@@ -1,0 +1,16 @@
+{
+    "name": "adronix",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run dev --parallel"
+    },
+    "devDependencies": {
+        "lerna": "^5.0.0",
+        "turbo": "latest"
+    },
+    "packageManager": "yarn@1.22.17"
+}
