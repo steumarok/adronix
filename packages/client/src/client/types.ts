@@ -16,6 +16,7 @@ export type ItemData = {
   $id: ItemId
   $type: string
   $inserted?: boolean
+  $mappedId?: ItemId
   [key: string]: any
 }
 

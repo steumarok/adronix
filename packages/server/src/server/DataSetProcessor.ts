@@ -1,6 +1,6 @@
 import { ItemCollector } from "./ItemCollector"
 import { ItemData } from "./types"
-import { Objects } from 'adronix-base'
+import { Objects } from '@adronix/base'
 
 export abstract class DataSetProcessor {
     abstract sync(data: ItemData[]): Promise<ItemData[]>
@@ -11,6 +11,10 @@ export abstract class DataSetProcessor {
     }
 
     protected async getItems(params: Map<String, any>): Promise<ItemCollector> {
+        return this.createCollector()
+    }
+
+    protected createCollector(): ItemCollector {
         return Objects.create(ItemCollector)
     }
 }

@@ -1,9 +1,11 @@
 import { Metadata } from "./Metadata"
-import { DataMap, DescriptorMap, IdGetter, ItemData, ItemRef } from "./types"
+import { DataMap, DescriptorMap, IdGetter, ItemData, ItemId, ItemRef } from "./types"
 
 export class ItemCollector {
     public descriptors: DescriptorMap = new Map()
     protected items: any[] = new Array()
+    private mappedIds: Map<ItemId, ItemId> = new Map()
+    private idCounter = 0
 
     constructor() {
         this.describe(Metadata, ['value'])
@@ -11,7 +13,7 @@ export class ItemCollector {
 
     describe(
         entityClass: any,
-        propNames: string[],
+        propNames: string[] = [],
         idGetter: IdGetter = (item) => item.id) {
         this.descriptors.set(entityClass, { propNames, idGetter })
         return this
@@ -36,42 +38,66 @@ export class ItemCollector {
         return c(this)
     }
 
+    addMappedId(id: ItemId, mappedId: ItemId) {
+        this.mappedIds.set(id, mappedId)
+    }
+
+    protected generateNewId() {
+        return --this.idCounter
+    }
+
+    protected isInsertion(item: any): boolean {
+        const { idGetter } = this.descriptors.get(item.constructor)
+        return !idGetter(item)
+    }
+
     addItemData(item: any, dataMap: DataMap) {
-        console.log(item.constructor)
         const { propNames, idGetter } = this.descriptors.get(item.constructor)
-        const key = `${idGetter(item)}@${item.constructor.name}`
+
+        const insertion = this.isInsertion(item)
+        const id = insertion ? this.generateNewId() : idGetter(item)
+
+        const key = `${id}@${item.constructor.name}`
         const itemData = dataMap.has(key)
             ? dataMap.get(key)
-            : { $id: idGetter(item), $type: item.constructor.name } as ItemData
+            : { $id: id, $type: item.constructor.name } as ItemData
+
         propNames.forEach(propName => {
             const value = this.readProperty(item, propName, dataMap)
             if (value) {
                 itemData[propName] = value
             }
         })
+
+        if (insertion) {
+            itemData.$inserted = true
+        }
+
+        if (this.mappedIds.has(id)) {
+            itemData.$mappedId = this.mappedIds.get(id)
+        }
+
         dataMap.set(key, itemData)
+
         return itemData
     }
 
     readProperty(item: any, propName: string, dataMap: DataMap): any {
         const value = item[propName]
         if (Array.isArray(value)) {
-            return value.map(v => {
-                if (typeof v == "object" && this.descriptors.has(v.constructor)) {
-                    return this.getItemRef(v, dataMap)
-                 }
-                 else {
-                     return v
-                 }
-            })
+            return value.map(v => this.readValue(v, dataMap))
         }
         else {
-            if (typeof value == "object" && this.descriptors.has(value.constructor)) {
-                return this.getItemRef(value, dataMap)
-            }
-            else {
-                return value
-            }
+            return this.readValue(value, dataMap)
+        }
+    }
+
+    readValue(value: any, dataMap: DataMap) {
+        if (typeof value == "object" && this.descriptors.has(value.constructor)) {
+            return this.getItemRef(value, dataMap)
+        }
+        else {
+            return value
         }
     }
 

@@ -1,7 +1,14 @@
 {
    "extends": "../../tsconfig.base.json",
    "compilerOptions": {
+      "lib": [
+            "es2021",
+            "dom"
+      ],
       "outDir": "dist",
-      "rootDir": "src"
-   }
+      "rootDir": "src",
+      "composite": true
+   },
+   "include": ["./**/*.ts"],
+   "references": [{ "path": "../client/tsconfig.json" }]
 }

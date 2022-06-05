@@ -7,14 +7,17 @@
         "target": "es2021",
         "module": "commonjs",
         "moduleResolution": "node",
-        "outDir": "./dist",
+        "noEmit": false,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "sourceMap": true,
         "declaration": true,
         "esModuleInterop": true,
+        "skipLibCheck": true,
+        "baseUrl": ".",
         "paths": {
-            "@adronix/*": ["./packages/*"]
+            "@adronix/*": ["./packages/*"],
+            "@adronix-apps/*": ["./apps/*"]
         }
     }
 }

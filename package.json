@@ -1,16 +1,21 @@
 {
     "name": "adronix",
     "private": true,
+    "license": "UNLICENSED",
+    "version": "1.0.1",
     "workspaces": [
-        "packages/*"
+        "packages/*",
+        "apps/*"
     ],
     "scripts": {
         "build": "turbo run build",
         "dev": "turbo run dev --parallel"
     },
     "devDependencies": {
-        "lerna": "^5.0.0",
-        "turbo": "latest"
+        "@types/node": "^16.11.6",
+        "ts-node": "^10.8.0",
+        "turbo": "latest",
+        "typescript": "^4.7.2"
     },
-    "packageManager": "yarn@1.22.17"
+    "packageManager": "yarn@3.2.1"
 }

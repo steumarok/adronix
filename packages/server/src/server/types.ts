@@ -8,6 +8,7 @@ export type ItemData = {
   $inserted?: boolean
   $deleted?: boolean
   $index?: number
+  $mappedId?: ItemId
   [key: string]: any
 }
 export type ItemRef = {

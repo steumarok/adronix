@@ -1,4 +1,4 @@
-import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery } from "adronix-client";
+import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery } from "@adronix/client";
 import { watch, reactive } from 'vue';
 import diff from 'object-diff'
 
@@ -107,6 +107,14 @@ export class VueDataSet extends DataSet {
             Array.prototype.splice.apply(rv.value, [0, rv.value.length, ...newValue])
           }
         })
+    }
+
+    protected updateRefs() {
+      super.updateRefs()
+      this.getItems()
+        .map(i => i.type)
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .forEach(type => this.refreshValues(type))
     }
 
   }

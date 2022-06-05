@@ -6,6 +6,10 @@ import { ItemData, ItemFilter, ItemId, ItemProp, ItemProps, ItemRef } from "./ty
 export class DataSet {
     private items: Item[] = [];
 
+    protected getItems() {
+      return this.items
+    }
+
     getDelta() {
       const delta = new Array<ItemData>()
       this.items.filter(item => item.inserted).forEach(item => {
@@ -45,9 +49,52 @@ export class DataSet {
       }
     }
 
+    async sync(cb: (delta: ItemData[]) => Promise<ItemData[]>) {
+      const data = await cb(this.getDelta())
+
+      data.forEach((itemData) => {
+
+        if (itemData.$mappedId) {
+          const item = this.items.find(item => item.id == itemData.$mappedId)
+
+          if (item) {
+            this.syncInserted(item, itemData.$id)
+          }
+        }
+        else {
+          const item = this.findItem(itemData.$type, item => item.id == itemData.$id)
+          if (item) {
+            if (item.deleted) {
+              this.syncDeleted(item)
+            }
+            else {
+              this.syncModified(item)
+            }
+          }
+        }
+      })
+    }
+
+    protected syncInserted(item: Item, id: ItemId) {
+      item.id = id as string
+      item.inserted = false
+    }
+
+    protected syncDeleted(item: Item) {
+      const index = this.items.indexOf(item)
+      this.items.splice(index, 1)
+    }
+
+    protected syncModified(item: Item) {
+      item.changes.clear()
+    }
+
     merge(data: ItemData[]) {
-      const modified = this.items.filter(item => item.deleted || item.changes.size > 0)
       const inserted = this.items.filter(item => item.inserted)
+
+      data = data.filter(itemData => !itemData.$inserted || inserted.findIndex(item => item.id == itemData.$id) == -1)
+
+      const modified = this.items.filter(item => item.deleted || item.changes.size > 0)
       const items = data.map(element => this.createItem(element))
       this.items = this.mergeModifiedItems(items, modified)
         .concat(inserted)
@@ -115,7 +162,7 @@ export class DataSet {
     }
 
     protected generateRandomId() {
-      return Math.random().toString(36).substr(2)
+      return Math.random().toString(36).substring(2)
     }
 
     update(item: Item, properties: Omit<ItemProps, "id">) {
@@ -152,18 +199,20 @@ export class DataSet {
           item[key] = element[key]
         }
       }
+      if (element.$inserted) {
+        item.inserted = true
+      }
       return item
     }
 
     protected readProperties(element: ItemData): ItemProps {
-      let properties: ItemProps = { id: element.$id}
+      let properties: ItemProps = {
+        id: element.$id
+      }
       for (const key in element) {
         if (!key.startsWith("$")) {
           properties[key] = element[key]
         }
-        /*else if (key === '$id') {
-          properties['id'] = element[key]
-        }*/
       }
       return properties
     }

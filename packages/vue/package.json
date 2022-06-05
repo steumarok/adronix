@@ -1,19 +1,20 @@
 {
    "name": "@adronix/vue",
    "version": "1.0.1",
-   "main": "dist/index.js",
-   "types": "dist/index.d.ts",
-   "dependencies": {
-      "@adronix/base": "*",
-      "@adronix/client": "*",
-      "object-diff": "^0.0.4",
+   "main": "src/index.ts",
+   "types": "src/index.ts",
+   "peerDependencies": {
       "vue": "^3.0.0"
+   },
+   "dependencies": {
+      "@adronix/base": "workspace:^",
+      "@adronix/client": "workspace:^",
+      "object-diff": "^0.0.4"
    },
    "devDependencies": {
       "@types/jest": "^27.4.0",
+      "@types/object-diff": "^0.0.2",
       "jest": "^27.5.1",
-      "ts-jest": "^27.1.3",
-      "ts-node": "3.3.0",
-      "typescript": "^4.5.5"
+      "ts-jest": "^27.1.3"
    }
 }

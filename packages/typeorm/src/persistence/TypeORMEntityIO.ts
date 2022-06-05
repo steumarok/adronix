@@ -1,26 +1,29 @@
-import { getConnection, getManager } from "typeorm"
+import { DataSource } from "typeorm"
 import { EntityIO, EntityId } from "@adronix/persistence"
 import { TypeORMTransaction } from "./TypeORMTransaction"
 
 export class TypeORMEntityIO<T> extends EntityIO<T, TypeORMTransaction> {
 
     constructor(
+        protected dataSource: DataSource,
         protected entityClass: new () => T) {
         super()
     }
 
     query() {
-        return getManager().createQueryBuilder()
+        return this.dataSource.manager.createQueryBuilder()
     }
 
-    protected getEntityId(entity: T) {
-        const md = getConnection().getMetadata(this.entityClass.constructor)
+    getEntityId(entity: T) {
+        const md = this.dataSource.getMetadata(this.entityClass)
         const id = md.primaryColumns.map(c => c.propertyName).map(n => entity[n])
-        return id.join('_')
+        return id.length == 1 ? id[0] : id
     }
 
     get(id: EntityId): Promise<T> {
-        return getManager().findOne(this.entityClass, id)
+        return this.dataSource.manager.createQueryBuilder(this.entityClass, "e")
+            .where("e.id = :id", { id })
+            .getOne()
     }
 
     newEntityInstance(): T {

@@ -1,13 +1,18 @@
-import { getConnection, QueryRunner } from "typeorm"
+import { DataSource, QueryRunner } from "typeorm"
 import { Transaction } from '@adronix/persistence'
 
 
 export class TypeORMTransaction extends Transaction {
     queryRunner: QueryRunner
 
+    constructor(
+        protected dataSource: DataSource) {
+        super()
+    }
+
     async start() {
         super.start()
-        this.queryRunner = getConnection().createQueryRunner()
+        this.queryRunner = this.dataSource.createQueryRunner()
         await this.queryRunner.connect()
         await this.queryRunner.startTransaction()
     }

@@ -22,13 +22,11 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         this.entityIOMap.set(entityClass, { entityIO, transactionManager })
     }
 
-    protected mapEntityId(type: string, tempId: EntityId, newId: EntityId) {
-        this.idMap.set(`${tempId}@${type}`, newId)
+    protected mapEntityId(type: string, tempId: EntityId, entity: any) {
+        this.idMap.set(`${tempId}@${type}`, entity)
     }
 
-    validate(data: ItemData[]) {
-
-    }
+    validate(data: ItemData[]) { }
 
     protected getEntityClassByName(name: string) {
         return Array.from(this.entityIOMap.keys()).find(c => c.name == name)
@@ -147,23 +145,44 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
             ioTransactionMap.set(key, transactionMap.get(value.transactionManager))
         })
 
-        await Promise.all(Array.from(transactionMap.values()).map(t => t.start()))
+        const transactions = Array.from(transactionMap.values())
+        await Promise.all(transactions.map(t => t.start()))
 
         try {
+            const collector = Array
+                .from(this.entityIOMap.keys())
+                .reduce((c, entityClass) => c.describe(entityClass), this.createCollector())
+
             for (let op of operations) {
                 const entity = await op.action(ioTransactionMap.get(op.entityClass))
-                this.mapEntityId(op.entityClass.name, op.entityId, entity)
+
+                const io = this.getEntityIO(op.entityClass)
+
+                this.mapEntityId(
+                    op.entityClass.name,
+                    op.entityId,
+                    entity)
+
+                collector.addOne(entity)
+
+                const id = io.getEntityId(entity)
+
+                if (id != op.entityId) {
+                    collector.addMappedId(id, op.entityId)
+                }
             }
 
-            await Promise.all(Array.from(transactionMap.values()).map(t => t.commit()))
+            await Promise.all(transactions.map(t => t.commit()))
+
+            return collector.get()
         }
         catch (e) {
-            await Promise.all(Array.from(transactionMap.values()).map(t => t.rollback()))
+            console.log(e)
+
+            await Promise.all(transactions.map(t => t.rollback()))
+
+            return []
         }
-
-        console.log(this.idMap)
-
-        return []
     }
 
     protected createTransactions(): Map<TransactionManager<Transaction>, Transaction> {

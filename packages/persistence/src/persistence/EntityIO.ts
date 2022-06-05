@@ -6,7 +6,7 @@ import { Objects } from '@adronix/base'
 export abstract class EntityIO<T, Tx extends Transaction> {
     abstract get(id: EntityId): Promise<T>
 
-    protected abstract getEntityId(entity: T): EntityId
+    abstract getEntityId(entity: T): EntityId
 
     abstract saveEntity(entity: T, transaction: Tx): Promise<any>
 

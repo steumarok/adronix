@@ -16,9 +16,8 @@ export function create<T>(Ctor: { new (...args: any[]): T }, ...args: any[]): T 
     const classRef: { new (...args: any[]): any; } = classMap[name];
 
     if (!classRef) {
-      throw new Error(`The class '${name}' was not found`);
+      return new Ctor(args[0], args[1])
     }
-
     let instance = Object.create(classRef.prototype);
 
     try {
@@ -29,12 +28,42 @@ export function create<T>(Ctor: { new (...args: any[]): T }, ...args: any[]): T 
        */
       if (/Class constructor/.test(err.toString())) {
         instance = class extends classRef {
-          constructor(...params: any[]) {
-            super(...params);
+          constructor(
+            params0: any,
+            params1: any,
+            params2: any,
+            params3: any,
+            params4: any,
+            params5: any,
+            params6: any,
+            params7: any,
+            params8: any,
+            params9: any) {
+            super(
+              params0,
+              params1,
+              params2,
+              params3,
+              params4,
+              params5,
+              params6,
+              params7,
+              params8,
+              params9);
           }
         };
 
-        return <T>new instance(args);
+        return <T>new instance(
+          args[0],
+          args[1],
+          args[2],
+          args[3],
+          args[4],
+          args[5],
+          args[6],
+          args[7],
+          args[8],
+          args[9]);
       } else {
           throw err
       }
