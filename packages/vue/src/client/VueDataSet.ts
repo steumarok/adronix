@@ -1,5 +1,5 @@
 import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery } from "@adronix/client";
-import { watch, reactive } from 'vue';
+import { watch, reactive, ref } from 'vue';
 import diff from 'object-diff'
 
 export class VueDataSet extends DataSet {
@@ -50,6 +50,17 @@ export class VueDataSet extends DataSet {
       stopHandler = watch(() => ({...item}), (curr, prev) => this.updateInternal(item, diff(prev, curr)))
       this.stopHandlerMap.set(this.getKey(item), stopHandler)
       this.valueMap.set(this.getKey(item), item)
+    }
+
+    list(type: string, expr: ItemId | ItemFilter = () => true) {
+      return this.query(type, expr).reactive().list()
+    }
+
+    ref(type: string, expr: ItemId | ItemFilter = () => true) {
+      const list = this.list(type, expr)
+      const result = ref(list.length > 0 ? list[0] : null)
+      watch(list, () => result.value = list.length > 0 ? list[0] : null)
+      return result
     }
 
     query(type: string, expr: ItemId | ItemFilter = () => true): IReactiveQuery {

@@ -45,7 +45,7 @@ export default defineComponent({
     })
 
     const refresh = async () => {
-      const resp = await fetch(`http://localhost:3001/editProductOption/1?page=${currentPage.value}`)
+      const resp = await fetch(`/api/editProductOption/1?page=${currentPage.value}`)
       const data = await resp.json() as ItemData[]
 
       dataSet.merge(data)
@@ -70,7 +70,7 @@ export default defineComponent({
       sync: async () => {
 
         await dataSet.sync(async delta => {
-          let resp = await fetch('http://localhost:3001/editProductOption/1', {
+          let resp = await fetch('/api/editProductOption/1', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json;charset=utf-8'

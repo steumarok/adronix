@@ -42,7 +42,7 @@ const linksList = [
   {
     title: 'Docs',
     caption: 'quasar.dev',
-    icon: 'school',
+    icon: 'edit',
     link: 'https://quasar.dev',
   },
   {

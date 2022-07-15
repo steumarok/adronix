@@ -8,13 +8,13 @@ import { TcaProductOptionExtIO } from '../persistence/TcaProductOptionExtIO'
 export default () => {
     Objects.override(EditProductOptionProcessor, base => {
         return class extends base {
-            constructor(transactionManager: TypeORMTransactionManager, dataSource: DataSource) {
-                super(transactionManager, dataSource)
-                this.addEntityIO(TcaProductOptionExt, Objects.create(TcaProductOptionExtIO, dataSource), transactionManager)
+            constructor(transactionManager: TypeORMTransactionManager) {
+                super(transactionManager)
+                this.addEntityIO(TcaProductOptionExt, Objects.create(TcaProductOptionExtIO, transactionManager.dataSource), transactionManager)
             }
 
             protected async getItems(params: Map<String, any>) {
-                const poe =  await this.dataSource.getRepository(TcaProductOptionExt)
+                const poe =  await this.transactionManager.dataSource.getRepository(TcaProductOptionExt)
                     .createQueryBuilder("poe")
                     .leftJoinAndSelect("poe.productOption", 'productOption')
                     .where("poe.productOption.id = :id", { id: params.get('id') })
@@ -25,7 +25,7 @@ export default () => {
             }
 
             protected async newExt(idProductOption: string) {
-                const po =  await this.dataSource.getRepository(TcmProductOption)
+                const po =  await this.transactionManager.dataSource.getRepository(TcmProductOption)
                     .createQueryBuilder("po")
                     .where("po.id = :id", { id: idProductOption })
                     .getOne()

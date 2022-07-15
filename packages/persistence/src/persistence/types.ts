@@ -1,4 +1,3 @@
-
 export type EntityId = string | number
 export type EntityProps = {
     [key: string]: any
@@ -34,3 +33,11 @@ export type Rule = {
 }
 
 export type EntityClass<T> = new () => T
+
+export enum EventKind {
+    Insert,
+    Update,
+    Delete
+}
+
+export type EventHandler<T> = (eventKind: EventKind, entity: T) => void

@@ -7,13 +7,18 @@ import { TcmProductOptionValue } from "../entities/TcmProductOptionValue";
 import { ProductOptionIO } from "../persistence/ProductOptionIO";
 import { ProductOptionValueIO } from "../persistence/ProductOptionValueIO";
 import { DataSource } from "typeorm";
+import { TestApplication, Module1 } from "..";
 
 export abstract class BaseDataSetProcessor extends EntityDataSetProcessor {
 
-    constructor(transactionManager: TypeORMTransactionManager, protected dataSource: DataSource) {
+    constructor(app: TestApplication) {
         super()
-        this.addEntityIO(TcmProductOption, Objects.create(ProductOptionIO, dataSource), transactionManager)
-        this.addEntityIO(TcmProductOptionValue, Objects.create(ProductOptionValueIO, dataSource), transactionManager)
+        this.addEntityIO(
+            TcmProductOption,
+            Objects.create(ProductOptionIO, app.getDataSource()), app.getTransactionManager())
+        this.addEntityIO(
+            TcmProductOptionValue,
+            Objects.create(ProductOptionValueIO, app.getDataSource()), app.getTransactionManager())
     }
 
     protected async getItems(params: Map<String, any>): Promise<ItemCollector> {

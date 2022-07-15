@@ -45,7 +45,9 @@ __metadata:
   dependencies:
     "@adronix/base": "workspace:^"
     "@types/jest": ^27.4.0
+    "@types/pubsub-js": ^1.8.3
     jest: ^27.5.1
+    pubsub-js: ^1.9.4
     ts-jest: ^27.1.3
   languageName: unknown
   linkType: soft
@@ -102,7 +104,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@adronix/test-module-02@workspace:apps/test-module-02":
+"@adronix/test-module-02@workspace:^, @adronix/test-module-02@workspace:apps/test-module-02":
   version: 0.0.0-use.local
   resolution: "@adronix/test-module-02@workspace:apps/test-module-02"
   dependencies:
@@ -126,6 +128,7 @@ __metadata:
     "@adronix/persistence": "workspace:^"
     "@adronix/server": "workspace:^"
     "@adronix/test-module-01": "workspace:^"
+    "@adronix/test-module-02": "workspace:^"
     "@adronix/typeorm": "workspace:^"
     body-parser: ^1.19.1
     cors: ^2.8.5
@@ -2446,6 +2449,13 @@ __metadata:
   version: 2.6.1
   resolution: "@types/prettier@npm:2.6.1"
   checksum: b25ec46d18129fa40c1a1f42feb7406e8f19901ba5261ba3c71600ad14996ae07b4f4b727a9b83da673948011e59d870fc519166f05b5d49e9ad39db1aea8c93
+  languageName: node
+  linkType: hard
+
+"@types/pubsub-js@npm:^1.8.3":
+  version: 1.8.3
+  resolution: "@types/pubsub-js@npm:1.8.3"
+  checksum: 10161a266ad6e35f059e0d8aca2612530ea1c747812b813ecc7934cd0aec5f7ca1d6f8fdea91d79ffaea698cde2e873f0c8a402210bc32861a16e88661d1c797
   languageName: node
   linkType: hard
 
@@ -10294,6 +10304,13 @@ __metadata:
   version: 1.1.8
   resolution: "pstree.remy@npm:1.1.8"
   checksum: 5cb53698d6bb34dfb278c8a26957964aecfff3e161af5fbf7cee00bbe9d8547c7aced4bd9cb193bce15fb56e9e4220fc02a5bf9c14345ffb13a36b858701ec2d
+  languageName: node
+  linkType: hard
+
+"pubsub-js@npm:^1.9.4":
+  version: 1.9.4
+  resolution: "pubsub-js@npm:1.9.4"
+  checksum: 4644a74d0731786bc10b5b01418ee8221f1dcd3ce6b6b011cf383059f625d6ce658e83c234c67dcdd3058023867bdcf128c1edff6cc05d09a3206d2276e14d36
   languageName: node
   linkType: hard
 

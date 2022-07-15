@@ -1,3 +1,5 @@
+import { ItemCollector } from "./ItemCollector"
+
 export type ItemId = string | number
 export type ItemProps = {
     [key: string]: any
@@ -33,3 +35,10 @@ export type Rule = {
 }
 
 // export type EntityClass<T> = new () => T
+
+
+export type Params = { [name: string]: string }
+export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
+
+export type DataProvider = (params: Params) => Promise<ReturnType[]>
+

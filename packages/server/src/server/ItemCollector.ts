@@ -25,7 +25,9 @@ export class ItemCollector {
     }
 
     addOne<T>(item: T) {
-        this.items.push(item)
+        if (item) {
+            this.items.push(item)
+        }
         return this
     }
 

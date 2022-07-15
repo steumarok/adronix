@@ -5,7 +5,7 @@ import { DataSource } from "typeorm";
 
 export class TypeORMTransactionManager extends TransactionManager<TypeORMTransaction> {
     constructor(
-        protected dataSource: DataSource) {
+        protected readonly dataSource: DataSource) {
         super()
     }
 

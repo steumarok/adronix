@@ -3,7 +3,11 @@
    "compilerOptions": {
       "composite": true,
       "outDir": "dist",
-      "rootDir": "src"
+      "rootDir": "./",
+      "paths": {
+         "src/*": ["src/*"],
+         "test/*": ["test/*"]
+      }
    },
    "include": ["./**/*.ts"],
    "references": [{ "path": "../base/tsconfig.json" }]

@@ -6,7 +6,6 @@ import { TcmProductOption } from "../entities/TcmProductOption";
 import { TcmProductOptionValue } from "../entities/TcmProductOptionValue";
 import { BaseDataSetProcessor } from "./BaseDataSetProcessor";
 
-
 function PaginatedList<T>(
     entityClass: EntityClass<T>,
     items: T[],
@@ -20,7 +19,7 @@ function PaginatedList<T>(
     }
 }
 
-export class EditProductOptionProcessor extends BaseDataSetProcessor {
+export class ListProductOptionProcessor extends BaseDataSetProcessor {
 
     constructor(transactionManager: TypeORMTransactionManager) {
         super(transactionManager)
@@ -28,34 +27,18 @@ export class EditProductOptionProcessor extends BaseDataSetProcessor {
 
     protected async getItems(params: Map<String, any>) {
 
-        const po =  await this.transactionManager.dataSource.getRepository(TcmProductOption)
-            .createQueryBuilder("po")
-            .leftJoinAndSelect("po.ingredients", "ingredient")
-            .where("po.id = :id", { id: params.get('id') })
-            .getOne()
-
-            /*
-        const { count } = await this.dataSource.getRepository(TcmProductOptionValue)
-            .createQueryBuilder("tov")
-            .select("count(*)", "count")
-            //.where("tov.productOption.id = :productOptionId", { productOptionId: po.id })
-            .getRawOne()
-            */
-
         const page = parseInt(params.get('page'))
+        const limit = parseInt(params.get('limit'))
 
-        const [ povs, count ] = await this.transactionManager.dataSource.getRepository(TcmProductOptionValue)
-            .createQueryBuilder("tov")
-            .leftJoinAndSelect("tov.productOption", "productOption")
-            .skip((page-1) * 10)
-            .take(10)
-            .where("tov.productOption.id = :productOptionId", { productOptionId: po.id })
+        const [ pos, count ] = await this.transactionManager.dataSource.getRepository(TcmProductOption)
+            .createQueryBuilder("po")
+            .skip((page-1) * limit)
+            .take(limit)
             .getManyAndCount()
 
 
         return (await super.getItems(params))
-            .addOne(po)
-            .add(PaginatedList(TcmProductOptionValue, povs, count));
+            .add(PaginatedList(TcmProductOption, pos, count));
     }
 
 }

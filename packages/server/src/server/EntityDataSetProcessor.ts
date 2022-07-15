@@ -9,7 +9,6 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         entityIO: EntityIO<unknown, Transaction>,
         transactionManager: TransactionManager<Transaction>
     }>()
-    private idMap: Map<string, any> = new Map()
 
     constructor() {
         super()
@@ -20,10 +19,12 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         entityIO: EntityIO<T, Tx>,
         transactionManager: TransactionManager<Tx>) {
         this.entityIOMap.set(entityClass, { entityIO, transactionManager })
+
+        // entityIO.addEventHandler()
     }
 
-    protected mapEntityId(type: string, tempId: EntityId, entity: any) {
-        this.idMap.set(`${tempId}@${type}`, entity)
+    protected mapEntityId(idMap: Map<string, any>, type: string, tempId: EntityId, entity: any) {
+        idMap.set(`${tempId}@${type}`, entity)
     }
 
     validate(data: ItemData[]) { }
@@ -32,14 +33,14 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         return Array.from(this.entityIOMap.keys()).find(c => c.name == name)
     }
 
-    protected prepareDataForIO(itemData: ItemData) {
+    protected prepareDataForIO(itemData: ItemData, idMap: Map<string, any>) {
         const data = {}
         for (let key in itemData) {
             if (!key.startsWith("$")) {
                 const value = itemData[key]
                 if (typeof value == "object") {
                     if (value.$idRef) {
-                        data[key] = () => this.resolveEntityRef(value.$type, value.$idRef)
+                        data[key] = () => this.resolveEntityRef(value.$type, value.$idRef, idMap)
                     }
                 }
                 else {
@@ -50,11 +51,11 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         return data
     }
 
-    protected resolveEntityRef(type: string, idRef: ItemId) {
+    protected resolveEntityRef(type: string, idRef: ItemId, idMap: Map<string, any>) {
         const tempKey = `${idRef}@${type}`
 
-        if (this.idMap.has(tempKey)) {
-            return Promise.resolve(this.idMap.get(tempKey))
+        if (idMap.has(tempKey)) {
+            return Promise.resolve(idMap.get(tempKey))
         }
         else {
             const entityIO = this.getEntityIO(type)
@@ -68,10 +69,10 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         return entityIO
     }
 
-    protected async processItem(itemData: ItemData) {
+    protected async processItem(itemData: ItemData, idMap: Map<string, any>) {
         const entityIO = this.getEntityIO(itemData.$type)
 
-        const changes = this.prepareDataForIO(itemData)
+        const changes = this.prepareDataForIO(itemData, idMap)
 
         if (itemData.$inserted) {
             console.log("itemData", itemData)
@@ -122,11 +123,13 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         const ordered = graph.topologicalSort()
         data.sort((a, b) => ordered.indexOf(`${a.$id}@${a.$type}`) - ordered.indexOf(`${b.$id}@${b.$type}`))
 
+        const idMap: Map<string, any> = new Map()
+
         data.forEach(async itemData => {
 
             const entityClass = this.getEntityClassByName(itemData.$type)
 
-            const action = await this.processItem(itemData)
+            const action = await this.processItem(itemData, idMap)
 
             if (typeof action == "function") {
                 operations.push({
@@ -159,6 +162,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
                 const io = this.getEntityIO(op.entityClass)
 
                 this.mapEntityId(
+                    idMap,
                     op.entityClass.name,
                     op.entityId,
                     entity)
