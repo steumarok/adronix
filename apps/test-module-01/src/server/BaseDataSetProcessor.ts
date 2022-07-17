@@ -9,8 +9,8 @@ import { ProductOptionValueIO } from "../persistence/ProductOptionValueIO";
 import { DataSource } from "typeorm";
 import { TestApplication, Module1 } from "..";
 
-export abstract class BaseDataSetProcessor extends EntityDataSetProcessor {
-
+export abstract class BaseDataSetProcessor  {
+/*
     constructor(app: TestApplication) {
         super()
         this.addEntityIO(
@@ -26,5 +26,5 @@ export abstract class BaseDataSetProcessor extends EntityDataSetProcessor {
             .describe(TcmProductOption, ['name', 'ingredients'])
             .describe(TcmIngredient, ['name'])
             .describe(TcmProductOptionValue, ['price', 'productOption']);
-    }
+    }*/
 }

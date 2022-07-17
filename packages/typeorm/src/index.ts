@@ -1,3 +1,5 @@
 export { TypeORMEntityIO } from './persistence/TypeORMEntityIO'
+export { TypeORMPersistence } from './persistence/TypeORMPersistence'
 export { TypeORMTransaction } from './persistence/TypeORMTransaction'
 export { TypeORMTransactionManager } from './persistence/TypeORMTransactionManager'
+export { ITypeORMApplication } from './persistence/ITypeORMApplication'

@@ -24,7 +24,7 @@
       <template v-slot:body="props">
         <q-tr :props="props">
           <q-td auto-width>
-            <q-btn size="sm" flat dense @click="edit(props)" icon="edit" />
+            <q-btn size="sm" flat dense @click="edit(props.key)" icon="edit" />
           </q-td>
           <q-td
             v-for="col in props.cols"
@@ -42,66 +42,11 @@
 
 <script lang="ts">
 import { Item, ItemData } from '@adronix/client';
-import { VueDataSet } from '@adronix/vue';
+import { GetParams, useDataSet, useUrlComposer, VueDataSet } from '@adronix/vue';
 import { computed, isRef, reactive, Ref, ref, unref, watch, watchEffect } from 'vue';
+import { useQuasar } from 'quasar';
+import EditProductOption from './EditProductOption.vue'
 
-type GetParams = {
-  [name: string]: any
-}
-/*function useDataSet1(get: (a: x) => String, params: x ) {
-
-}*/
-
-//useDataSet1(p => `${p.prova}`, {prova: '1'})
-
-function useUrlComposer(
-  composer: (params: GetParams) => string,
-  initParams: GetParams) {
-  const url = ref(composer(initParams))
-  const params = reactive(initParams)
-
-  watch(params, (newParams) => {
-    url.value = composer(newParams)
-  })
-
-  return {
-    url,
-    params
-  }
-}
-
-type IDataBroker = {
-  get(url: string): Promise<Response>
-}
-
-function useFetch(): IDataBroker {
-  return {
-    get: (url) => fetch(url)
-  }
-}
-
-function useDataSet(url: string | Ref<string>, dataBroker: IDataBroker = useFetch()) {
-  const dataSet = new VueDataSet()
-
-  function doFetch() {
-    dataBroker.get(unref(url))
-      .then((res) => res.json())
-      .then(json => json as ItemData[])
-      .then(data => dataSet.merge(data))
-      .catch((err) => alert(err))
-  }
-
-   if (isRef(url)) {
-    // setup reactive re-fetch if input URL is a ref
-    watchEffect(doFetch)
-  } else {
-    // otherwise, just fetch once
-    // and avoid the overhead of a watcher
-    void doFetch()
-  }
-
-  return dataSet
-}
 
 function useQTableHandler(ds: VueDataSet, params: GetParams | null, type: string) {
   const rows =  ds.list('TcmProductOption')
@@ -152,7 +97,7 @@ export default {
     ]
 
     const { url, params } = useUrlComposer(
-      params => `/api/listProductOption?page=${params.table.page as string}&limit=${params.table.limit as string}`, {
+      ({ table }) => `/api/listProductOption?page=${table.page as string}&limit=${table.limit as string}`, {
         table: {
           page: 1,
           limit: 10
@@ -164,10 +109,27 @@ export default {
       params.table,
       'TcmProductOption')
 
+    const $q = useQuasar()
+
     return {
       columns,
-      edit(props) {
-        console.log(props)
+      edit(key: string) {
+
+        $q.dialog({
+          component: EditProductOption,
+
+          // props forwarded to your custom component
+          componentProps: {
+            id: key,
+            // ...more..props...
+          }
+        }).onOk(() => {
+          console.log('OK')
+        }).onCancel(() => {
+          console.log('Cancel')
+        }).onDismiss(() => {
+          console.log('Called on OK or Cancel')
+        })
       },
       ...h
     }

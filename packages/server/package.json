@@ -6,6 +6,7 @@
    "dependencies": {
       "@adronix/base": "workspace:^",
       "@adronix/persistence": "workspace:^",
+      "better-sse": "^0.8.0",
       "graph-data-structure": "^2.0.0"
    },
    "devDependencies": {

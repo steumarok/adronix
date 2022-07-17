@@ -11,6 +11,7 @@ export type ItemData = {
   $deleted?: boolean
   $index?: number
   $mappedId?: ItemId
+  $errors?: Errors
   [key: string]: any
 }
 export type ItemRef = {
@@ -37,8 +38,8 @@ export type Rule = {
 // export type EntityClass<T> = new () => T
 
 
-export type Params = { [name: string]: string }
+export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
-export type DataProvider = (params: Params) => Promise<ReturnType[]>
+export type DataProvider = (params: Partial<Params>) => Promise<ReturnType[]>
 

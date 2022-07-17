@@ -1,3 +1,6 @@
+import { Transaction } from "./Transaction"
+import { Validator } from "./Validator"
+
 export type EntityId = string | number
 export type EntityProps = {
     [key: string]: any
@@ -34,10 +37,18 @@ export type Rule = {
 
 export type EntityClass<T> = new () => T
 
-export enum EventKind {
+export enum EntityEventKind {
     Insert,
     Update,
     Delete
 }
 
-export type EventHandler<T> = (eventKind: EventKind, entity: T) => void
+export enum TransactionEventKind {
+    Commit,
+    Rollback
+}
+
+export type EntityEventHandler<T, Tx extends Transaction> = (eventKind: EntityEventKind, entity: T, transaction: Tx) => void
+export type TransactionEventHandler = (eventKind: TransactionEventKind) => void
+
+export type ValidationHandler<T> = (validator: Validator, changes: EntityProps, entity?: T) => Validator

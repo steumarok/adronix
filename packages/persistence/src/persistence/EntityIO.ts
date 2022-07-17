@@ -1,10 +1,10 @@
 import { Transaction } from "./Transaction"
-import { Errors, EntityId, EntityProps, EventKind, EventHandler } from "./types"
+import { Errors, EntityId, EntityProps, EntityEventHandler, EntityEventKind } from "./types"
 import { Validator } from "./Validator"
 import { Objects } from '@adronix/base'
 
 export abstract class EntityIO<T, Tx extends Transaction> {
-    private eventHandlers: EventHandler<T>[] = []
+    private eventHandlers: EntityEventHandler<T, Tx>[] = []
 
     abstract get(id: EntityId): Promise<T>
 
@@ -37,7 +37,7 @@ export abstract class EntityIO<T, Tx extends Transaction> {
                 await this.fillEntity(t, entity, changes)
                 const result =  await this.saveEntity(entity, t)
 
-                this.notify(EventKind.Update, result)
+                this.notify(EntityEventKind.Update, result, t)
 
                 return result
             }
@@ -57,7 +57,7 @@ export abstract class EntityIO<T, Tx extends Transaction> {
                 await this.fillEntity(t, entity, changes)
                 const result = await this.saveEntity(entity, t)
 
-                this.notify(EventKind.Insert, result)
+                this.notify(EntityEventKind.Insert, result, t)
 
                 return result
             }
@@ -68,11 +68,11 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         return Objects.create(Validator)
     }
 
-    protected notify(eventKind: EventKind, entity: T) {
-        this.eventHandlers.forEach(handler => handler(eventKind, entity))
+    protected notify(eventKind: EntityEventKind, entity: T, transaction: Tx) {
+        this.eventHandlers.forEach(handler => handler(eventKind, entity, transaction))
     }
 
-    addEventHandler(handler: EventHandler<T>) {
+    addEventHandler(handler: EntityEventHandler<T, Tx>) {
         this.eventHandlers.push(handler)
     }
 }

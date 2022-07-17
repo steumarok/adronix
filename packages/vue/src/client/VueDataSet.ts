@@ -1,6 +1,146 @@
-import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery } from "@adronix/client";
-import { watch, reactive, ref } from 'vue';
+import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery, ItemData } from "@adronix/client";
+import { watch, reactive, ref, unref, Ref, isRef, watchEffect } from 'vue';
 import diff from 'object-diff'
+import { Errors } from "@adronix/client/src/client/types";
+
+
+export type GetParams = {
+  [name: string]: any
+}
+
+export function useUrlComposer(
+  composer: (params: GetParams) => string,
+  initParams: GetParams) {
+  const url = ref(composer(initParams))
+  const params = reactive(initParams)
+
+  watch(params, (newParams) => {
+    url.value = composer(newParams)
+  })
+
+  return {
+    url,
+    params
+  }
+}
+
+export type IDataBroker = {
+  get(url: string): Promise<Response>
+  post(url: string, data: any): Promise<Response>
+}
+
+export function useFetch(): IDataBroker {
+  return {
+    get: (url) => fetch(url),
+    post: (url, data) => {
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(data)
+      })
+    }
+  }
+}
+
+export type NotificationManager = {
+  stop(): void
+}
+
+interface INotificationBroker {
+  on(topic: string, handler: () => void): NotificationManager
+}
+
+
+class EventSourceNotificationBroker implements INotificationBroker {
+
+  eventSource: EventSource
+
+  constructor() {
+    this.eventSource = new EventSource("/api/sse");
+  }
+
+  on(topic: string, handler: () => void): NotificationManager {
+    this.eventSource.addEventListener(topic, handler);
+    this.eventSource.addEventListener("message", c => console.log(c));
+
+    return {
+      stop: () => {
+        this.eventSource.removeEventListener(topic, handler)
+      }
+    }
+  }
+}
+
+export function useEventSource(): INotificationBroker {
+  return new EventSourceNotificationBroker()
+}
+
+interface ExtendedVueDataSet {
+  commit(): Promise<boolean>
+  refresh(): Promise<void>
+}
+
+//const reg = new FinalizationRegistry((value: string) => console.log(value))
+
+
+export function useDataSet(
+  url: string | Ref<string>,
+  dataBroker: IDataBroker = useFetch(),
+  notificationBroker = useEventSource()): VueDataSet & ExtendedVueDataSet {
+  const Class = class extends VueDataSet implements ExtendedVueDataSet {
+    constructor() {
+      super()
+      //reg.register(this, "test")
+    }
+
+    async commit() {
+      return await this.sync(async (delta) => {
+        let resp = await dataBroker.post(unref(url), delta)
+        return await resp.json() as ItemData[]
+      })
+    }
+
+    async refresh() {
+      await doFetch()
+    }
+  }
+  const dataSet = new Class()
+
+  const notificationManagers = new Map<string, NotificationManager>();
+
+  function listenNotifications() {
+
+    notificationManagers.forEach(m => m.stop())
+
+    dataSet.filterItems('*', (item) => item.type != 'Metadata')
+      .forEach(item => {
+        const manager = notificationBroker.on(item.type, () => doFetch())
+        notificationManagers.set(item.type, manager)
+      })
+  }
+
+  function doFetch(): Promise<void> {
+    return dataBroker.get(unref(url))
+      .then((res) => res.json())
+      .then(json => json as ItemData[])
+      .then(data => dataSet.merge(data))
+      .then(() => listenNotifications())
+      .catch((err) => alert(err))
+  }
+
+  if (isRef(url)) {
+    // setup reactive re-fetch if input URL is a ref
+    watchEffect(doFetch)
+  } else {
+    // otherwise, just fetch once
+    // and avoid the overhead of a watcher
+    void doFetch()
+  }
+
+  return dataSet
+}
 
 export class VueDataSet extends DataSet {
 
@@ -10,6 +150,11 @@ export class VueDataSet extends DataSet {
 
     protected getKey(item: Item) {
       return `${item.id}@${item.type}`
+    }
+
+    protected syncErrors(item: Item, errors: Errors) {
+      super.syncErrors(item, errors)
+      this.update(item, { errors })
     }
 
     insert(type: string, properties: Omit<ItemProps, "id">) {

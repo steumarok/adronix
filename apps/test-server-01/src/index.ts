@@ -3,7 +3,7 @@ import express from "express";
 import cors from 'cors'
 import bodyParser from "body-parser";
 import { ExpressApplication, ExpressDataSetController } from "@adronix/express";
-import { BaseDataSetProcessor, Module1, TcmProductOption } from "@adronix/test-module-01";
+import { Module1, TcmProductOption } from "@adronix/test-module-01";
 import { Objects } from "@adronix/base";
 import { EntityClass, Transaction, TransactionManager } from "@adronix/persistence";
 import { DataSetProcessor, EntityDataSetProcessor, ItemCollector } from "@adronix/server";
@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 class TestApp extends ExpressApplication {
     constructor() {
         super(app)
+        this.addNotificationChannel('/sse')
         this.addModule(Objects.create(Module1, this))
     }
 

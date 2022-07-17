@@ -1,4 +1,4 @@
-import { ItemProp } from "./types"
+import { Errors, ItemProp } from "./types"
 
 export class Item {
     constructor(type: string, id: string) {
@@ -11,4 +11,5 @@ export class Item {
     changes: Set<string> = new Set()
     inserted: boolean = false
     deleted: boolean = false
+    errors: Errors = {}
 }

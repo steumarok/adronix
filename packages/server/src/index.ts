@@ -4,5 +4,7 @@ export { ItemCollector } from './server/ItemCollector'
 export { Metadata } from './server/Metadata'
 export { Module } from './server/Module'
 export { Application } from './server/Application'
+export { NotificationChannel } from './server/NotificationChannel'
+export { BetterSseNotificationSession } from './server/BetterSseNotificationSession'
 
 export { DataProvider } from './server/types'

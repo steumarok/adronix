@@ -1,7 +1,7 @@
 import { IQuery } from "./IQuery";
 import { Item } from "./Item";
 import { Query } from "./Query";
-import { ItemData, ItemFilter, ItemId, ItemProp, ItemProps, ItemRef } from "./types";
+import { Errors, ItemData, ItemFilter, ItemId, ItemProp, ItemProps, ItemRef } from "./types";
 
 export class DataSet {
     private items: Item[] = [];
@@ -49,7 +49,7 @@ export class DataSet {
       }
     }
 
-    async sync(cb: (delta: ItemData[]) => Promise<ItemData[]>) {
+    async sync(cb: (delta: ItemData[]) => Promise<ItemData[]>): Promise<boolean> {
       const data = await cb(this.getDelta())
 
       data.forEach((itemData) => {
@@ -64,7 +64,10 @@ export class DataSet {
         else {
           const item = this.findItem(itemData.$type, item => item.id == itemData.$id)
           if (item) {
-            if (item.deleted) {
+            if (itemData.$errors) {
+              this.syncErrors(item, itemData.$errors)
+            }
+            else if (item.deleted) {
               this.syncDeleted(item)
             }
             else {
@@ -73,11 +76,20 @@ export class DataSet {
           }
         }
       })
+
+      return data.filter(itemData => itemData.$errors).length == 0
+    }
+
+    protected syncErrors(item: Item, errors: Errors) {
+      for (let propName in errors) {
+        item.errors[propName] = errors[propName]
+      }
     }
 
     protected syncInserted(item: Item, id: ItemId) {
       item.id = id as string
       item.inserted = false
+      item.errors = {}
     }
 
     protected syncDeleted(item: Item) {
@@ -87,6 +99,7 @@ export class DataSet {
 
     protected syncModified(item: Item) {
       item.changes.clear()
+      item.errors = {}
     }
 
     merge(data: ItemData[]) {
@@ -145,9 +158,9 @@ export class DataSet {
       return item ? this.propertyMapper(item) : null
     }*/
 
-    filterItems(typeName: string, expr: ItemFilter): Item[] {
+    filterItems(typeName: string = '*', expr: ItemFilter = () => true): Item[] {
       return this.items
-        .filter(item => item.type === typeName)
+        .filter(item => item.type === typeName || typeName == '*')
         .filter(expr)
     }
 

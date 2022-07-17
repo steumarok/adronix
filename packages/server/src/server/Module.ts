@@ -1,4 +1,5 @@
 import { Objects } from "@adronix/base"
+import { EntityClass, EntityIO, Persistence, Transaction, TransactionManager } from "@adronix/persistence"
 import { Application } from "./Application"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { EntityDataSetProcessor } from "./EntityDataSetProcessor"
@@ -8,38 +9,42 @@ import { DataProvider, ReturnType } from "./types"
 
 
 
-type Cls = abstract new (app: Application) => EntityDataSetProcessor
-type ClsOut = new (app: Application) => DataSetProcessor
+//type Cls = abstract new (app: Application) => EntityDataSetProcessor
+type ClsOut = new (app: Module<Application>) => EntityDataSetProcessor
+
+type Descriptor = (collector: ItemCollector) => ItemCollector
 
 
 
 export abstract class Module<A extends Application> {
-    constructor(protected app: A) {
+    constructor(readonly app: A) {
+    }
+
+    usePersistence<Tx extends Transaction>(persistence: Persistence<Tx>) {
+        persistence.entityIOMap.forEach((value, key) => this.app.addEntityIO(key, value.entityIO, value.transactionManager))
     }
 
     protected registerProvider(
         path: string,
         dataProvider: DataProvider,
-        base: Cls) {
-        this.app.registerProcessor(path, () => Objects.create(this.createDataSetProcessor(dataProvider, base)))
+        descriptor: Descriptor) {
+        this.app.registerProcessor(path, () => Objects.create(this.createDataSetProcessor(dataProvider, descriptor)))
     }
-
-    //abstract getBaseDataSetProcessor(): Cls
 
     createDataSetProcessor(
         dataProvider: DataProvider,
-        base: Cls): ClsOut {
+        descriptor: Descriptor): ClsOut {
         const this_ = this
-        return class extends base {
+        return class extends EntityDataSetProcessor {
             constructor() {
-                super(this_.app)
+                super(this_)
             }
 
             protected async getItems(params: Map<String, any>): Promise<ItemCollector> {
 
-                const collector = await super.getItems(params)
+                const collector =  descriptor.call(this_, await super.getItems(params))
 
-                const items = await dataProvider(Object.fromEntries(params))
+                const items = await dataProvider.call(this_, Object.fromEntries(params))
 
                 return items.reduce((a, b) => this.add(a, b), collector)
             }
