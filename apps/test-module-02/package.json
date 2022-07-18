@@ -9,7 +9,8 @@
       "@adronix/persistence": "workspace:^",
       "@adronix/server": "workspace:^",
       "@adronix/test-module-01": "workspace:^",
-      "@adronix/typeorm": "workspace:^"
+      "@adronix/typeorm": "workspace:^",
+      "@adronix/sequelize": "workspace:^"
    },
    "peerDependencies": {
       "reflect-metadata": "^0.1.10",

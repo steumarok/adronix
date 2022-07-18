@@ -4,5 +4,5 @@ import { TypeORMTransactionManager } from "./TypeORMTransactionManager"
 
 export interface ITypeORMManager extends IPersistenceManager {
     getDataSource(name?: string): DataSource
-    getTransactionManager(name?: string): TypeORMTransactionManager
+    getTypeORMTransactionManager(name?: string): TypeORMTransactionManager
 }

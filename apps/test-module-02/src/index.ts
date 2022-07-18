@@ -4,12 +4,14 @@ import { Application, ItemCollector, Module } from "@adronix/server";
 import { ITypeORMManager, TypeORMPersistence } from "@adronix/typeorm";
 import { TcaProductOptionExt } from "./entities/TcaProductOptionExt";
 import { EntityClass, EntityEventKind, EntityIO, ValidationHandler } from "@adronix/persistence/src";
+import { ISequelizeManager, SequelizePersistence } from "@adronix/sequelize";
+import { TcaTest } from "./entities/TcaTest";
 
 export { TcaProductOptionExt }
 export const TcaEntities = [ TcaProductOptionExt ]
 
 
-export type TestApplication = Application & ITypeORMManager
+export type TestApplication = Application & ITypeORMManager & ISequelizeManager
 
 class Module2Persistence extends TypeORMPersistence {
     constructor(app: TestApplication) {
@@ -18,7 +20,18 @@ class Module2Persistence extends TypeORMPersistence {
         this.defineEntityIO(
             TcaProductOptionExt,
             (validator, changes) => validator
-                .addRule("name", () => changes.name != "", { message: 'empty' }))
+                .addRule("nameExt", () => !!changes.nameExt, { message: 'empty' }))
+    }
+}
+
+class Module2Persistence1 extends SequelizePersistence {
+    constructor(app: TestApplication) {
+        super(app);
+
+        this.defineEntityIO(
+            TcaTest,
+            (validator, changes) => validator
+                .addRule("firstName", () => !!changes.firstName, { message: 'empty' }))
     }
 }
 
@@ -28,6 +41,7 @@ export class Module2 extends Module<TestApplication> {
         super(app)
 
         this.usePersistence(Objects.create(Module2Persistence, app))
+        this.usePersistence(Objects.create(Module2Persistence1, app))
     }
 
 
@@ -69,6 +83,7 @@ Objects.override(Module1, base => {
         describe(collector: ItemCollector) {
             return super.describe(collector)
                 .describe(TcaProductOptionExt, ['nameExt', 'productOption'])
+                .describe(TcaTest, ['firstName'])
         }
 
         async editProductOption({ id }) {
@@ -81,6 +96,8 @@ Objects.override(Module1, base => {
                 .getOne()
 
             result.push(poe ? poe : await this.newExt(result[0]))
+
+            result.push(TcaTest.build({firstName: 'prova'}))
 
             return result
         }

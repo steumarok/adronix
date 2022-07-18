@@ -11,8 +11,8 @@
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
-    "@adronix/vue": "workspace:^",
     "@adronix/quasar": "workspace:^",
+    "@adronix/vue": "workspace:^",
     "@quasar/extras": "^1.0.0",
     "axios": "^0.21.1",
     "class-transformer": "^0.5.1",

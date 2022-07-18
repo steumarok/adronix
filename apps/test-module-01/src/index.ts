@@ -18,7 +18,7 @@ export class Module1Persistence extends TypeORMPersistence {
         this.defineEntityIO(
             TcmProductOption,
             (validator, changes) => validator
-                .addRule("name", () => changes.name != "", { message: 'empty' }))
+                .addRule("name", () => !!changes.name, { message: 'empty' }))
 
         this.defineEntityIO(
             TcmProductOptionValue,

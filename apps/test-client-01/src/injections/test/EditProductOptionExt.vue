@@ -1,5 +1,6 @@
 <template>
   <q-input v-if="productOptionExt" v-model="productOptionExt.nameExt" label="name" />
+  <q-input v-if="test" v-model="test.firstName" label="text.firstName" />
 </template>
 
 <script lang="ts">
@@ -17,6 +18,7 @@ export default defineComponent({
   setup(props) {
 
     const productOptionExt = props.ds!.ref('TcaProductOptionExt')
+    const test = props.ds!.ref('TcaTest')
 
 /*
     const filter = (ext: Item) => {
@@ -28,7 +30,8 @@ export default defineComponent({
       .query('TcaProductOptionExt', filter).reactive().list()*/
 
     return {
-      productOptionExt
+      productOptionExt,
+      test
       /*productOptionExt: computed(() => productOptions.length > 0 ? productOptions[0] : {}),
       click: () => {
           return props

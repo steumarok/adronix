@@ -6,6 +6,7 @@
    "dependencies": {
       "@adronix/express": "workspace:^",
       "@adronix/persistence": "workspace:^",
+      "@adronix/sequelize": "workspace:^",
       "@adronix/server": "workspace:^",
       "@adronix/test-module-01": "workspace:^",
       "@adronix/test-module-02": "workspace:^",

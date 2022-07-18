@@ -38,7 +38,7 @@ export class TypeORMPersistence extends Persistence<TypeORMTransaction> {
         this.addEntityIO(
             entityClass,
             entityIO,
-            this.manager.getTransactionManager(this.name))
+            this.manager.getTypeORMTransactionManager(this.name))
         return entityIO
     }
 }
