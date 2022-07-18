@@ -1,0 +1,1 @@
+export { useQTableHandler } from './client/Quasar'

@@ -42,47 +42,13 @@
 </template>
 
 <script lang="ts">
+import { useQTableHandler } from '@adronix/quasar';
 import { Item, ItemData } from '@adronix/client';
-import { GetParams, useDataSet, useUrlComposer, VueDataSet } from '@adronix/vue';
-import { computed, isRef, reactive, Ref, ref, unref, watch, watchEffect } from 'vue';
+import { useDataSet, useUrlComposer } from '@adronix/vue';
 import { useQuasar } from 'quasar';
 import EditProductOption from './EditProductOption.vue'
 
 
-function useQTableHandler(ds: VueDataSet, params: GetParams | null, type: string) {
-  const rows =  ds.list('TcmProductOption')
-  const totalCount = ds.ref('Metadata', `${type}.totalCount`)
-  const pageRef = ref(1)
-  const rowsPerPageRef = ref(params?.limit)
-
-  const pagination = ({
-    sortBy: 'desc',
-    descending: false
-  })
-
-  const onRequest = (props: any) => {
-    const { page, rowsPerPage, sortBy, descending } = props.pagination
-
-    pageRef.value = page
-    rowsPerPageRef.value = rowsPerPage
-
-    if (params) {
-      params.page = page
-      params.limit = rowsPerPage
-    }
-  }
-
-  return {
-    rows,
-    pagination: computed(() => ({
-      ...pagination,
-      page: pageRef.value,
-      rowsPerPage: rowsPerPageRef.value,
-      rowsNumber: unref(totalCount)?.value
-    })),
-    onRequest
-  }
-}
 
 export default {
   setup () {
