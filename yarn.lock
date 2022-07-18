@@ -61,7 +61,6 @@ __metadata:
     "@types/jest": ^27.4.0
     better-sse: ^0.8.0
     graph-data-structure: ^2.0.0
-    group-items: ^2.1.0
     jest: ^27.5.1
     ts-jest: ^27.1.3
   languageName: unknown
@@ -4894,15 +4893,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"deep-eql@npm:^4.0.0":
-  version: 4.1.0
-  resolution: "deep-eql@npm:4.1.0"
-  dependencies:
-    type-detect: ^4.0.0
-  checksum: 2fccd527df9a70a92a1dfa8c771d139753625938e137b09fc946af8577d22360ef28d3c74f0e9c5aaa399bab20542d0899da1529c71db76f280a30147cd2a110
-  languageName: node
-  linkType: hard
-
 "deep-equal@npm:^1.0.1":
   version: 1.1.1
   resolution: "deep-equal@npm:1.1.1"
@@ -6640,15 +6630,6 @@ __metadata:
   version: 2.0.0
   resolution: "graph-data-structure@npm:2.0.0"
   checksum: 766df31c3768dfa3b9f9205f46fda1469e0bb2239212ac9ca461f373b89a43e7925e26636e2ea3093c0d5c56a58a5436b9441a45d407a2cb1fdbb10ab80b8184
-  languageName: node
-  linkType: hard
-
-"group-items@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "group-items@npm:2.1.0"
-  dependencies:
-    deep-eql: ^4.0.0
-  checksum: 5cb3928daf6d68527851144e536da7dd7df4b5631c96f4d76df957217d4c3eb68d2b926cc2b5604f90b4450acf1ee5b227e9bd2ed8e05a51fc156487925548d0
   languageName: node
   linkType: hard
 
@@ -12256,7 +12237,7 @@ turbo@latest:
   languageName: node
   linkType: hard
 
-"type-detect@npm:4.0.8, type-detect@npm:^4.0.0":
+"type-detect@npm:4.0.8":
   version: 4.0.8
   resolution: "type-detect@npm:4.0.8"
   checksum: 62b5628bff67c0eb0b66afa371bd73e230399a8d2ad30d852716efcc4656a7516904570cd8631a49a3ce57c10225adf5d0cbdcb47f6b0255fe6557c453925a15

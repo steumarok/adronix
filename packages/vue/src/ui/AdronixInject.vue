@@ -22,8 +22,6 @@ export default defineComponent({
     }
   },
   setup(props) {
-    console.log("yy")
-    console.log(props.props!.dataSet);
     return {
         componentProps: props.props,
         components: injectionsMap.get(props.path) || [],

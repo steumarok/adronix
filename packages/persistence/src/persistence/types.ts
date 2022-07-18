@@ -38,9 +38,12 @@ export type Rule = {
 export type EntityClass<T> = new () => T
 
 export enum EntityEventKind {
-    Insert,
-    Update,
-    Delete
+    Inserting,
+    Updating,
+    Deleting,
+    Inserted,
+    Updated,
+    Deleted
 }
 
 export enum TransactionEventKind {
@@ -48,7 +51,7 @@ export enum TransactionEventKind {
     Rollback
 }
 
-export type EntityEventHandler<T, Tx extends Transaction> = (eventKind: EntityEventKind, entity: T, transaction: Tx) => void
+export type EntityEventHandler<T, Tx extends Transaction> = (eventKind: EntityEventKind, entity: T, transaction: Tx) => Promise<void>
 export type TransactionEventHandler = (eventKind: TransactionEventKind) => void
 
 export type ValidationHandler<T> = (validator: Validator, changes: EntityProps, entity?: T) => Validator

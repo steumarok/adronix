@@ -12,22 +12,34 @@ export class DataSet {
 
     getDelta() {
       const delta = new Array<ItemData>()
-      this.items.filter(item => item.inserted).forEach(item => {
-        const itemData: ItemData = { $id: item.id, $type: item.type, $inserted: true }
-        for (let propName in item) {
-          if (['id', 'type', 'changes', 'inserted', 'deleted'].indexOf(propName) == -1) {
-            itemData[propName] = this.convertPropForDelta(item[propName])
+      this.items
+        .filter(item => !item.deleted)
+        .filter(item => item.inserted && !item.deleted)
+        .forEach(item => {
+          const itemData: ItemData = { $id: item.id, $type: item.type, $inserted: true }
+          for (let propName in item) {
+            if (['id', 'type', 'changes', 'inserted', 'deleted', 'errors'].indexOf(propName) == -1) {
+              itemData[propName] = this.convertPropForDelta(item[propName])
+            }
           }
-        }
-        delta.push(itemData)
-      })
-      this.items.filter(item => item.changes.size > 0).forEach(item => {
-        const itemData: ItemData = { $id: item.id, $type: item.type }
-        item.changes.forEach(propName => {
-            itemData[propName] = this.convertPropForDelta(item[propName])
+          delta.push(itemData)
         })
-        delta.push(itemData)
-      })
+      this.items
+        .filter(item => !item.deleted)
+        .filter(item => item.changes.size > 0)
+        .forEach(item => {
+          const itemData: ItemData = { $id: item.id, $type: item.type }
+          item.changes.forEach(propName => {
+              itemData[propName] = this.convertPropForDelta(item[propName])
+          })
+          delta.push(itemData)
+        })
+      this.items
+        .filter(item => item.deleted)
+        .forEach(item => {
+          const itemData: ItemData = { $id: item.id, $type: item.type, $deleted: true }
+          delta.push(itemData)
+        })
       return delta
     }
 
@@ -160,6 +172,7 @@ export class DataSet {
 
     filterItems(typeName: string = '*', expr: ItemFilter = () => true): Item[] {
       return this.items
+        .filter(item => !item.deleted)
         .filter(item => item.type === typeName || typeName == '*')
         .filter(expr)
     }
@@ -185,6 +198,10 @@ export class DataSet {
           item.changes.add(propName)
         }
       }
+    }
+
+    delete(item: Item) {
+      item.deleted = true
     }
 
     protected mergeModifiedItems(items: Item[], modified: Item[]): Item[] {

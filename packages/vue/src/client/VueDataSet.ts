@@ -1,81 +1,9 @@
-import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery, ItemData } from "@adronix/client";
-import { watch, reactive, ref, unref, Ref, isRef, watchEffect } from 'vue';
+import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery, ItemData, useEventSource, NotificationListener, useFetch, IDataBroker } from "@adronix/client";
+import { watch, reactive, ref, unref, Ref, isRef, watchEffect, onUnmounted } from 'vue';
 import diff from 'object-diff'
-import { Errors } from "@adronix/client/src/client/types";
+import { Errors } from "@adronix/client";
 
 
-export type GetParams = {
-  [name: string]: any
-}
-
-export function useUrlComposer(
-  composer: (params: GetParams) => string,
-  initParams: GetParams) {
-  const url = ref(composer(initParams))
-  const params = reactive(initParams)
-
-  watch(params, (newParams) => {
-    url.value = composer(newParams)
-  })
-
-  return {
-    url,
-    params
-  }
-}
-
-export type IDataBroker = {
-  get(url: string): Promise<Response>
-  post(url: string, data: any): Promise<Response>
-}
-
-export function useFetch(): IDataBroker {
-  return {
-    get: (url) => fetch(url),
-    post: (url, data) => {
-      return fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json;charset=utf-8'
-        },
-        body: JSON.stringify(data)
-      })
-    }
-  }
-}
-
-export type NotificationManager = {
-  stop(): void
-}
-
-interface INotificationBroker {
-  on(topic: string, handler: () => void): NotificationManager
-}
-
-
-class EventSourceNotificationBroker implements INotificationBroker {
-
-  eventSource: EventSource
-
-  constructor() {
-    this.eventSource = new EventSource("/api/sse");
-  }
-
-  on(topic: string, handler: () => void): NotificationManager {
-    this.eventSource.addEventListener(topic, handler);
-    this.eventSource.addEventListener("message", c => console.log(c));
-
-    return {
-      stop: () => {
-        this.eventSource.removeEventListener(topic, handler)
-      }
-    }
-  }
-}
-
-export function useEventSource(): INotificationBroker {
-  return new EventSourceNotificationBroker()
-}
 
 interface ExtendedVueDataSet {
   commit(): Promise<boolean>
@@ -98,6 +26,9 @@ export function useDataSet(
     async commit() {
       return await this.sync(async (delta) => {
         let resp = await dataBroker.post(unref(url), delta)
+        if (resp.status == 500) {
+          throw await resp.text()
+        }
         return await resp.json() as ItemData[]
       })
     }
@@ -108,20 +39,28 @@ export function useDataSet(
   }
   const dataSet = new Class()
 
-  const notificationManagers = new Map<string, NotificationManager>();
+  const notificationManagers = new Map<string, NotificationListener>();
+  const stopListeners = () => notificationManagers.forEach(m => m.stop())
+
+  onUnmounted(() => {
+    stopListeners()
+  })
 
   function listenNotifications() {
 
-    notificationManagers.forEach(m => m.stop())
+    stopListeners()
 
-    dataSet.filterItems('*', (item) => item.type != 'Metadata')
-      .forEach(item => {
-        const manager = notificationBroker.on(item.type, () => doFetch())
-        notificationManagers.set(item.type, manager)
+    new Set(dataSet.filterItems('*', (item) => item.type != 'Metadata')
+      .map(item => item.type))
+      .forEach(type => {
+        const listener = notificationBroker.on(type, () => {
+          doFetch()
+        })
+        notificationManagers.set(type, listener)
       })
   }
 
-  function doFetch(): Promise<void> {
+  async function doFetch(): Promise<void> {
     return dataBroker.get(unref(url))
       .then((res) => res.json())
       .then(json => json as ItemData[])
@@ -170,6 +109,11 @@ export class VueDataSet extends DataSet {
         }
       }
       super.update(item, properties)
+      this.refreshValues(item.type)
+    }
+
+    delete(item: Item) {
+      super.delete(item)
       this.refreshValues(item.type)
     }
 

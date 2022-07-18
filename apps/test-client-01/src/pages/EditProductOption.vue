@@ -1,16 +1,14 @@
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin">
-      <!--
-        ...content
-        ... use q-card-section for it?
-      -->
       <q-card-section>
         <q-input v-if="productOption"
           v-model="productOption.name"
           label="Nome"
           :error-message="productOption.errors.name && productOption.errors.name[0].message"
           :error="!!productOption.errors.name"/>
+
+        <adronix-inject path="test/EditProductOptionExt" :props="{ ds }" />
       </q-card-section>
 
       <!-- buttons example -->
@@ -25,14 +23,14 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { GetParams, useDataSet, useUrlComposer, VueDataSet } from '@adronix/vue';
 
 const props = defineProps({
   id: Number
 })
 
-const ds = useDataSet(`/api/editProductOption?id=${props.id || -2}`)
+const ds = useDataSet(`/api/editProductOption?id=${props.id || ''}`)
 
 const productOption = ds.ref('TcmProductOption')
 
@@ -52,8 +50,10 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginC
 
 // this is part of our example (so not required)
 function onRefresh() {
- productOption.value.name = "prova"
+ // productOption.value.name = "prova"
 }
+
+
 async function onOKClick () {
   if (await ds.commit()) {
     onDialogOK()

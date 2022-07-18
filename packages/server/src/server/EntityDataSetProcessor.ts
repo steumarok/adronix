@@ -22,7 +22,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
     validate(data: ItemData[]) { }
 
     protected getEntityClassByName(name: string) {
-        return Array.from(this.getEntityIOMap().keys()).find(c => c.name == name)
+        return this.module.app.getEntityClassByName(name)
     }
 
     protected prepareDataForIO(itemData: ItemData, idMap: Map<string, any>) {
@@ -56,9 +56,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
     }
 
     protected getEntityIO(type: string | EntityClass<unknown>) {
-        const entityClass = typeof type == "string" ? this.getEntityClassByName(type) : type
-        const { entityIO } = this.getEntityIOMap().get(entityClass)
-        return entityIO
+       return this.module.app.getEntityIO(type)
     }
 
     protected async processItem(itemData: ItemData, idMap: Map<string, any>) {
@@ -67,11 +65,11 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         const changes = this.prepareDataForIO(itemData, idMap)
 
         if (itemData.$inserted) {
-            console.log("itemData", itemData)
             return entityIO.insert(changes)
         }
         else if (itemData.$deleted) {
-            throw "not imp"
+            const entity = await entityIO.get(itemData.$id)
+            return entityIO.delete(entity)
         }
         else {
             const entity = await entityIO.get(itemData.$id)
@@ -191,11 +189,9 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
             return collector.get()
         }
         catch (e) {
-            console.log(e)
-
             await Promise.all(transactions.map(t => t.rollback()))
 
-            return []
+            throw e
         }
     }
 

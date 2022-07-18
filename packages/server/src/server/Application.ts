@@ -6,7 +6,8 @@ import { Module } from "./Module"
 import { NotificationChannel } from "./NotificationChannel"
 
 export abstract class Application {
-    modules: Module<Application>[] = []
+    readonly modules: Module<Application>[] = []
+    readonly defaultNotificationChannel: NotificationChannel  = new BetterSseNotificationChannel()
 
     public readonly entityIOMap = new Map<EntityClass<unknown>, {
         entityIO: EntityIO<unknown, Transaction>,
@@ -27,20 +28,37 @@ export abstract class Application {
         transactionManager: TransactionManager<Tx>) {
         this.entityIOMap.set(entityClass, { entityIO, transactionManager })
 
-        entityIO.addEventHandler((entityEventKind, entity, transaction) => {
-            transaction.addEventHandler((transactionEventKind) => {
-                if (transactionEventKind == TransactionEventKind.Commit) {
-                    this.channel.broadcast(entity, `${entityEventKind}`)
-                }
-            })
+        entityIO.addEventHandler(async (entityEventKind, entity, transaction) => {
+            if (entityEventKind == EntityEventKind.Deleted ||
+                entityEventKind == EntityEventKind.Updated ||
+                entityEventKind == EntityEventKind.Inserted) {
+                transaction.addEventHandler((transactionEventKind) => {
+                    if (transactionEventKind == TransactionEventKind.Commit) {
+                        this.defaultNotificationChannel.broadcast(entity, entity.constructor.name)
+                    }
+                })
+            }
         })
     }
 
-    channel: NotificationChannel
+    getEntityClassByName(name: string) {
+        return Array.from(this.getEntityIOMap().keys()).find(c => c.name == name)
+    }
+
+    getEntityIO(type: string | EntityClass<unknown>): EntityIO<unknown, Transaction> {
+        const entityClass = typeof type == "string" ? this.getEntityClassByName(type) : type
+        const { entityIO } = this.getEntityIOMap().get(entityClass)
+        return entityIO
+    }
+
+
+    setDefaultNotificationChannel(path: string) {
+        this.registerNotificationChannel(path, this.defaultNotificationChannel)
+    }
+
     addNotificationChannel(path: string): NotificationChannel {
         const channel = new BetterSseNotificationChannel()
         this.registerNotificationChannel(path, channel)
-        this.channel = channel
         return channel
     }
 

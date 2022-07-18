@@ -8,3 +8,4 @@ export { NotificationChannel } from './server/NotificationChannel'
 export { BetterSseNotificationSession } from './server/BetterSseNotificationSession'
 
 export { DataProvider } from './server/types'
+export { PaginatedList } from './server/PaginatedList'

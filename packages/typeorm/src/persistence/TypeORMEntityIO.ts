@@ -34,4 +34,8 @@ export class TypeORMEntityIO<T> extends EntityIO<T, TypeORMTransaction> {
         return transaction.entityManager.save(entity)
     }
 
+    deleteEntity(entity: T, transaction: TypeORMTransaction): Promise<any> {
+        return transaction.entityManager.remove(entity)
+    }
+
 }

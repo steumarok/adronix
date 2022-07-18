@@ -8,6 +8,5 @@ export class BetterSseNotificationSession implements NotificationSession {
 
     async init(req: IncomingMessage, resp: ServerResponse) {
         this.session = await createSession(req, resp)
-        this.session.push("Hello world!");
     }
 }

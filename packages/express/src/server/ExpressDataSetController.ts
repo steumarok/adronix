@@ -30,8 +30,19 @@ export class ExpressDataSetController {
 
     syncCallback() {
         return async (request: Request, response: Response) => {
-            response.json(await this.getProcessor().sync(request.body))
-            response.status(200)
+            try {
+                const data = await this.getProcessor().sync(request.body)
+                response
+                    .status(200)
+                    .json(data)
+            }
+            catch (e) {
+                console.log(e)
+
+                response
+                    .status(500)
+                    .send("Internal server error")
+            }
         }
     }
 }

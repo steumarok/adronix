@@ -7,10 +7,14 @@ export class Transaction {
 
     async commit() {
         this.eventHandlers.forEach(handler => handler(TransactionEventKind.Commit))
+
+        this.eventHandlers = []
     }
 
     async rollback() {
         this.eventHandlers.forEach(handler => handler(TransactionEventKind.Rollback))
+
+        this.eventHandlers = []
     }
 
     addEventHandler(handler: TransactionEventHandler) {

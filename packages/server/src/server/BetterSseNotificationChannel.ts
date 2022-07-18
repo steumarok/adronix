@@ -10,7 +10,7 @@ export class BetterSseNotificationChannel implements NotificationChannel {
     register(session: NotificationSession): void {
         if (session instanceof BetterSseNotificationSession) {
             this.channel.register(session.session)
-            this.channel.broadcast("data", "event")
+            this.channel.broadcast("data", "message")
         }
     }
 

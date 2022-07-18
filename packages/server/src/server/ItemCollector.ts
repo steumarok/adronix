@@ -5,6 +5,7 @@ export class ItemCollector {
     public descriptors: DescriptorMap = new Map()
     protected items: any[] = new Array()
     private mappedIds: Map<ItemId, ItemId> = new Map()
+    private itemsMap: Map<any, ItemData> = new Map()
     private idCounter = 0
 
     constructor() {
@@ -56,13 +57,19 @@ export class ItemCollector {
     addItemData(item: any, dataMap: DataMap) {
         const { propNames, idGetter } = this.descriptors.get(item.constructor)
 
+        if (this.itemsMap.has(item)) {
+            return this.itemsMap.get(item)
+        }
+
         const insertion = this.isInsertion(item)
         const id = insertion ? this.generateNewId() : idGetter(item)
-
         const key = `${id}@${item.constructor.name}`
+
         const itemData = dataMap.has(key)
             ? dataMap.get(key)
             : { $id: id, $type: item.constructor.name } as ItemData
+
+        this.itemsMap.set(item, itemData)
 
         propNames.forEach(propName => {
             const value = this.readProperty(item, propName, dataMap)

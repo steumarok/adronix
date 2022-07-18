@@ -1,4 +1,5 @@
-export { VueDataSet, GetParams, useDataSet, useFetch, useUrlComposer } from './client/VueDataSet'
+export { VueDataSet, useDataSet } from './client/VueDataSet'
+export { GetParams, useUrlComposer } from './client/UrlComposer'
 import AdronixPlugin from './ui/AdronixPlugin'
 
 export { AdronixPlugin }

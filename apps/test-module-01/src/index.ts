@@ -1,40 +1,17 @@
 import { Objects } from "@adronix/base";
-import { EntityClass, EntityProps, Persistence, Transaction, Validator } from "@adronix/persistence";
-import { Application, DataProvider, ItemCollector, Module } from "@adronix/server";
-import { ITypeORMApplication, TypeORMPersistence, TypeORMTransactionManager } from "@adronix/typeorm";
-import { DataSource } from "typeorm";
+import { Application, ItemCollector, Module, PaginatedList } from "@adronix/server";
+import { ITypeORMManager, TypeORMPersistence } from "@adronix/typeorm";
 import { TcmIngredient } from "./entities/TcmIngredient";
 import { TcmProductOption } from "./entities/TcmProductOption";
 import { TcmProductOptionValue } from "./entities/TcmProductOptionValue";
-import { ProductOptionIO } from "./persistence/ProductOptionIO";
-import { ProductOptionValueIO } from "./persistence/ProductOptionValueIO";
 
 export { TcmIngredient, TcmProductOption, TcmProductOptionValue }
 export const TcmEntities = [ TcmIngredient, TcmProductOption, TcmProductOptionValue ]
 
 
+export type TestApplication = Application & ITypeORMManager
 
-
-
-function PaginatedList<T>(
-    entityClass: EntityClass<T>,
-    items: T[],
-    totalCount: number): (collector: ItemCollector) => ItemCollector {
-    return collector => {
-        const { idGetter } = collector.descriptors.get(entityClass)
-        return collector
-            .metadata(`${entityClass.name}.totalCount`, totalCount)
-            .metadata(`${entityClass.name}.ids`, items.map(pov => idGetter(pov)))
-            .addList(items)
-    }
-}
-
-
-
-
-export type TestApplication = Application & ITypeORMApplication
-
-class Module1Persistence extends TypeORMPersistence {
+export class Module1Persistence extends TypeORMPersistence {
     constructor(app: TestApplication) {
         super(app);
 
@@ -49,7 +26,6 @@ class Module1Persistence extends TypeORMPersistence {
                 .addRule("price", () => changes.price != 0, { message: 'price not valid' }))
     }
 }
-
 
 
 export class Module1 extends Module<TestApplication> {
@@ -84,11 +60,14 @@ export class Module1 extends Module<TestApplication> {
 
     async editProductOption({ id }) {
 
-        const po =  await this.app.getDataSource().getRepository(TcmProductOption)
-            .createQueryBuilder("po")
-            .leftJoinAndSelect("po.ingredients", "ingredient")
-            .where("po.id = :id", { id })
-            .getOne()
+        const po =
+            id
+                ? await this.app.getDataSource().getRepository(TcmProductOption)
+                    .createQueryBuilder("po")
+                    .leftJoinAndSelect("po.ingredients", "ingredient")
+                    .where("po.id = :id", { id })
+                    .getOne()
+                : new TcmProductOption()
 
         return [po]
     }

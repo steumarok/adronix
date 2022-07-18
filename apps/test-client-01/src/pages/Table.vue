@@ -25,6 +25,7 @@
         <q-tr :props="props">
           <q-td auto-width>
             <q-btn size="sm" flat dense @click="edit(props.key)" icon="edit" />
+            <q-btn size="sm" flat dense @click="del(props.key)" icon="delete" />
           </q-td>
           <q-td
             v-for="col in props.cols"
@@ -36,7 +37,7 @@
         </q-tr>
       </template>
     </q-table>
-    {{pagination}}
+    <q-btn @click="insert">Nuovo</q-btn>
   </div>
 </template>
 
@@ -104,8 +105,9 @@ export default {
         }
       })
 
-    const h = useQTableHandler(
-      useDataSet(url),
+    const ds = useDataSet(url)
+    const table = useQTableHandler(
+      ds,
       params.table,
       'TcmProductOption')
 
@@ -113,25 +115,31 @@ export default {
 
     return {
       columns,
-      edit(key: string) {
-
+      insert() {
         $q.dialog({
-          component: EditProductOption,
-
-          // props forwarded to your custom component
-          componentProps: {
-            id: key,
-            // ...more..props...
-          }
-        }).onOk(() => {
-          console.log('OK')
-        }).onCancel(() => {
-          console.log('Cancel')
-        }).onDismiss(() => {
-          console.log('Called on OK or Cancel')
+          component: EditProductOption
         })
       },
-      ...h
+      async del(key: string) {
+        const item = ds.query('TcmProductOption', key).single()
+        if (item) {
+          ds.delete(item)
+          try {
+            await ds.commit()
+          } catch (e) {
+            alert(e)
+          }
+        }
+      },
+      edit(key: string) {
+        $q.dialog({
+          component: EditProductOption,
+          componentProps: {
+            id: key,
+          }
+        })
+      },
+      ...table
     }
   }
 }

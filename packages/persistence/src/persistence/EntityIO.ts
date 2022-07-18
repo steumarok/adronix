@@ -12,6 +12,8 @@ export abstract class EntityIO<T, Tx extends Transaction> {
 
     abstract saveEntity(entity: T, transaction: Tx): Promise<T>
 
+    abstract deleteEntity(entity: T, transaction: Tx): Promise<T>
+
     abstract newEntityInstance(): T
 
     protected async fillEntity(transaction: Tx, entity: T, changes: EntityProps) {
@@ -26,6 +28,18 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         }
     }
 
+    delete(entity: T): (t: Tx) => Promise<T> {
+        return async (t) => {
+            await this.notify(EntityEventKind.Deleting, entity, t)
+
+            const result =  await this.deleteEntity(entity, t)
+
+            await this.notify(EntityEventKind.Deleted, entity, t)
+
+            return result
+        }
+    }
+
     update(entity: T, changes: EntityProps): Errors | ((t: Tx) => Promise<T>) {
         const validator = this.validate(changes, entity)
         const errors = validator.validate()
@@ -35,9 +49,12 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         else {
             return async (t) => {
                 await this.fillEntity(t, entity, changes)
+
+                await this.notify(EntityEventKind.Updating, entity, t)
+
                 const result =  await this.saveEntity(entity, t)
 
-                this.notify(EntityEventKind.Update, result, t)
+                await this.notify(EntityEventKind.Updated, result, t)
 
                 return result
             }
@@ -55,9 +72,12 @@ export abstract class EntityIO<T, Tx extends Transaction> {
                 const entity = this.newEntityInstance()
 
                 await this.fillEntity(t, entity, changes)
+
+                await this.notify(EntityEventKind.Inserting, entity, t)
+
                 const result = await this.saveEntity(entity, t)
 
-                this.notify(EntityEventKind.Insert, result, t)
+                await this.notify(EntityEventKind.Inserted, result, t)
 
                 return result
             }
@@ -68,8 +88,10 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         return Objects.create(Validator)
     }
 
-    protected notify(eventKind: EntityEventKind, entity: T, transaction: Tx) {
-        this.eventHandlers.forEach(handler => handler(eventKind, entity, transaction))
+    protected async notify(eventKind: EntityEventKind, entity: T, transaction: Tx) {
+        return Promise.all(
+            this.eventHandlers.map(handler => handler(eventKind, entity, transaction))
+        )
     }
 
     addEventHandler(handler: EntityEventHandler<T, Tx>) {
