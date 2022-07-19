@@ -34,6 +34,10 @@ export type Rule = {
     expr: () => boolean,
     error: ItemError
 }
+export type AsyncRule = {
+    expr: () => Promise<boolean>,
+    error: ItemError
+}
 
 export type EntityClass<T> = new () => T
 

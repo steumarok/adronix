@@ -28,26 +28,24 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         }
     }
 
-    delete(entity: T): (t: Tx) => Promise<T> {
+    delete(entity: T): (t: Tx) => Promise<void> {
         return async (t) => {
             await this.notify(EntityEventKind.Deleting, entity, t)
 
             const result =  await this.deleteEntity(entity, t)
 
             await this.notify(EntityEventKind.Deleted, entity, t)
-
-            return result
         }
     }
 
-    update(entity: T, changes: EntityProps): Errors | ((t: Tx) => Promise<T>) {
+    async update(entity: T, changes: EntityProps) {
         const validator = this.validate(changes, entity)
-        const errors = validator.validate()
+        const errors = await validator.validate()
         if (Object.keys(errors).length > 0) {
             return errors
         }
         else {
-            return async (t) => {
+            return async (t: Tx) => {
                 await this.fillEntity(t, entity, changes)
 
                 await this.notify(EntityEventKind.Updating, entity, t)
@@ -61,14 +59,14 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         }
     }
 
-    insert(changes: EntityProps): Errors | ((t: Tx) => Promise<T>) {
+    async insert(changes: EntityProps) {
         const validator = this.validate(changes)
-        const errors = validator.validate()
+        const errors = await validator.validate()
         if (Object.keys(errors).length > 0) {
             return errors
         }
         else {
-            return async (t) => {
+            return async (t: Tx) => {
                 const entity = this.newEntityInstance()
 
                 await this.fillEntity(t, entity, changes)

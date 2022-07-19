@@ -4,6 +4,7 @@ import { ItemData, ItemId } from "./types"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
 import { Application } from "./Application"
+import { isPromise } from "util/types"
 
 export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
@@ -65,7 +66,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         const changes = this.prepareDataForIO(itemData, idMap)
 
         if (itemData.$inserted) {
-            return entityIO.insert(changes)
+            return await entityIO.insert(changes)
         }
         else if (itemData.$deleted) {
             const entity = await entityIO.get(itemData.$id)
@@ -73,7 +74,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         }
         else {
             const entity = await entityIO.get(itemData.$id)
-            return entityIO.update(entity, changes)
+            return await entityIO.update(entity, changes)
         }
     }
 
@@ -167,20 +168,22 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
             for (let op of operations) {
                 const entity = await op.action(ioTransactionMap.get(op.entityClass))
 
-                const io = this.getEntityIO(op.entityClass)
+                if (entity) {
+                    const io = this.getEntityIO(op.entityClass)
 
-                this.mapEntityId(
-                    idMap,
-                    op.entityClass.name,
-                    op.entityId,
-                    entity)
+                    this.mapEntityId(
+                        idMap,
+                        op.entityClass.name,
+                        op.entityId,
+                        entity)
 
-                collector.addOne(entity)
+                    collector.addOne(entity)
 
-                const id = io.getEntityId(entity)
+                    const id = io.getEntityId(entity)
 
-                if (id != op.entityId) {
-                    collector.addMappedId(id, op.entityId)
+                    if (id != op.entityId) {
+                        collector.addMappedId(id, op.entityId)
+                    }
                 }
             }
 

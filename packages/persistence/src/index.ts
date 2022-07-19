@@ -5,5 +5,5 @@ export { TransactionManager } from './persistence/TransactionManager'
 export { Validator } from './persistence/Validator'
 export { Persistence } from './persistence/Persistence'
 export { IPersistenceManager } from './persistence/IPersistenceManager'
-
+export { PersistenceBuilder } from './persistence/PersistenceBuilder'
 

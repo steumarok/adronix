@@ -3,7 +3,7 @@ import { Objects } from "@adronix/base";
 import { Application, ItemCollector, Module } from "@adronix/server";
 import { ITypeORMManager, TypeORMPersistence } from "@adronix/typeorm";
 import { TcaProductOptionExt } from "./entities/TcaProductOptionExt";
-import { EntityClass, EntityEventKind, EntityIO, ValidationHandler } from "@adronix/persistence/src";
+import { EntityClass, EntityEventKind, EntityIO, Transaction, ValidationHandler } from "@adronix/persistence/src";
 import { ISequelizeManager, SequelizePersistence } from "@adronix/sequelize";
 import { TcaTest } from "./entities/TcaTest";
 
@@ -51,39 +51,40 @@ export class Module2 extends Module<TestApplication> {
     }
 }
 
-Objects.override(Module1Persistence, base => {
-    return class extends base {
-        defineEntityIO<T>(
-            entityClass: EntityClass<T>,
-            validationHandler: ValidationHandler<T>) {
-            const entityIO = super.defineEntityIO(entityClass, validationHandler)
-            if (entityClass.prototype.constructor.name == 'TcmProductOption') {
-                entityIO.addEventHandler(async (eventKind, entity, t) => {
-                    if (eventKind == EntityEventKind.Deleting) {
-                        const productOption = entity as unknown as TcmProductOption
-                        const io = this.manager.getEntityIO(TcaProductOptionExt)
-                        const poe = await this.manager.getDataSource().getRepository(TcaProductOptionExt)
-                            .createQueryBuilder("poe")
-                            .where("poe.productOption.id = :id", { id: productOption.id })
-                            .getOne()
-
-                        if (poe) {
-                            await io.delete(poe)(t)
-                        }
-                    }
-                })
-            }
-            return entityIO
-        }
-    }
-})
 
 Objects.override(Module1, base => {
     return class extends base {
+
         describe(collector: ItemCollector) {
             return super.describe(collector)
                 .describe(TcaProductOptionExt, ['nameExt', 'productOption'])
                 .describe(TcaTest, ['firstName'])
+        }
+
+        buildPersistence() {
+            const persistence = super.buildPersistence()
+
+            persistence.getEntityIO(TcmProductOption)
+                .addEventHandler(this.tcmProductOptionHandler())
+
+            return persistence
+        }
+
+        tcmProductOptionHandler() {
+            return async (eventKind: EntityEventKind, entity: TcmProductOption, t: Transaction) => {
+                if (eventKind == EntityEventKind.Deleting) {
+                    const productOption = entity as unknown as TcmProductOption
+                    const io = this.app.getEntityIO(TcaProductOptionExt)
+                    const poe = await this.app.getDataSource().getRepository(TcaProductOptionExt)
+                        .createQueryBuilder("poe")
+                        .where("poe.productOption.id = :id", { id: productOption.id })
+                        .getOne()
+
+                    if (poe) {
+                        await io.delete(poe)(t)
+                    }
+                }
+            }
         }
 
         async editProductOption({ id }) {
