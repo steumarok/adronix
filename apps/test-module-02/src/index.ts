@@ -1,4 +1,4 @@
-import { Module1, Module1Persistence, TcmProductOption } from "@adronix/test-module-01";
+import { Module1, TcmProductOption } from "@adronix/test-module-01";
 import { Objects } from "@adronix/base";
 import { Application, ItemCollector, Module } from "@adronix/server";
 import { ITypeORMManager, TypeORMPersistence } from "@adronix/typeorm";

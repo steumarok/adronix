@@ -11,6 +11,7 @@
    },
    "include": ["./**/*.ts"],
    "references": [
+      { "path": "../../packages/sequelize/tsconfig.json" },
       { "path": "../../packages/express/tsconfig.json" },
       { "path": "../../packages/typeorm/tsconfig.json" }
    ]

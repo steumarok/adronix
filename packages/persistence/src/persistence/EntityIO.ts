@@ -4,19 +4,30 @@ import { Validator } from "./Validator"
 import { Objects } from '@adronix/base'
 
 export abstract class EntityIO<T, Tx extends Transaction> {
+
     private eventHandlers: EntityEventHandler<T, Tx>[] = []
 
-    abstract get(id: EntityId): Promise<T>
+    abstract get(
+        id: EntityId): Promise<T>
 
-    abstract getEntityId(entity: T): EntityId
+    abstract getEntityId(
+        entity: T): EntityId
 
-    abstract saveEntity(entity: T, transaction: Tx): Promise<T>
+    abstract saveEntity(
+        entity: T,
+        transaction: Tx): Promise<T>
 
-    abstract deleteEntity(entity: T, transaction: Tx): Promise<T>
+    abstract deleteEntity(
+        entity: T,
+        transaction: Tx): Promise<T>
 
     abstract newEntityInstance(): T
 
-    protected async fillEntity(transaction: Tx, entity: T, changes: EntityProps) {
+    protected async fillEntity(
+        transaction: Tx,
+        entity: T,
+        changes: EntityProps) {
+
         for (let key in changes) {
             const value = changes[key]
             if (typeof value == "function") {
@@ -28,8 +39,10 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         }
     }
 
-    delete(entity: T): (t: Tx) => Promise<void> {
-        return async (t) => {
+    delete(
+        entity: T): (t: Tx) => Promise<void> {
+
+        return async (t: Tx) => {
             await this.notify(EntityEventKind.Deleting, entity, t)
 
             const result =  await this.deleteEntity(entity, t)
@@ -38,7 +51,10 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         }
     }
 
-    async update(entity: T, changes: EntityProps) {
+    async update(
+        entity: T,
+        changes: EntityProps) {
+
         const validator = this.validate(changes, entity)
         const errors = await validator.validate()
         if (Object.keys(errors).length > 0) {
@@ -59,7 +75,9 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         }
     }
 
-    async insert(changes: EntityProps) {
+    async insert(
+        changes: EntityProps) {
+
         const validator = this.validate(changes)
         const errors = await validator.validate()
         if (Object.keys(errors).length > 0) {
@@ -82,17 +100,26 @@ export abstract class EntityIO<T, Tx extends Transaction> {
         }
     }
 
-    validate(changes: EntityProps, entity?: T): Validator {
+    validate(
+        changes: EntityProps,
+        entity?: T): Validator {
+
         return Objects.create(Validator)
     }
 
-    protected async notify(eventKind: EntityEventKind, entity: T, transaction: Tx) {
+    protected async notify(
+        eventKind: EntityEventKind,
+        entity: T,
+        transaction: Tx) {
+
         return Promise.all(
             this.eventHandlers.map(handler => handler(eventKind, entity, transaction))
         )
     }
 
-    addEventHandler(handler: EntityEventHandler<T, Tx>) {
+    addEventHandler(
+        handler: EntityEventHandler<T, Tx>) {
+
         this.eventHandlers.push(handler)
     }
 }

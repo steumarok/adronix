@@ -1,37 +1,46 @@
-import { EntityId, EntityIO, Transaction } from "@adronix/persistence"
+import { EntityId, EntityIO, EntityProps, Transaction, Validator } from "@adronix/persistence"
 import { Group } from "../entities/Group"
 import { User } from "../entities/User"
 
-const GroupDB = {
-    1: new Group(1, 'developers'),
-    2: new Group(1, 'managers')
-}
+export const GroupDB = { }
 
-const UserDB = {
-    1: new User(2, 'steumarok', [GroupDB[1]]),
-    2: new User(2, 'nasiu', [GroupDB[1], GroupDB[2]])
-}
+export const UserDB = { }
 
 export class UserEntityIO extends EntityIO<User, Transaction> {
+
+    deleteEntity(entity: User, transaction: Transaction): Promise<User> {
+        const id = this.getEntityId(entity)
+        delete UserDB[id]
+        return Promise.resolve(entity)
+    }
     async get(id: EntityId): Promise<User> {
-        return UserDB[id]
+        return Promise.resolve(UserDB[id] || null)
     }
     getEntityId(entity: User): EntityId {
-        return entity.getId()
+        return entity.id
     }
     async saveEntity(entity: User, transaction: Transaction): Promise<any> {
-        if (!entity.getId()) {
-            entity.id = Object.keys(UserDB).length + 1
-        }
-        var user = await this.get(entity.getId())
+        const id = entity.id || (Object.keys(UserDB).length + 1)
+
+        var user = await this.get(entity.id)
         if (!user) {
             user = this.newEntityInstance()
+                .withId(id)
         }
-        user.name = entity.name
+        user = user
+            .withName(entity.name)
+
+        UserDB[id] = user
+
         return Promise.resolve(user)
     }
     newEntityInstance(): User {
         return new User()
+    }
+
+    validate(changes: EntityProps, entity?: User): Validator {
+        return super.validate(changes, entity)
+            .addRule('name', () => !!changes.name, { message: 'empty' })
     }
 
 }

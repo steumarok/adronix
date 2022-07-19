@@ -12,20 +12,6 @@ export type TestApplication = Application & ITypeORMManager
 
 
 
-export class Module1Persistence extends TypeORMPersistence {
-    constructor(app: TestApplication) {
-        super(app);
-
-        this
-            .defineEntityIO(TcmProductOption)
-                .rule("name", (changes) => !!changes.name, { message: 'empty' })
-
-            .defineEntityIO(TcmProductOptionValue)
-                .rule("price", (changes) => changes.price != 0, { message: 'price not valid' })
-    }
-}
-
-
 export class Module1 extends Module<TestApplication> {
     constructor(app: TestApplication) {
         super(app)

@@ -1,3 +1,5 @@
+/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
 module.exports = {
-  ...require("@my-monorepo/jest-config"),
+  preset: 'ts-jest',
+  testEnvironment: 'node',
 };

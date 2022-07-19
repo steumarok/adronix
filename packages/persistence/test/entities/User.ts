@@ -1,22 +1,23 @@
 import { IGroup } from "./IGroup";
-import { IUser } from "./IUser";
 
-export class User implements IUser {
+export class User {
     constructor(
-        private id: number,
-        private name: string,
-        private groups: IGroup[]) {
+        readonly id: number = null,
+        readonly name: string = null,
+        readonly groups: IGroup[] = []) {
     }
 
-    getId(): number {
-        return this.id
+    withId(id: number) {
+        return new User(
+            id,
+            this.name,
+            this.groups)
     }
 
-    getName(): string {
-        return this.name
-    }
-
-    getGroups(): IGroup[] {
-        return this.groups
+    withName(name: string) {
+        return new User(
+            this.id,
+            name,
+            this.groups)
     }
 }
