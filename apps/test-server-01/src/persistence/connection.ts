@@ -1,8 +1,8 @@
 import { DataSource } from "typeorm"
-import { Sequelize } from "sequelize"
+import { Sequelize, DataTypes } from "sequelize"
 import { TypeORMTransactionManager } from "@adronix/typeorm"
 import { TcmEntities } from "@adronix/test-module-01"
-import { TcaEntities } from "@adronix/test-module-02"
+import { TcaEntities, TcaTest } from "@adronix/test-module-02"
 import { SequelizeTransactionManager } from "@adronix/sequelize"
 
 export const sequelize = new Sequelize({
@@ -23,3 +23,13 @@ export const dataSource = new DataSource({
 
 export const transactionManager = new TypeORMTransactionManager(dataSource)
 export const sequelizeTransactionManager = new SequelizeTransactionManager(sequelize)
+
+TcaTest.init({
+    firstName: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+}, {
+    sequelize: sequelize,
+    modelName: TcaTest.prototype.constructor.name
+})

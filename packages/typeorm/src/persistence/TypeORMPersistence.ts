@@ -1,22 +1,23 @@
-import { DataSource, QueryRunner } from "typeorm"
-import { EntityClass, EntityIO, EntityProps, Persistence, PersistenceBuilder, Transaction, TransactionManager, ValidationHandler } from '@adronix/persistence'
-import { TypeORMTransaction } from "./TypeORMTransaction"
+import { DataSource } from "typeorm"
+import { EntityClass, EntityProps, Persistence, PersistenceBuilder, ValidationHandler } from '@adronix/persistence'
 import { TypeORMEntityIO } from "./TypeORMEntityIO"
-import { ITypeORMManager } from "./ITypeORMManager"
+import { ITypeORMAware } from "./ITypeORMAware"
 import { EntityIODefinition } from "@adronix/persistence/src/persistence/EntityIODefinition"
 
 export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
     constructor(
         dataSource: DataSource,
         entityClass: new () => T,
-        protected readonly definition: EntityIODefinition<T, TypeORMTransaction>,
+        protected readonly definition: EntityIODefinition<T>,
         protected readonly validationHandler: ValidationHandler<T>) {
+
         super(dataSource, entityClass)
     }
 
     validate(
         changes: EntityProps,
         entity?: T) {
+
         const validator = this.definition.addRules(
             super.validate(changes, entity),
             changes,
@@ -30,24 +31,24 @@ export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
 
 
 
-export class TypeORMPersistence extends Persistence<TypeORMTransaction> {
+export class TypeORMPersistence extends Persistence {
 
     static build(
-        manager: ITypeORMManager,
+        manager: ITypeORMAware,
         name: string = null) {
         const persistence = new TypeORMPersistence(manager, name)
         return new PersistenceBuilder(persistence)
     }
 
     constructor(
-        protected manager: ITypeORMManager,
+        protected manager: ITypeORMAware,
         protected name: string = null) {
         super()
     }
 
     defineEntityIO<T>(
         entityClass: EntityClass<T>,
-        validationHandler: ValidationHandler<T> = validator => validator): EntityIODefinition<T, TypeORMTransaction> {
+        validationHandler: ValidationHandler<T> = validator => validator): EntityIODefinition<T> {
 
         const definition = super.defineEntityIO(entityClass, validationHandler)
 

@@ -1,80 +1,67 @@
-import { Objects } from "@adronix/base";
-import { EntityProps } from "@adronix/persistence/src";
-import { Application, ItemCollector, Module, PaginatedList } from "@adronix/server";
-import { ITypeORMManager, TypeORMPersistence } from "@adronix/typeorm";
+import { Application, defineModule, Module, PaginatedList } from "@adronix/server";
+import { DataProvider } from "@adronix/server/src/server/types";
+import { ITypeORMAware, TypeORMPersistence } from "@adronix/typeorm";
+import { Not } from "typeorm";
 import { TcmProductOptionValue, TcmProductOption, TcmIngredient } from "./entities";
 
 export { TcmIngredient, TcmProductOption, TcmProductOptionValue }
 export const TcmEntities = [ TcmIngredient, TcmProductOption, TcmProductOptionValue ]
 
 
-export type TestApplication = Application & ITypeORMManager
+export type TestApplication = Application & ITypeORMAware
 
 
+const listProductOption: DataProvider<TestApplication> = async ({ page, limit }, module) => {
 
-export class Module1 extends Module<TestApplication> {
-    constructor(app: TestApplication) {
-        super(app)
+    const [ pos, count ] = await module.app.getDataSource().getRepository(TcmProductOption)
+        .createQueryBuilder("po")
+        .skip((parseInt(page)-1) * parseInt(limit))
+        .take(parseInt(limit))
+        .getManyAndCount()
 
-        this.usePersistence(this.buildPersistence())
+    return [PaginatedList(TcmProductOption, pos, count)]
+}
 
-        this.registerProvider("/listProductOption", this.listProductOption, this.describe)
-        this.registerProvider("/editProductOption", this.editProductOption, this.describe)
-    }
+export async function editProductOption({ id }, module: Module<TestApplication>) {
+    const po =
+        id
+            ? await module.app.getDataSource().getRepository(TcmProductOption)
+                .findOne({ relations: { ingredients: true }, where: { id }})
+            : new TcmProductOption()
 
-    buildPersistence() {
-        return TypeORMPersistence.build(this.app)
-            .defineEntityIO(TcmProductOption)
-                .rule('name', changes => !!changes.name,{ message: 'empty' })
-                .asyncRule("name", this.checkName.bind(this), { message: 'name not valid' })
-            .defineEntityIO(TcmProductOptionValue)
-                //.asyncRule("price", this.checkPrice, { message: 'price not valid' })
-            .create()
-    }
+    return [po]
+}
 
-    async checkName({name}, entity?: TcmProductOption) {
-        let query = this.app.getDataSource().getRepository(TcmProductOption)
-            .createQueryBuilder("po")
-            .where('po.name = :name', { name })
-        if (entity) {
-            query = query.andWhere('po.id <> :id', { id: entity.id })
-        }
-        const count = await query.getCount()
-        console.log(count)
-        return count == 0
-    }
-
-    describe(collector: ItemCollector) {
-        return collector
-            .describe(TcmProductOption, ['name', 'ingredients'])
-            .describe(TcmIngredient, ['name'])
-            .describe(TcmProductOptionValue, ['price', 'productOption']);
-    }
-
-    async listProductOption({ page, limit }) {
-
-        const [ pos, count ] = await this.app.getDataSource().getRepository(TcmProductOption)
-            .createQueryBuilder("po")
-            .skip((parseInt(page)-1) * parseInt(limit))
-            .take(parseInt(limit))
-            .getManyAndCount()
-
-
-        return [PaginatedList(TcmProductOption, pos, count)]
-    }
-
-    async editProductOption({ id }) {
-
-        const po =
-            id
-                ? await this.app.getDataSource().getRepository(TcmProductOption)
-                    .createQueryBuilder("po")
-                    .leftJoinAndSelect("po.ingredients", "ingredient")
-                    .where("po.id = :id", { id })
-                    .getOne()
-                : new TcmProductOption()
-
-        return [po]
+function checkName(module: Module<TestApplication>) {
+    return async ({name}, entity?: TcmProductOption) => {
+        const conditions = entity ? { id: Not(entity.id) } : {}
+        const po = await module.app.getDataSource().getRepository(TcmProductOption)
+            .findOne({ where: { name, ...conditions }})
+        return !po
     }
 }
+
+async function checkName1({name}, entity: TcmProductOption, module: Module<TestApplication>) {
+    const conditions = entity ? { id: Not(entity.id) } : {}
+    const po = await module.app.getDataSource().getRepository(TcmProductOption)
+        .findOne({ where: { name, ...conditions }})
+    return !po
+}
+
+
+export const Module1 = defineModule<TestApplication>()
+    .buildPersistence(module => {
+        return TypeORMPersistence.build(module.app)
+            .defineEntityIO(TcmProductOption)
+                .rule('name', changes => !!changes.name, { message: 'empty' })
+                .asyncRule("name", module.bind(checkName1), { message: 'name not valid' })
+            .defineEntityIO(TcmProductOptionValue)
+                //.asyncRule("price", this.checkPrice, { message: 'price not valid' })
+
+    })
+    .addDataProvider("/listProductOption", listProductOption)
+        .describe(TcmProductOption, ['name'])
+    .addDataProvider("/editProductOption", editProductOption)
+        .describe(TcmProductOption, ['name', 'ingredients'])
+
 

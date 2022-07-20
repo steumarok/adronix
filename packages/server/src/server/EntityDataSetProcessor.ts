@@ -1,10 +1,9 @@
 import Graph from "graph-data-structure"
-import { EntityClass, EntityId, EntityIO, Transaction, TransactionManager } from '@adronix/persistence'
+import { EntityClass, EntityId, Transaction, TransactionManager } from '@adronix/persistence'
 import { ItemData, ItemId } from "./types"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
 import { Application } from "./Application"
-import { isPromise } from "util/types"
 
 export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
@@ -198,8 +197,8 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         }
     }
 
-    protected createTransactions(): Map<TransactionManager<Transaction>, Transaction> {
-        const transactionMap = new Map<TransactionManager<Transaction>, Transaction>()
+    protected createTransactions(): Map<TransactionManager, Transaction> {
+        const transactionMap = new Map<TransactionManager, Transaction>()
         this.getTransactionManagers().forEach(tm => {
             transactionMap.set(tm, tm.createTransaction())
         })

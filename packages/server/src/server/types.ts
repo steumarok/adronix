@@ -1,4 +1,6 @@
+import { Application } from "./Application"
 import { ItemCollector } from "./ItemCollector"
+import { Module } from "./Module"
 
 export type ItemId = string | number
 export type ItemProps = {
@@ -35,11 +37,10 @@ export type Rule = {
     error: ItemError
 }
 
-// export type EntityClass<T> = new () => T
-
 
 export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
-export type DataProvider = (params: Partial<Params>) => Promise<ReturnType[]>
+//export type _DataProvider = (params: Partial<Params>, items?: any[]) => Promise<ReturnType[]>
 
+export type DataProvider<A extends Application> = (params: Partial<Params>, module: Module<A>, items?: any[]) => Promise<ReturnType[]>

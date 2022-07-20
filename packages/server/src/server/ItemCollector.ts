@@ -50,12 +50,23 @@ export class ItemCollector {
     }
 
     protected isInsertion(item: any): boolean {
-        const { idGetter } = this.descriptors.get(item.constructor)
+        const { idGetter } = this.getDescriptor(item)
         return !idGetter(item)
     }
 
+    protected getDescriptor(item: any) {
+        return this.descriptors.get(item.constructor)
+    }
+
     addItemData(item: any, dataMap: DataMap) {
-        const { propNames, idGetter } = this.descriptors.get(item.constructor)
+        const descriptor = this.getDescriptor(item)
+
+        if (!descriptor) {
+            console.warn(`object type ${item.constructor.name} not described`)
+            return
+        }
+
+        const { propNames, idGetter } = descriptor
 
         if (this.itemsMap.has(item)) {
             return this.itemsMap.get(item)

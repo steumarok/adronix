@@ -3,7 +3,7 @@ import { Objects } from '@adronix/base'
 import { Sequelize } from "sequelize";
 import { SequelizeTransaction } from "./SequelizeTransaction"
 
-export class SequelizeTransactionManager extends TransactionManager<SequelizeTransaction> {
+export class SequelizeTransactionManager extends TransactionManager {
     constructor(
         protected readonly sequelize: Sequelize) {
         super()

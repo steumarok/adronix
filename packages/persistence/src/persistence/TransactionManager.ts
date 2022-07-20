@@ -1,10 +1,10 @@
 import { Transaction } from "./Transaction";
 
-export abstract class TransactionManager<T extends Transaction> {
-    abstract createTransaction(): T
+export abstract class TransactionManager {
+    abstract createTransaction(): Transaction
 
     async run<R>(
-        runnable: (transaction: T) => Promise<R>) {
+        runnable: (transaction: Transaction) => Promise<R>) {
 
         const transaction = this.createTransaction()
 

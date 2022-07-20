@@ -4,9 +4,9 @@ import { Transaction } from "./Transaction"
 import { EntityClass, EntityProps, ItemError, ValidationHandler } from "./types"
 
 export class PersistenceBuilder<Tx extends Transaction> {
-    private lastDefinition: EntityIODefinition<unknown, Tx>
+    private lastDefinition: EntityIODefinition<unknown>
 
-    constructor(protected persistence: Persistence<Tx>) {}
+    constructor(protected persistence: Persistence) {}
 
     defineEntityIO<T>(
         entityClass: EntityClass<T>,

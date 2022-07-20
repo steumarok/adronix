@@ -2,7 +2,7 @@ import { Sequelize }  from 'sequelize'
 import { EntityIO, EntityId } from "@adronix/persistence"
 import { SequelizeTransaction } from "./SequelizeTransaction"
 
-export class SequelizeEntityIO<T> extends EntityIO<T, SequelizeTransaction> {
+export class SequelizeEntityIO<T> extends EntityIO<T> {
 
     constructor(
         protected sequelize: Sequelize,

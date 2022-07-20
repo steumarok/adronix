@@ -4,16 +4,16 @@ import { EntityClass, EntityProps, ItemError, ValidationHandler } from "./types"
 import { Validator } from "./Validator"
 
 
-export class EntityIODefinition<T, Tx extends Transaction> {
+export class EntityIODefinition<T> {
 
     readonly rules = []
     readonly asyncRules = []
 
-    constructor(protected readonly persistence: Persistence<Tx>) {}
+    constructor(protected readonly persistence: Persistence) {}
 
     defineEntityIO<T>(
         entityClass: EntityClass<T>,
-        validationHandler: ValidationHandler<T> = validator => validator): EntityIODefinition<T, Tx> {
+        validationHandler: ValidationHandler<T> = validator => validator): EntityIODefinition<T> {
         return this.persistence.defineEntityIO(entityClass, validationHandler)
     }
 

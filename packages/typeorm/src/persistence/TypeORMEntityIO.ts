@@ -2,7 +2,7 @@ import { DataSource } from "typeorm"
 import { EntityIO, EntityId } from "@adronix/persistence"
 import { TypeORMTransaction } from "./TypeORMTransaction"
 
-export class TypeORMEntityIO<T> extends EntityIO<T, TypeORMTransaction> {
+export class TypeORMEntityIO<T> extends EntityIO<T> {
 
     constructor(
         protected dataSource: DataSource,

@@ -1,5 +1,5 @@
 export { SequelizeEntityIO } from './persistence/SequelizeEntityIO'
 export { SequelizeTransaction } from './persistence/SequelizeTransaction'
 export { SequelizeTransactionManager } from './persistence/SequelizeTransactionManager'
-export { ISequelizeManager } from './persistence/ISequelizeManager'
+export { ISequelizeAware } from './persistence/ISequelizeAware'
 export { SequelizePersistence } from './persistence/SequelizePersistence'

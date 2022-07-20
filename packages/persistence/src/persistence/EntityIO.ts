@@ -3,9 +3,9 @@ import { Errors, EntityId, EntityProps, EntityEventHandler, EntityEventKind } fr
 import { Validator } from "./Validator"
 import { Objects } from '@adronix/base'
 
-export abstract class EntityIO<T, Tx extends Transaction> {
+export abstract class EntityIO<T> {
 
-    private eventHandlers: EntityEventHandler<T, Tx>[] = []
+    private eventHandlers: EntityEventHandler<T, Transaction>[] = []
 
     abstract get(
         id: EntityId): Promise<T>
@@ -15,16 +15,16 @@ export abstract class EntityIO<T, Tx extends Transaction> {
 
     abstract saveEntity(
         entity: T,
-        transaction: Tx): Promise<T>
+        transaction: Transaction): Promise<T>
 
     abstract deleteEntity(
         entity: T,
-        transaction: Tx): Promise<T>
+        transaction: Transaction): Promise<T>
 
     abstract newEntityInstance(): T
 
     protected async fillEntity(
-        transaction: Tx,
+        transaction: Transaction,
         entity: T,
         changes: EntityProps) {
 
@@ -40,9 +40,9 @@ export abstract class EntityIO<T, Tx extends Transaction> {
     }
 
     delete(
-        entity: T): (t: Tx) => Promise<void> {
+        entity: T): (t: Transaction) => Promise<void> {
 
-        return async (t: Tx) => {
+        return async (t: Transaction) => {
             await this.notify(EntityEventKind.Deleting, entity, t)
 
             const result =  await this.deleteEntity(entity, t)
@@ -61,7 +61,7 @@ export abstract class EntityIO<T, Tx extends Transaction> {
             return errors
         }
         else {
-            return async (t: Tx) => {
+            return async (t: Transaction) => {
                 await this.fillEntity(t, entity, changes)
 
                 await this.notify(EntityEventKind.Updating, entity, t)
@@ -84,7 +84,7 @@ export abstract class EntityIO<T, Tx extends Transaction> {
             return errors
         }
         else {
-            return async (t: Tx) => {
+            return async (t: Transaction) => {
                 const entity = this.newEntityInstance()
 
                 await this.fillEntity(t, entity, changes)
@@ -110,7 +110,7 @@ export abstract class EntityIO<T, Tx extends Transaction> {
     protected async notify(
         eventKind: EntityEventKind,
         entity: T,
-        transaction: Tx) {
+        transaction: Transaction) {
 
         return Promise.all(
             this.eventHandlers.map(handler => handler(eventKind, entity, transaction))
@@ -118,7 +118,7 @@ export abstract class EntityIO<T, Tx extends Transaction> {
     }
 
     addEventHandler(
-        handler: EntityEventHandler<T, Tx>) {
+        handler: EntityEventHandler<T, Transaction>) {
 
         this.eventHandlers.push(handler)
     }

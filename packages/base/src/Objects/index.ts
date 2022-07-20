@@ -1,4 +1,4 @@
-const classMap = {}
+const classMap = new Map()
 
 export function override<T>(
     base: { new (...args: any[]): T },
@@ -6,14 +6,14 @@ export function override<T>(
 ) {
     const current = classMap[base.name] || base
     const cls = fn(current);
-    classMap[base.name] = cls
+    classMap.set(base, cls)
     return cls
 }
 
 
 export function create<T>(Ctor: { new (...args: any[]): T }, ...args: any[]): T {
     const name = Ctor.name
-    const classRef: { new (...args: any[]): any; } = classMap[name];
+    const classRef: { new (...args: any[]): any; } = classMap.get(Ctor);
 
     if (!classRef) {
       return new Ctor(args[0], args[1])

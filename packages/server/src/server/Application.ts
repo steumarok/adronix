@@ -10,8 +10,8 @@ export abstract class Application {
     readonly defaultNotificationChannel: NotificationChannel  = new BetterSseNotificationChannel()
 
     public readonly entityIOMap = new Map<EntityClass<unknown>, {
-        entityIO: EntityIO<unknown, Transaction>,
-        transactionManager: TransactionManager<Transaction>
+        entityIO: EntityIO<unknown>,
+        transactionManager: TransactionManager
     }>()
 
 
@@ -22,10 +22,10 @@ export abstract class Application {
         return this.entityIOMap
     }
 
-    addEntityIO<T, Tx extends Transaction>(
+    addEntityIO<T>(
         entityClass: EntityClass<T>,
-        entityIO: EntityIO<T, Tx>,
-        transactionManager: TransactionManager<Tx>) {
+        entityIO: EntityIO<T>,
+        transactionManager: TransactionManager) {
         this.entityIOMap.set(entityClass, { entityIO, transactionManager })
 
         entityIO.addEventHandler(async (entityEventKind, entity, transaction) => {
@@ -45,7 +45,7 @@ export abstract class Application {
         return Array.from(this.getEntityIOMap().keys()).find(c => c.name == name)
     }
 
-    getEntityIO(type: string | EntityClass<unknown>): EntityIO<unknown, Transaction> {
+    getEntityIO(type: string | EntityClass<unknown>): EntityIO<unknown> {
         const entityClass = typeof type == "string" ? this.getEntityClassByName(type) : type
         const { entityIO } = this.getEntityIOMap().get(entityClass)
         return entityIO
