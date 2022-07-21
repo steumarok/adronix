@@ -21,8 +21,6 @@ export const dataSource = new DataSource({
     ]
 })
 
-export const transactionManager = new TypeORMTransactionManager(dataSource)
-export const sequelizeTransactionManager = new SequelizeTransactionManager(sequelize)
 
 TcaTest.init({
     firstName: {

@@ -4,6 +4,7 @@ import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
 import { NotificationChannel } from "./NotificationChannel"
+import { Objects } from "@adronix/base/src"
 
 export abstract class Application {
     readonly modules: Module<Application>[] = []
@@ -62,8 +63,8 @@ export abstract class Application {
         return channel
     }
 
-    addModule<A extends Application>(module: Module<A>) {
-        this.modules.push(module)
+    addModule(moduleClass: new (app: Application) => Module<Application>) {
+        this.modules.push(Objects.create(moduleClass, this))
     }
 
     abstract registerProcessor(
