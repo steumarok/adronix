@@ -1,8 +1,9 @@
 import { Sequelize } from "sequelize"
-import { EntityClass, EntityProps, Persistence, ValidationHandler } from '@adronix/persistence'
+import { EntityClass, EntityProps, Persistence, TransactionManager, ValidationHandler } from '@adronix/persistence'
 import { SequelizeEntityIO } from "./SequelizeEntityIO"
 import { ISequelizeAware } from "./ISequelizeAware"
 import { EntityIODefinition } from "@adronix/persistence/src/persistence/EntityIODefinition"
+import { SequelizeTransactionManager } from "./SequelizeTransactionManager"
 
 export class GenericEntityIO<T> extends SequelizeEntityIO<T> {
     constructor(
@@ -23,6 +24,8 @@ export class GenericEntityIO<T> extends SequelizeEntityIO<T> {
 
 export class SequelizePersistence extends Persistence {
 
+    static transactionManagers: Map<String, TransactionManager> = new Map()
+
     constructor(
         protected manager: ISequelizeAware,
         protected name: string = null) {
@@ -34,16 +37,23 @@ export class SequelizePersistence extends Persistence {
         validationHandler: ValidationHandler<T> = validator => validator): EntityIODefinition<T> {
 
         const definition = super.defineEntityIO(entityClass, validationHandler)
+        const sequelize = this.manager.getSequelize(this.name)
+
+        if (!SequelizePersistence.transactionManagers.has(this.name)) {
+            SequelizePersistence.transactionManagers.set(
+                this.name,
+                new SequelizeTransactionManager(sequelize))
+        }
 
         const entityIO = new GenericEntityIO<T>(
-            this.manager.getSequelize(this.name),
+            sequelize,
             entityClass,
             definition,
             validationHandler.bind(this))
         this.addEntityIO(
             entityClass,
             entityIO,
-            this.manager.getSequelizeTransactionManager(this.name))
+            SequelizePersistence.transactionManagers.get(this.name))
         return definition
     }
 }

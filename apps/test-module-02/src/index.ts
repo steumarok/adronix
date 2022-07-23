@@ -1,18 +1,18 @@
 import { Module1, TcmProductOption } from "@adronix/test-module-01";
-import { Objects } from "@adronix/base";
-import { Application, defineModule, ItemCollector, Module } from "@adronix/server";
+import { Application, DataProviderDefintions, defineModule } from "@adronix/server";
 import { ITypeORMAware, TypeORMPersistence } from "@adronix/typeorm";
 import { TcaProductOptionExt } from "./entities/TcaProductOptionExt";
 import { ISequelizeAware, SequelizePersistence } from "@adronix/sequelize";
-import { EntityEventKind, Persistence, Transaction } from "@adronix/persistence";
+import { EntityEventKind, EntityIODefinitions, PersistenceExtension, Transaction } from "@adronix/persistence";
 import { TcaTest } from "./entities/TcaTest";
+import { In } from "typeorm";
 
 export { TcaProductOptionExt, TcaTest }
 export const TcaEntities = [ TcaProductOptionExt ]
 
 export type TestApplication = Application & ITypeORMAware & ISequelizeAware
 
-
+/*
 class Module2Persistence1 extends SequelizePersistence {
     constructor(app: TestApplication) {
         super(app);
@@ -23,67 +23,81 @@ class Module2Persistence1 extends SequelizePersistence {
                 .addRule("firstName", () => !!changes.firstName, { message: 'empty' }))
     }
 }
+*/
+
+const ioDefinitions: EntityIODefinitions = [
+    {
+        entityClass: TcaProductOptionExt,
+        rules: [
+            [ 'nameExt', changes => !!changes.nameExt, { message: 'empty' } ]
+        ]
+    }
+]
 
 export const Module2 = defineModule<TestApplication>()
-    .buildPersistence(module => TypeORMPersistence.build(module.app)
-        .defineEntityIO(TcaProductOptionExt)
-            .rule("nameExt", changes => !!changes.nameExt, { message: 'empty' }))
+    .buildPersistence(TypeORMPersistence.build().addDefinitions(ioDefinitions));
 
-Objects.override(Module1, base => {
-    return class Module1Ovr extends base {
+const providers: DataProviderDefintions<TestApplication> = {
 
-        constructor(app: TestApplication) {
-            super(app)
-            this.overrideProvider('/editProductOption', this.editProductOptionOvr, this.describeEditProductOptionOvr)
-        }
+    '/listProductOption': {
+        handler: async function ({ }, items: any[]) {
 
-        describeEditProductOptionOvr(collector: ItemCollector) {
-            return collector
-                .describe(TcaProductOptionExt, ['nameExt', 'productOption'])
-        }
+            const poes = await this.app.getDataSource().getRepository(TcaProductOptionExt)
+                .find({
+                    where: { productOption: In(items as TcmProductOption[])},
+                    relations: ['productOption'] })
 
-        usePersistence(persistence: Persistence) {
-            super.usePersistence(persistence)
+            return items.concat(poes)
+        },
+        output: [
+            [TcaProductOptionExt, 'nameExt', 'productOption']
+        ]
+    },
 
-            persistence.getEntityIO(TcmProductOption)
-                .addEventHandler(this.tcmProductOptionHandler())
-        }
+    '/editProductOption': {
+        handler: async function ({ id }, items: any[]) {
 
-        tcmProductOptionHandler() {
-            return async (eventKind: EntityEventKind, productOption: TcmProductOption, t: Transaction) => {
-                if (eventKind == EntityEventKind.Deleting) {
-                    const io = this.app.getEntityIO(TcaProductOptionExt)
+            async function newExt(po: TcmProductOption) {
+                const poe = new TcaProductOptionExt()
+                poe.productOption = po
+                if (po.name) {
+                    poe.nameExt = po.name + " ext"
+                }
+                return poe
+            }
 
-                    const poe = await this.app.getDataSource().getRepository(TcaProductOptionExt)
-                        .findOne({ where: { productOption: { id: productOption.id } }})
+            const poe = await this.app.getDataSource().getRepository(TcaProductOptionExt)
+                .findOne({ relations: { productOption: true }, where: { productOption: { id } }})
 
-                    if (poe) {
-                        await io.delete(poe)(t)
-                    }
+            return items.concat(poe ? poe : await newExt(items[0]))
+        },
+        output: [
+            [TcaProductOptionExt, 'nameExt', 'productOption']
+        ]
+    }
+}
+
+
+const persistenceExtension: PersistenceExtension = {
+    eventHandlers: [
+        [TcmProductOption, async function(
+            eventKind,
+            productOption: TcmProductOption,
+            transaction) {
+            if (eventKind == EntityEventKind.Deleting) {
+                const io = this.getEntityIO(TcaProductOptionExt)
+
+                const poe = await (this as ITypeORMAware).getDataSource().getRepository(TcaProductOptionExt)
+                    .findOne({ where: { productOption: { id: productOption.id } }})
+
+                if (poe) {
+                    await io.delete(poe)(transaction)
                 }
             }
-        }
+        }]
+    ]
+}
 
-        async editProductOptionOvr({ id }, module: Module<TestApplication>, items: any[]) {
-
-            const poe = await module.app.getDataSource().getRepository(TcaProductOptionExt)
-                .findOne({ relations: { productOption: true }, where: { productOption: { id} }})
-
-            items.push(poe ? poe : await this.newExt(items[0]))
-
-            //items.push(TcaTest.build({firstName: 'prova'}))
-
-            return items
-        }
-
-        protected async newExt(po: TcmProductOption) {
-            const poe = new TcaProductOptionExt()
-            poe.productOption = po
-            if (po.name) {
-                poe.nameExt = po.name + " ext"
-            }
-            return poe
-        }
-    }
-})
-
+Module1.extend()
+    .extendDataProviders(providers)
+    .extendPersistence(persistenceExtension)

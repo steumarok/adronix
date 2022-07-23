@@ -30,7 +30,7 @@ const props = defineProps({
   id: Number
 })
 
-const ds = useDataSet(`/api/editProductOption?id=${props.id || ''}`)
+const ds = useDataSet(`/api/module1/editProductOption?id=${props.id || ''}`)
 
 const productOption = ds.ref('TcmProductOption')
 

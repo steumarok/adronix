@@ -1,8 +1,6 @@
 import { EntityIO } from "./EntityIO"
-import { EntityIODefinition } from "./EntityIODefinition"
-import { Transaction } from "./Transaction"
 import { TransactionManager } from "./TransactionManager"
-import { EntityClass, EntityProps, TransactionEventHandler, TransactionEventKind, ValidationHandler } from "./types"
+import { EntityClass, Rule } from "./types"
 
 
 export abstract class Persistence {
@@ -12,13 +10,11 @@ export abstract class Persistence {
         transactionManager: TransactionManager
     }>()
 
-    defineEntityIO<T>(
+    abstract createEntityIO<T>(
         entityClass: EntityClass<T>,
-        validationHandler: ValidationHandler<T> = (validator) => validator): EntityIODefinition<T> {
-        return new EntityIODefinition(this)
-    }
+        rules: Rule[]): EntityIO<T>
 
-    addEntityIO<T>(
+    protected addEntityIO<T>(
         entityClass: EntityClass<T>,
         entityIO: EntityIO<T>,
         transactionManager: TransactionManager) {
@@ -29,4 +25,5 @@ export abstract class Persistence {
         const { entityIO } = this.entityIOMap.get(entityClass)
         return entityIO
     }
+
 }

@@ -53,18 +53,8 @@ import EditProductOption from './EditProductOption.vue'
 export default {
   setup () {
 
-    const columns = [
-      {
-        name: 'name',
-        required: true,
-        label: 'Name',
-        align: 'left',
-        field: (row: Item) => row.name,
-      }
-    ]
-
     const { url, params } = useUrlComposer(
-      ({ table }) => `/api/listProductOption?page=${table.page as string}&limit=${table.limit as string}`, {
+      ({ table }) => `/api/module1/listProductOption?page=${table.page as string}&limit=${table.limit as string}`, {
         table: {
           page: 1,
           limit: 10
@@ -72,6 +62,26 @@ export default {
       })
 
     const ds = useDataSet(url)
+
+    const columns = [
+      {
+        name: 'name',
+        required: true,
+        label: 'Name',
+        align: 'left',
+        field: (row: Item) => row.name,
+      },
+      {
+        name: 'nameExt',
+        label: 'Name ext',
+        align: 'left',
+        field: (row: Item) => {
+          const ext = ds.query('TcaProductOptionExt', item => (item.productOption as Item)?.id == row.id).single()
+          return ext?.nameExt
+        }
+      }
+    ]
+
     const table = useQTableHandler(
       ds,
       params.table,

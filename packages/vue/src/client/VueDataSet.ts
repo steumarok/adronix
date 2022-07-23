@@ -50,14 +50,17 @@ export function useDataSet(
 
     stopListeners()
 
-    new Set(dataSet.filterItems('*', (item) => item.type != 'Metadata')
-      .map(item => item.type))
-      .forEach(type => {
-        const listener = notificationBroker.on(type, () => {
-          doFetch()
+    const metadata = dataSet.query('Metadata', (item) => item.id == '__types').single()
+
+    if (metadata) {
+      (metadata.value as string).split(',')
+        .forEach(type => {
+          const listener = notificationBroker.on(type, () => {
+            doFetch()
+          })
+          notificationManagers.set(type, listener)
         })
-        notificationManagers.set(type, listener)
-      })
+    }
   }
 
   async function doFetch(): Promise<void> {

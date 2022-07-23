@@ -5,7 +5,7 @@ import { Objects } from '@adronix/base'
 
 export abstract class EntityIO<T> {
 
-    private eventHandlers: EntityEventHandler<T, Transaction>[] = []
+    private eventHandlers: EntityEventHandler<T>[] = []
 
     abstract get(
         id: EntityId): Promise<T>
@@ -118,8 +118,10 @@ export abstract class EntityIO<T> {
     }
 
     addEventHandler(
-        handler: EntityEventHandler<T, Transaction>) {
+        handler: EntityEventHandler<T>) {
 
         this.eventHandlers.push(handler)
+
+        return this
     }
 }

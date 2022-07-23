@@ -7,5 +7,5 @@ export { Application } from './server/Application'
 export { NotificationChannel } from './server/NotificationChannel'
 export { BetterSseNotificationSession } from './server/BetterSseNotificationSession'
 
-export { DataProvider } from './server/types'
+export { DataProvider, DataProviderDefintions, ModuleOptions } from './server/types'
 export { PaginatedList } from './server/PaginatedList'

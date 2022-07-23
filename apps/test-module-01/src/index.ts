@@ -1,5 +1,6 @@
+import { AsyncRuleExpr, EntityClass, EntityIODefinitions, ItemError, RuleExpr } from "@adronix/persistence/src/persistence/types";
 import { Application, defineModule, Module, PaginatedList } from "@adronix/server";
-import { DataProvider } from "@adronix/server/src/server/types";
+import { DataProvider, DataProviderDefintions } from "@adronix/server/src/server/types";
 import { ITypeORMAware, TypeORMPersistence } from "@adronix/typeorm";
 import { Not } from "typeorm";
 import { TcmProductOptionValue, TcmProductOption, TcmIngredient } from "./entities";
@@ -7,61 +8,69 @@ import { TcmProductOptionValue, TcmProductOption, TcmIngredient } from "./entiti
 export { TcmIngredient, TcmProductOption, TcmProductOptionValue }
 export const TcmEntities = [ TcmIngredient, TcmProductOption, TcmProductOptionValue ]
 
-
 export type TestApplication = Application & ITypeORMAware
 
 
-const listProductOption: DataProvider<TestApplication> = async ({ page, limit }, module) => {
+const providers: DataProviderDefintions<TestApplication> = {
 
-    const [ pos, count ] = await module.app.getDataSource().getRepository(TcmProductOption)
-        .createQueryBuilder("po")
-        .skip((parseInt(page)-1) * parseInt(limit))
-        .take(parseInt(limit))
-        .getManyAndCount()
+    '/listProductOption': {
+        handler: async function ({ page, limit }) {
 
-    return [PaginatedList(TcmProductOption, pos, count)]
-}
+            const [ pos, count ] = await this.app.getDataSource().getRepository(TcmProductOption)
+                .createQueryBuilder("po")
+                .skip((parseInt(page)-1) * parseInt(limit))
+                .take(parseInt(limit))
+                .getManyAndCount()
 
-export async function editProductOption({ id }, module: Module<TestApplication>) {
-    const po =
-        id
-            ? await module.app.getDataSource().getRepository(TcmProductOption)
-                .findOne({ relations: { ingredients: true }, where: { id }})
-            : new TcmProductOption()
+            return [PaginatedList(TcmProductOption, pos, count)]
+        },
+        output: [
+            [TcmProductOption, 'name']
+        ]
+    },
 
-    return [po]
-}
+    '/editProductOption': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.app.getDataSource().getRepository(TcmProductOption)
+                        .findOne({ relations: { ingredients: true }, where: { id }})
+                    : new TcmProductOption()
 
-function checkName(module: Module<TestApplication>) {
-    return async ({name}, entity?: TcmProductOption) => {
-        const conditions = entity ? { id: Not(entity.id) } : {}
-        const po = await module.app.getDataSource().getRepository(TcmProductOption)
-            .findOne({ where: { name, ...conditions }})
-        return !po
+            return [po]
+        },
+        output: [
+            [TcmProductOption, 'name', 'ingredients']
+        ]
     }
 }
 
-async function checkName1({name}, entity: TcmProductOption, module: Module<TestApplication>) {
+
+
+
+const checkNameDup: AsyncRuleExpr = async function({ name }, entity: TcmProductOption) {
     const conditions = entity ? { id: Not(entity.id) } : {}
-    const po = await module.app.getDataSource().getRepository(TcmProductOption)
+    const po = await (this as ITypeORMAware).getDataSource().getRepository(TcmProductOption)
         .findOne({ where: { name, ...conditions }})
     return !po
 }
 
 
-export const Module1 = defineModule<TestApplication>()
-    .buildPersistence(module => {
-        return TypeORMPersistence.build(module.app)
-            .defineEntityIO(TcmProductOption)
-                .rule('name', changes => !!changes.name, { message: 'empty' })
-                .asyncRule("name", module.bind(checkName1), { message: 'name not valid' })
-            .defineEntityIO(TcmProductOptionValue)
-                //.asyncRule("price", this.checkPrice, { message: 'price not valid' })
+const ioDefinitions: EntityIODefinitions = [
+    {
+        entityClass: TcmProductOption,
+        rules: [
+            [ 'name', changes => !!changes.name, { message: 'empty' } ],
+            [ 'name', checkNameDup, { message: 'name not valid' } ]
+        ]
+    }
+]
 
-    })
-    .addDataProvider("/listProductOption", listProductOption)
-        .describe(TcmProductOption, ['name'])
-    .addDataProvider("/editProductOption", editProductOption)
-        .describe(TcmProductOption, ['name', 'ingredients'])
+export const Module1 = defineModule<TestApplication>()
+    .buildPersistence(TypeORMPersistence
+        .build()
+        .addDefinitions(ioDefinitions)
+    )
+    .addDataProviders(providers)
 
 

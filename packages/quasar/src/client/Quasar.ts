@@ -2,7 +2,7 @@ import { VueDataSet, GetParams } from '@adronix/vue'
 import { computed, ref, unref } from "vue"
 
 export function useQTableHandler(ds: VueDataSet, params: GetParams | null, type: string) {
-    const rows =  ds.list('TcmProductOption')
+    const rows = ds.list(type)
     const totalCount = ds.ref('Metadata', `${type}.totalCount`)
     const pageRef = ref(1)
     const rowsPerPageRef = ref(params?.limit)

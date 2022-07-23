@@ -1,3 +1,4 @@
+import { IPersistenceManager } from "./IPersistenceManager"
 import { Transaction } from "./Transaction"
 import { Validator } from "./Validator"
 
@@ -30,12 +31,12 @@ export type Errors = {
 export type DataMap = Map<string, EntityData>
 export type IdGetter = (item: any) => EntityId
 export type DescriptorMap = Map<any, { propNames: string[], idGetter: IdGetter }>
+
+export type RuleExpr = (this: IPersistenceManager, changes: EntityProps, entity?: any) => boolean
+export type AsyncRuleExpr = (this: IPersistenceManager, changes: EntityProps, entity?: any) => Promise<boolean>
 export type Rule = {
-    expr: () => boolean,
-    error: ItemError
-}
-export type AsyncRule = {
-    expr: () => Promise<boolean>,
+    name: string,
+    expr: RuleExpr | AsyncRuleExpr,
     error: ItemError
 }
 
@@ -55,7 +56,15 @@ export enum TransactionEventKind {
     Rollback
 }
 
-export type EntityEventHandler<T, Tx extends Transaction> = (eventKind: EntityEventKind, entity: T, transaction: Tx) => Promise<void>
+export type EntityEventHandler<T = any> = (eventKind: EntityEventKind, entity: T, transaction: Transaction) => Promise<void>
+export type EntityEventHandlerExt<T = any> = (this: IPersistenceManager, eventKind: EntityEventKind, entity: T, transaction: Transaction) => Promise<void>
 export type TransactionEventHandler = (eventKind: TransactionEventKind) => void
 
 export type ValidationHandler<T> = (validator: Validator, changes: EntityProps, entity?: T) => Validator
+
+export type EntityIODefinitions = {
+    entityClass: EntityClass<unknown>,
+    rules: [ string, AsyncRuleExpr | RuleExpr, ItemError][]
+}[]
+
+export type PersistenceExtension = { eventHandlers: [ EntityClass<unknown>, EntityEventHandlerExt ][]}

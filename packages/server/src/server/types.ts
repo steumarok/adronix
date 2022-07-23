@@ -1,3 +1,4 @@
+import { EntityClass } from "@adronix/persistence/src"
 import { Application } from "./Application"
 import { ItemCollector } from "./ItemCollector"
 import { Module } from "./Module"
@@ -41,6 +42,16 @@ export type Rule = {
 export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
-//export type _DataProvider = (params: Partial<Params>, items?: any[]) => Promise<ReturnType[]>
 
-export type DataProvider<A extends Application> = (params: Partial<Params>, module: Module<A>, items?: any[]) => Promise<ReturnType[]>
+export type DataProvider<A extends Application> = (this: Module<A>, params: Partial<Params>, items?: any[]) => Promise<ReturnType[]>
+
+export type DataProviderDefintions<A extends Application> =  {
+    [key: string]: {
+        handler: DataProvider<A>,
+        output: [ EntityClass<unknown>, ...string[] ][]
+    }
+}
+
+export type ModuleOptions = {
+    urlContext?: string
+}

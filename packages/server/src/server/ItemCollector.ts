@@ -130,6 +130,13 @@ export class ItemCollector {
     }
 
     get(): ItemData[] {
+        const types = Array.from(this.descriptors.keys())
+            .filter(entityClass => entityClass != Metadata)
+            .map(entityClass => entityClass.name)
+            .join(',')
+
+        this.metadata("__types", types)
+
         const dataMap: DataMap = new Map()
         this.items.forEach(item => this.addItemData(item, dataMap))
         return Array.from(dataMap.values())

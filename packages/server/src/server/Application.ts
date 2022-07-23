@@ -1,12 +1,13 @@
-import { EntityClass, EntityIO, Transaction, TransactionEventKind, TransactionManager } from "@adronix/persistence/src"
+import { EntityClass, EntityIO, IPersistenceManager, Transaction, TransactionEventKind, TransactionManager } from "@adronix/persistence/src"
 import { EntityEventKind } from "@adronix/persistence"
 import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
 import { NotificationChannel } from "./NotificationChannel"
 import { Objects } from "@adronix/base/src"
+import { ModuleOptions } from "./types"
 
-export abstract class Application {
+export abstract class Application implements IPersistenceManager {
     readonly modules: Module<Application>[] = []
     readonly defaultNotificationChannel: NotificationChannel  = new BetterSseNotificationChannel()
 
@@ -27,6 +28,7 @@ export abstract class Application {
         entityClass: EntityClass<T>,
         entityIO: EntityIO<T>,
         transactionManager: TransactionManager) {
+
         this.entityIOMap.set(entityClass, { entityIO, transactionManager })
 
         entityIO.addEventHandler(async (entityEventKind, entity, transaction) => {
@@ -63,8 +65,10 @@ export abstract class Application {
         return channel
     }
 
-    addModule(moduleClass: new (app: Application) => Module<Application>) {
-        this.modules.push(Objects.create(moduleClass, this))
+    addModule(
+        moduleClass: new (app: Application) => Module<Application>,
+        options?: ModuleOptions) {
+        this.modules.push(Objects.create(moduleClass, this, options))
     }
 
     abstract registerProcessor(
