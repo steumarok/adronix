@@ -9,9 +9,11 @@
    "dependencies": {
       "@adronix/base": "workspace:^",
       "@adronix/client": "workspace:^",
+      "domurl": "^2.3.4",
       "object-diff": "^0.0.4"
    },
    "devDependencies": {
+      "@types/domurl": "^0.0.7",
       "@types/jest": "^27.4.0",
       "@types/object-diff": "^0.0.2",
       "jest": "^27.5.1",

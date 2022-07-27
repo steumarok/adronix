@@ -1,9 +1,8 @@
-import { VueDataSet, GetParams } from '@adronix/vue'
-import { computed, ref, unref } from "vue"
+import { GetParams } from '@adronix/vue'
+import { Component, computed, ComputedRef, ref, unref } from "vue"
+import { useQuasar } from 'quasar'
 
-export function useQTableHandler(ds: VueDataSet, params: GetParams | null, type: string) {
-    const rows = ds.list(type)
-    const totalCount = ds.ref('Metadata', `${type}.totalCount`)
+export function useQTableHandler(totalCount: ComputedRef<any>, params: GetParams | null) {
     const pageRef = ref(1)
     const rowsPerPageRef = ref(params?.limit)
 
@@ -25,7 +24,6 @@ export function useQTableHandler(ds: VueDataSet, params: GetParams | null, type:
     }
 
     return {
-      rows,
       pagination: computed(() => ({
         ...pagination,
         page: pageRef.value,
@@ -35,3 +33,15 @@ export function useQTableHandler(ds: VueDataSet, params: GetParams | null, type:
       onRequest
     }
   }
+
+
+
+export function dialog(
+  this: ReturnType<typeof useQuasar>,
+  component: Component,
+  props?: any) {
+  this.dialog({
+    component,
+    componentProps: props
+  })
+}

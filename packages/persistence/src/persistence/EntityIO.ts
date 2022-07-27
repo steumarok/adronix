@@ -1,11 +1,13 @@
 import { Transaction } from "./Transaction"
-import { Errors, EntityId, EntityProps, EntityEventHandler, EntityEventKind } from "./types"
-import { Validator } from "./Validator"
-import { Objects } from '@adronix/base'
+import { EntityId, EntityProps, EntityEventHandler, EntityEventKind } from "./types"
+import { Objects, Validator, Errors } from '@adronix/base'
+import { TransactionManager } from "./TransactionManager"
 
 export abstract class EntityIO<T> {
 
     private eventHandlers: EntityEventHandler<T>[] = []
+
+    constructor(public readonly transactionManager: TransactionManager) {}
 
     abstract get(
         id: EntityId): Promise<T>

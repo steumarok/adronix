@@ -1,4 +1,10 @@
-import { Errors, ItemError, Rule } from "./types"
+export type ItemError = {
+    code?: string,
+    message: string
+}
+export type Errors = {
+    [key: string]: ItemError[]
+}
 
 export class Validator {
     rules = []

@@ -6,6 +6,7 @@
    "dependencies": {
       "@adronix/base": "workspace:^",
       "@adronix/persistence": "workspace:^",
+      "@adronix/server": "workspace:^",
       "typeorm": "^0.3.6"
    },
    "devDependencies": {

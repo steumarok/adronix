@@ -3,8 +3,6 @@ import { watch, reactive, ref, unref, Ref, isRef, watchEffect, onUnmounted } fro
 import diff from 'object-diff'
 import { Errors } from "@adronix/client";
 
-
-
 interface ExtendedVueDataSet {
   commit(): Promise<boolean>
   refresh(): Promise<void>
@@ -13,10 +11,11 @@ interface ExtendedVueDataSet {
 //const reg = new FinalizationRegistry((value: string) => console.log(value))
 
 
-export function useDataSet(
+export function dataSet(
   url: string | Ref<string>,
   dataBroker: IDataBroker = useFetch(),
   notificationBroker = useEventSource()): VueDataSet & ExtendedVueDataSet {
+
   const Class = class extends VueDataSet implements ExtendedVueDataSet {
     constructor() {
       super()
@@ -50,7 +49,7 @@ export function useDataSet(
 
     stopListeners()
 
-    const metadata = dataSet.query('Metadata', (item) => item.id == '__types').single()
+    const metadata = dataSet.query('Metadata', (item) => item.id == '$types').single()
 
     if (metadata) {
       (metadata.value as string).split(',')

@@ -1,29 +1,22 @@
 import { EntityIO } from "./EntityIO"
+import { PersistenceContext } from "./PersistenceContext"
 import { TransactionManager } from "./TransactionManager"
-import { EntityClass, Rule } from "./types"
+import { EntityClass, EntityEventHandler, Rule } from "./types"
 
 
 export abstract class Persistence {
 
-    public readonly entityIOMap = new Map<EntityClass<unknown>, {
-        entityIO: EntityIO<unknown>,
-        transactionManager: TransactionManager
-    }>()
+    public readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: PersistenceContext) => EntityIO<unknown>>()
 
     abstract createEntityIO<T>(
         entityClass: EntityClass<T>,
-        rules: Rule[]): EntityIO<T>
+        eventHandlers: EntityEventHandler<T>[],
+        rules: Rule[]): void
 
-    protected addEntityIO<T>(
+    protected addEntityIOCreator<T>(
         entityClass: EntityClass<T>,
-        entityIO: EntityIO<T>,
-        transactionManager: TransactionManager) {
-        this.entityIOMap.set(entityClass, { entityIO, transactionManager })
-    }
-
-    getEntityIO(entityClass: EntityClass<unknown>): EntityIO<unknown> {
-        const { entityIO } = this.entityIOMap.get(entityClass)
-        return entityIO
+        entityIOCreator: (context: PersistenceContext) => EntityIO<unknown>) {
+        this.entityIOCreatorMap.set(entityClass, entityIOCreator)
     }
 
 }

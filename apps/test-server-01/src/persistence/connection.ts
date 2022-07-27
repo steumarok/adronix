@@ -10,16 +10,28 @@ export const sequelize = new Sequelize({
     "database": "/tmp/prova1.db"
 })
 
-export const dataSource = new DataSource({
-    "type": "sqlite",
-    "database": "/tmp/prova.db",
-    "synchronize": true,
-    logging: true,
-    entities: [
-        ...TcmEntities,
-        ...TcaEntities
-    ]
-})
+export const dataSources = {
+    't1': new DataSource({
+        "type": "sqlite",
+        "database": "/tmp/t1.db",
+        "synchronize": true,
+        logging: true,
+        entities: [
+            ...TcmEntities,
+            ...TcaEntities
+        ]
+    }),
+    't2': new DataSource({
+        "type": "sqlite",
+        "database": "/tmp/t2.db",
+        "synchronize": true,
+        logging: true,
+        entities: [
+            ...TcmEntities,
+            ...TcaEntities
+        ]
+    })
+}
 
 
 TcaTest.init({

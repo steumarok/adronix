@@ -1,13 +1,14 @@
 import { DataSource } from "typeorm"
-import { EntityIO, EntityId } from "@adronix/persistence"
+import { EntityIO, EntityId, TransactionManager } from "@adronix/persistence"
 import { TypeORMTransaction } from "./TypeORMTransaction"
 
 export class TypeORMEntityIO<T> extends EntityIO<T> {
 
     constructor(
-        protected dataSource: DataSource,
-        protected entityClass: new () => T) {
-        super()
+        transactionManager: TransactionManager,
+        protected readonly dataSource: DataSource,
+        protected readonly entityClass: new () => T) {
+        super(transactionManager)
     }
 
     query() {

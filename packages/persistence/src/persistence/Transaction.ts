@@ -1,7 +1,10 @@
+import { PersistenceContext } from "./PersistenceContext"
 import { TransactionEventHandler, TransactionEventKind } from "./types"
 
 export class Transaction {
     private eventHandlers: TransactionEventHandler[] = []
+
+    constructor(public readonly context: PersistenceContext) { }
 
     async start() { }
 

@@ -1,9 +1,11 @@
 import { Objects } from "@adronix/base/src"
 import { EntityClass, EntityProps, IPersistenceExtender, Persistence, PersistenceBuilder, PersistenceExtension } from "@adronix/persistence"
-import { Application } from "./Application"
+import { AbstractService } from "./AbstractService"
+import { Application, CallContext } from "./Application"
 import { EntityDataSetProcessor } from "./EntityDataSetProcessor"
+import { FormProcessor } from "./FormProcessor"
 import { ItemCollector } from "./ItemCollector"
-import { DataProvider, DataProviderDefintions, ModuleOptions, Params, ReturnType } from "./types"
+import { DataProvider, DataProviderDefintions, FormDefinitions, FormHandler, ModuleOptions, Params, ReturnType } from "./types"
 
 
 
@@ -12,6 +14,7 @@ type Descriptor = (collector: ItemCollector) => ItemCollector
 
 export abstract class Module<A extends Application> {
     readonly providers: Map<string, { dataProvider: DataProvider<A>, descriptor: Descriptor}[]> = new Map()
+    readonly formHandlers: Map<string, FormHandler<A>[]> = new Map()
 
     constructor(
         readonly app: A,
@@ -19,7 +22,8 @@ export abstract class Module<A extends Application> {
     }
 
     usePersistence(persistence: Persistence) {
-        persistence.entityIOMap.forEach((value, key) => this.app.addEntityIO(key, value.entityIO, value.transactionManager))
+        persistence.entityIOCreatorMap.forEach(
+            (value, entityClass) => this.app.addEntityIOCreator(entityClass, value))
     }
 
     bind(fn: (changes: EntityProps, entity: any, module: Module<A>) => Promise<boolean>) {
@@ -49,6 +53,21 @@ export abstract class Module<A extends Application> {
         return (this.options?.urlContext ? this.options?.urlContext : '') + path
     }
 
+    registerService(service: typeof AbstractService<A>) {
+        this.app.registerService(service)
+    }
+
+    registerFormHandler(
+        path: string,
+        handler: FormHandler<A>) {
+
+        this.formHandlers.set(path, [handler])
+        this.app.registerFormProcessor(
+            this.composePath(path),
+            () => this.createFormProcessor(path),
+            this.options.secured)
+    }
+
     registerProvider(
         path: string,
         dataProvider: DataProvider<A>,
@@ -58,7 +77,28 @@ export abstract class Module<A extends Application> {
             dataProvider,
             descriptor
         }])
-        this.app.registerProcessor(this.composePath(path), () => this.createDataSetProcessor(path))
+        this.app.registerProcessor(
+            this.composePath(path),
+            () => this.createDataSetProcessor(path),
+            this.options.secured)
+    }
+
+    createFormProcessor(
+        path: string): FormProcessor {
+
+        const module = this
+        return new class extends FormProcessor {
+            constructor() {
+                super(module)
+            }
+
+            async submit(payload: any) {
+                await Promise.all(
+                    module.formHandlers.get(path).map(handler => handler.call(module.app, payload))
+                )
+                return { status: 200 }
+            }
+        }
     }
 
     createDataSetProcessor(
@@ -70,26 +110,29 @@ export abstract class Module<A extends Application> {
                 super(module)
             }
 
-            protected async getItems(params: Map<String, any>): Promise<ItemCollector> {
+            protected async getItems(
+                params: Map<String, any>,
+                context: CallContext): Promise<ItemCollector> {
 
                 const dataProviders = module.providers.get(path).map(({ dataProvider }) => dataProvider)
                 const descriptors = module.providers.get(path).map(({ descriptor }) => descriptor)
 
                 const collector = descriptors.reduce(
                     (collector, descriptor) => descriptor.call(module, collector),
-                    await super.getItems(params))
+                    await super.getItems(params, context))
 
                 const p = Object.fromEntries(params)
-                const items = await dataProviders.reduce(
-                    async (items, provider) => {
-                        const i = await items
-                        return i.concat(await provider.call(module, p, i))
-                    },
-                    Promise.resolve([]))
+                return await dataProviders.reduce(
+                    async (collector, provider) => {
+                        const c = await collector
+                        const items = c.getCollectedItems()
+                        const newItems = await provider.call(module, context, p, items)
 
-                return items.reduce(
-                    (collector, item) => this.add(collector, item),
-                    collector)
+                        return newItems.reduce(
+                            (collector, item) => this.add(collector, item),
+                            c)
+                    },
+                    Promise.resolve(collector))
             }
 
             add(collector: ItemCollector, item: ReturnType) {
@@ -115,23 +158,37 @@ export function defineModule<A extends Application>() {
     var persistenceBuilder: PersistenceBuilder
     var persistenceBuilderCallback: (extender: IPersistenceExtender) => IPersistenceExtender
     var currentProviderPath: string
+
+    const moduleServices: Array<typeof AbstractService<A>> = []
+
+    const formHandlers: Map<string, FormHandler<A>> = new Map()
+
     const dataProviders: Map<string, DataProvider<A>> = new Map()
     const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
+
     return class extends Module<A> {
         constructor(app: A, options?: ModuleOptions) {
             super(app, options)
+
             if (persistenceBuilder) {
                 if (persistenceBuilderCallback) {
                     persistenceBuilder = persistenceBuilderCallback(persistenceBuilder) as PersistenceBuilder
                 }
                 this.usePersistence(persistenceBuilder.create(app))
             }
+
             dataProviders.forEach((provider, path) => {
-                this.registerProvider(path, (params: Params) => {
-                    return provider.bind(this)(params, this, [])
+                this.registerProvider(path, (context, params: Params, items) => {
+                    return provider.bind(this)(context, params, items)
                 },
                 this.describe(path))
             })
+
+            formHandlers.forEach((handler, path) => {
+                this.registerFormHandler(path, handler)
+            })
+
+            moduleServices.forEach(service => this.registerService(service))
         }
         getDescriptors(path: string) {
             return descriptorsMap.get(path) || []
@@ -142,10 +199,28 @@ export function defineModule<A extends Application>() {
                 return descriptors.reduce((a, b) => a.describe(b.entityClass, b.propNames), collector)
             }
         }
+
         static buildPersistence(builder: PersistenceBuilder) {
             persistenceBuilder = builder
             return this
         }
+
+        static addForms(formDefinitions: FormDefinitions<A>) {
+            for (const path in formDefinitions) {
+                const self = this.addFormHandler(path, formDefinitions[path].handler)
+            }
+            return this
+        }
+        static addFormHandler(path: string, handler: FormHandler<A>) {
+            formHandlers.set(path, handler)
+            return this
+        }
+
+        static addServices(...serviceClasses: typeof AbstractService<A>[]) {
+            serviceClasses.forEach(cls => moduleServices.push(cls))
+            return this
+        }
+
         static addDataProvider(path: string, provider: DataProvider<A>) {
             dataProviders.set(path, provider)
             currentProviderPath = path
@@ -234,54 +309,3 @@ export function defineModule<A extends Application>() {
 
     }
 }
-/*
-Objects.override(Module1, base => {
-    return class extends base {
-        constructor(app: A) {
-            super(app)
-            console.log("jjj")
-        }
-    }
-})*/
-
-
-
-/*
-export function overrideModule<A extends Application>(moduleClass: new (app: A) => Module<A>) {
-    var persistenceOverrider: (module: Module<A>) => PersistenceBuilder<Transaction>
-    var currentProviderPath: string
-    const dataProviders: Map<string, DataProvider<A>> = new Map()
-    const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
-
-    Objects.override(moduleClass, base => {
-        return class extends base {
-            constructor(app: A) {
-                super(app)
-
-//                this.overrideProvider('/editProductOption', this.editProductOptionOvr, this.describeEditProductOptionOvr)
-            }
-        }
-    })
-
-    const overrider = {
-        overrideDataProvider(path: string, provider: DataProvider<A>) {
-            dataProviders.set(path, provider)
-            currentProviderPath = path
-            return overrider
-        },
-        describe(entityClass: EntityClass<unknown>, propNames: string[]) {
-            const descriptors = descriptorsMap.get(currentProviderPath) || []
-            descriptors.push({ entityClass, propNames })
-            descriptorsMap.set(currentProviderPath, descriptors)
-            return overrider
-        },
-        overridePersistence(fn: (ovr: PersistenceOverrider) => PersistenceOverrider) {
-            fn(persistenceOverrider)
-            return this
-        }
-    }
-
-    return overrider
-
-
-}*/

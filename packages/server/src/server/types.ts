@@ -1,5 +1,7 @@
+import { Errors, ItemError } from "@adronix/base/src"
 import { EntityClass } from "@adronix/persistence/src"
-import { Application } from "./Application"
+import { IncomingMessage, ServerResponse } from "http"
+import { Application, CallContext } from "./Application"
 import { ItemCollector } from "./ItemCollector"
 import { Module } from "./Module"
 
@@ -22,14 +24,6 @@ export type ItemRef = {
     $type: string
 }
 
-export type ItemError = {
-    code?: string,
-    message: string
-}
-export type Errors = {
-    [key: string]: ItemError[]
-}
-
 export type DataMap = Map<string, ItemData>
 export type IdGetter = (item: any) => ItemId
 export type DescriptorMap = Map<any, { propNames: string[], idGetter: IdGetter }>
@@ -43,7 +37,12 @@ export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
 
-export type DataProvider<A extends Application> = (this: Module<A>, params: Partial<Params>, items?: any[]) => Promise<ReturnType[]>
+export type DataProvider<A extends Application> = (
+    this: Module<A>,
+    context: CallContext,
+    params: Partial<Params>,
+    items?: any[]
+) => Promise<ReturnType[]>
 
 export type DataProviderDefintions<A extends Application> =  {
     [key: string]: {
@@ -53,5 +52,19 @@ export type DataProviderDefintions<A extends Application> =  {
 }
 
 export type ModuleOptions = {
-    urlContext?: string
+    urlContext?: string,
+    secured?: boolean
+}
+
+
+export type FormRuleExpr<A extends Application> = (this: A, payload: any) => boolean
+export type AsyncFormRuleExpr<A extends Application> = (this: A, payload: any) => Promise<boolean>
+
+export type FormHandler<A extends Application> = (this: Module<A>, payload: any) => Promise<any>
+
+export type FormDefinitions<A extends Application> =  {
+    [key: string]: {
+        handler: FormHandler<A>,
+        rules: [ string, FormRuleExpr<A> | AsyncFormRuleExpr<A>, ItemError][]
+    }
 }

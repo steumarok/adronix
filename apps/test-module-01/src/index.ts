@@ -1,28 +1,28 @@
-import { AsyncRuleExpr, EntityClass, EntityIODefinitions, ItemError, RuleExpr } from "@adronix/persistence/src/persistence/types";
-import { Application, defineModule, Module, PaginatedList } from "@adronix/server";
-import { DataProvider, DataProviderDefintions } from "@adronix/server/src/server/types";
+import { AsyncRuleExpr, EntityIODefinitions } from "@adronix/persistence/src/persistence/types";
+import { Application, defineModule, Module, PaginatedList, ServiceContext } from "@adronix/server";
+import { DataProviderDefintions } from "@adronix/server/src/server/types";
 import { ITypeORMAware, TypeORMPersistence } from "@adronix/typeorm";
 import { Not } from "typeorm";
 import { TcmProductOptionValue, TcmProductOption, TcmIngredient } from "./entities";
+import { Service1, Service2 } from "./services";
+import { Request as JWTRequest } from "express-jwt";
 
 export { TcmIngredient, TcmProductOption, TcmProductOptionValue }
 export const TcmEntities = [ TcmIngredient, TcmProductOption, TcmProductOptionValue ]
 
 export type TestApplication = Application & ITypeORMAware
 
-
 const providers: DataProviderDefintions<TestApplication> = {
 
     '/listProductOption': {
-        handler: async function ({ page, limit }) {
+        handler: async function (context, { page, limit }, items: any[]) {
 
-            const [ pos, count ] = await this.app.getDataSource().getRepository(TcmProductOption)
-                .createQueryBuilder("po")
-                .skip((parseInt(page)-1) * parseInt(limit))
-                .take(parseInt(limit))
-                .getManyAndCount()
+            console.log((context.request as JWTRequest).auth)
 
-            return [PaginatedList(TcmProductOption, pos, count)]
+            //const { rows, count } = await this.app.services<Service1>(Service1, context).listProductOptions(page, limit)
+            const { rows, count } = await Module1_Service1(this, context).listProductOptions(page, limit)
+
+            return [PaginatedList(TcmProductOption, rows, count)]
         },
         output: [
             [TcmProductOption, 'name']
@@ -30,10 +30,10 @@ const providers: DataProviderDefintions<TestApplication> = {
     },
 
     '/editProductOption': {
-        handler: async function({ id }) {
+        handler: async function(ctx, { id }) {
             const po =
                 id
-                    ? await this.app.getDataSource().getRepository(TcmProductOption)
+                    ? await this.app.getDataSource(ctx).getRepository(TcmProductOption)
                         .findOne({ relations: { ingredients: true }, where: { id }})
                     : new TcmProductOption()
 
@@ -48,9 +48,9 @@ const providers: DataProviderDefintions<TestApplication> = {
 
 
 
-const checkNameDup: AsyncRuleExpr = async function({ name }, entity: TcmProductOption) {
+const checkNameDup: AsyncRuleExpr = async function(ctx, { name }, entity: TcmProductOption) {
     const conditions = entity ? { id: Not(entity.id) } : {}
-    const po = await (this as ITypeORMAware).getDataSource().getRepository(TcmProductOption)
+    const po = await (this as ITypeORMAware).getDataSource(ctx).getRepository(TcmProductOption)
         .findOne({ where: { name, ...conditions }})
     return !po
 }
@@ -60,11 +60,13 @@ const ioDefinitions: EntityIODefinitions = [
     {
         entityClass: TcmProductOption,
         rules: [
-            [ 'name', changes => !!changes.name, { message: 'empty' } ],
+            [ 'name', (_ctx, changes) => !!changes.name, { message: 'empty' } ],
             [ 'name', checkNameDup, { message: 'name not valid' } ]
         ]
     }
 ]
+
+
 
 export const Module1 = defineModule<TestApplication>()
     .buildPersistence(TypeORMPersistence
@@ -72,5 +74,6 @@ export const Module1 = defineModule<TestApplication>()
         .addDefinitions(ioDefinitions)
     )
     .addDataProviders(providers)
+    .addServices(Service1, Service2)
 
-
+const Module1_Service1 = (module: Module<TestApplication>, context: ServiceContext) => module.app.services<Service1>(Service1, context)

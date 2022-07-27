@@ -3,17 +3,49 @@ import { EntityClass, EntityId, Transaction, TransactionManager } from '@adronix
 import { ItemData, ItemId } from "./types"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
-import { Application } from "./Application"
+import { Application, CallContext } from "./Application"
+import { IncomingMessage, ServerResponse } from "http"
+
+function groupBy<K, V>(array: V[], grouper: (item: V) => K) {
+    return array.reduce((store, item) => {
+        var key = grouper(item)
+        if (!store.has(key)) {
+            store.set(key, [item])
+        } else {
+            store.get(key).push(item)
+        }
+        return store
+    }, new Map<K, V[]>())
+}
+
+function transformMap<K, V, R>(
+    source: Map<K, V>,
+    transformer: (value: V, key: K) => R
+) {
+    return new Map(
+        Array.from(source, v => [v[0], transformer(v[1], v[0])])
+    )
+}
+
+function groupByAndMap<T, K, R>(
+    array: T[],
+    grouper: (x: T) => K,
+    mapper: (x: T[]) => R
+) {
+    let groups = groupBy(array, grouper)
+    return transformMap(groups, value => mapper(value))
+}
+
 
 export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
-    constructor(protected module: Module<Application>) {
-        super()
+    constructor(module: Module<Application>) {
+        super(module)
     }
 
-    protected getEntityIOMap() {
+    /*protected getEntityIOMap() {
         return this.module.app.getEntityIOMap()
-    }
+    }*/
 
     protected mapEntityId(idMap: Map<string, any>, type: string, tempId: EntityId, entity: any) {
         idMap.set(`${tempId}@${type}`, entity)
@@ -25,14 +57,18 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         return this.module.app.getEntityClassByName(name)
     }
 
-    protected prepareDataForIO(itemData: ItemData, idMap: Map<string, any>) {
+    protected prepareDataForIO(itemData: ItemData, idMap: Map<string, any>, context: CallContext) {
         const data = {}
         for (let key in itemData) {
             if (!key.startsWith("$")) {
                 const value = itemData[key]
                 if (typeof value == "object") {
                     if (value.$idRef) {
-                        data[key] = () => this.resolveEntityRef(value.$type, value.$idRef, idMap)
+                        data[key] = () => this.resolveEntityRef(
+                            value.$type,
+                            value.$idRef,
+                            idMap,
+                            context)
                     }
                 }
                 else {
@@ -43,26 +79,26 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         return data
     }
 
-    protected resolveEntityRef(type: string, idRef: ItemId, idMap: Map<string, any>) {
+    protected resolveEntityRef(type: string, idRef: ItemId, idMap: Map<string, any>, context: CallContext) {
         const tempKey = `${idRef}@${type}`
 
         if (idMap.has(tempKey)) {
             return Promise.resolve(idMap.get(tempKey))
         }
         else {
-            const entityIO = this.getEntityIO(type)
+            const entityIO = this.getEntityIO(type, context)
             return entityIO.get(idRef)
         }
     }
 
-    protected getEntityIO(type: string | EntityClass<unknown>) {
-       return this.module.app.getEntityIO(type)
+    protected getEntityIO(type: string | EntityClass<unknown>, context: CallContext) {
+       return this.module.app.getEntityIO(type, context)
     }
 
-    protected async processItem(itemData: ItemData, idMap: Map<string, any>) {
-        const entityIO = this.getEntityIO(itemData.$type)
+    protected async processItem(itemData: ItemData, idMap: Map<string, any>, context: CallContext) {
+        const entityIO = this.getEntityIO(itemData.$type, context)
 
-        const changes = this.prepareDataForIO(itemData, idMap)
+        const changes = this.prepareDataForIO(itemData, idMap, context)
 
         if (itemData.$inserted) {
             return await entityIO.insert(changes)
@@ -77,7 +113,9 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         }
     }
 
-    async sync(data: ItemData[]) {
+    async sync(
+        data: ItemData[],
+        context: CallContext) {
 
         const graph = Graph()
         data.map(itemData => {
@@ -109,13 +147,15 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
         const idMap: Map<string, any> = new Map()
 
+        const transactionManagerMap = this.getTransactionManagerMap(data, context)
+
         const processedItems = await Promise.all(
             data.map(async itemData => {
                 const entityClass = this.getEntityClassByName(itemData.$type)
                 return {
                     itemData,
                     entityClass,
-                    actionOrErrors: await this.processItem(itemData, idMap)
+                    actionOrErrors: await this.processItem(itemData, idMap, context)
                 }
             })
         )
@@ -146,29 +186,23 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         })
 
         if (itemsWithErrors.length > 0) {
-            return itemsWithErrors
+            return { data: itemsWithErrors, status: 400 }
         }
 
-        const transactionMap = this.createTransactions()
-
-        const ioTransactionMap = new Map<EntityClass<unknown>, Transaction>()
-        this.getEntityIOMap().forEach((value, key) => {
-            ioTransactionMap.set(key, transactionMap.get(value.transactionManager))
-        })
+        const transactionMap = this.createTransactions(transactionManagerMap)
 
         const transactions = Array.from(transactionMap.values())
         await Promise.all(transactions.map(t => t.start()))
 
         try {
-            const collector = Array
-                .from(this.getEntityIOMap().keys())
+            const collector = this.module.app.getEntityClasses()
                 .reduce((c, entityClass) => c.describe(entityClass), this.createCollector())
 
-            for (let op of operations) {
-                const entity = await op.action(ioTransactionMap.get(op.entityClass))
+            for (const op of operations) {
+                const entity = await op.action(transactionMap.get(op.entityClass))
 
                 if (entity) {
-                    const io = this.getEntityIO(op.entityClass)
+                    const io = this.getEntityIO(op.entityClass, context)
 
                     this.mapEntityId(
                         idMap,
@@ -188,7 +222,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
             await Promise.all(transactions.map(t => t.commit()))
 
-            return collector.get()
+            return { data: collector.get(), status: 200 }
         }
         catch (e) {
             await Promise.all(transactions.map(t => t.rollback()))
@@ -197,16 +231,29 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         }
     }
 
-    protected createTransactions(): Map<TransactionManager, Transaction> {
-        const transactionMap = new Map<TransactionManager, Transaction>()
-        this.getTransactionManagers().forEach(tm => {
-            transactionMap.set(tm, tm.createTransaction())
-        })
-        return transactionMap
+    protected getTransactionManagerMap(
+        data: ItemData[],
+        context: CallContext): Map<EntityClass<unknown>, TransactionManager> {
+        return new Map(
+            data.map(itemData => {
+                const entityClass = this.getEntityClassByName(itemData.$type)
+                return [ entityClass, this.getEntityIO(entityClass, context).transactionManager ]
+            })
+        )
     }
 
-    protected getTransactionManagers() {
-        return new Set(Array.from(this.getEntityIOMap().values()).map(v => v.transactionManager))
+    protected createTransactions(
+        transactionManagerMap: Map<EntityClass<unknown>, TransactionManager>): Map<EntityClass<unknown>, Transaction> {
+        const a = Array.from(transactionManagerMap.entries())
+        const r = groupByAndMap(a, x => x[1].createTransaction(), x => x.reduce((v, c) => v.concat([c[0]]), [] as EntityClass<unknown>[]))
+        const map: Map<EntityClass<unknown>, Transaction> = new Map()
+        r.forEach((entityClasses, tm) => {
+            entityClasses.forEach(entityClass => {
+                map.set(entityClass, tm)
+            })
+        })
+        return map
     }
+
 
 }

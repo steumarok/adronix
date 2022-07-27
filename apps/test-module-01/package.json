@@ -7,7 +7,8 @@
       "@adronix/express": "workspace:^",
       "@adronix/persistence": "workspace:^",
       "@adronix/server": "workspace:^",
-      "@adronix/typeorm": "workspace:^"
+      "@adronix/typeorm": "workspace:^",
+      "express-jwt": "^7.7.5"
    },
    "peerDependencies": {
       "reflect-metadata": "^0.1.10",

@@ -2,15 +2,25 @@ import { EntityClass, EntityIO, EntityProps, IPersistenceManager, Persistence, P
 import { TypeORMEntityIO } from "./TypeORMEntityIO"
 import { ITypeORMAware } from "./ITypeORMAware"
 import { TypeORMTransactionManager } from "./TypeORMTransactionManager"
-import { Rule } from "@adronix/persistence/src/persistence/types"
+import { EntityEventHandler, Rule } from "@adronix/persistence"
+import { PersistenceContext } from '@adronix/persistence'
 
 export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
     constructor(
-        protected manager: ITypeORMAware,
-        entityClass: new () => T,
+        protected readonly transactionManagerCreator: (context: PersistenceContext) => TransactionManager,
+        protected readonly manager: ITypeORMAware,
+        protected readonly name: string,
+        protected readonly context: PersistenceContext,
+        protected readonly entityClass: new () => T,
+        eventHandlers: EntityEventHandler<T>[],
         protected readonly rules: Rule[]) {
 
-        super(manager.getDataSource(), entityClass)
+        super(
+            transactionManagerCreator(context),
+            manager.getDataSource(context, name),
+            entityClass)
+
+        eventHandlers.forEach(handler => this.addEventHandler(handler))
     }
 
     validate(
@@ -20,7 +30,7 @@ export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
         return this.rules.reduce(
             (validator, rule) => validator.addRule(
                 async () => {
-                    const result = await rule.expr.bind(this.manager)(changes, entity)
+                    const result = await rule.expr.bind(this.manager)(this.context, changes, entity)
                     if (!result) {
                         return { name: rule.name, error: rule.error }
                     }
@@ -34,14 +44,13 @@ export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
 
 export class TypeORMPersistence extends Persistence {
 
-    static transactionManagers: Map<String, TransactionManager> = new Map()
-
     static build(
-        name: string = 'default') {
+        name: string = null) {
         return new PersistenceBuilder(
             manager => new TypeORMPersistence(manager as ITypeORMAware, name))
     }
 
+    protected transactionManagerMap: Map<string, (context: PersistenceContext) => TransactionManager> = new Map()
 
     constructor(
         protected manager: ITypeORMAware,
@@ -51,26 +60,32 @@ export class TypeORMPersistence extends Persistence {
 
     createEntityIO<T>(
         entityClass: EntityClass<T>,
-        rules: Rule[]): EntityIO<T> {
+        eventHandlers: EntityEventHandler<T>[],
+        rules: Rule[]) {
 
-        const dataSource = this.manager.getDataSource(this.name)
+        const tmKey = this.name || 'default'
 
-        if (!TypeORMPersistence.transactionManagers.has(this.name)) {
-            TypeORMPersistence.transactionManagers.set(
-                this.name,
-                new TypeORMTransactionManager(dataSource))
+        if (!this.transactionManagerMap.has(tmKey)) {
+            this.transactionManagerMap.set(
+                tmKey,
+                (context: PersistenceContext) => new TypeORMTransactionManager(
+                    context,
+                    this.manager.getDataSource(context, this.name)))
         }
 
-        const entityIO = new GenericEntityIO<T>(
-            this.manager,
-            entityClass,
-            rules)
+        const tm = this.transactionManagerMap.get(tmKey)
 
-        this.addEntityIO(
+        this.addEntityIOCreator(
             entityClass,
-            entityIO,
-            TypeORMPersistence.transactionManagers.get(this.name))
+            (context: PersistenceContext) => new GenericEntityIO<T>(
+                tm,
+                this.manager,
+                this.name,
+                context,
+                entityClass,
+                eventHandlers,
+                rules))
 
-        return entityIO
+        //return entityIO
     }
 }

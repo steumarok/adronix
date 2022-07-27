@@ -5,5 +5,8 @@
       "composite": true
     },
     "include": ["./**/*.ts"],
-    "references": [{ "path": "../persistence/tsconfig.json" }]
+    "references": [
+      { "path": "../persistence/tsconfig.json" },
+      { "path": "../server/tsconfig.json" }
+   ]
 }

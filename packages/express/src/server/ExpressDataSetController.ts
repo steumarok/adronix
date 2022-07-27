@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import { DataSetProcessor } from '@adronix/server'
 import { Objects } from "@adronix/base"
+import { CallContext } from "@adronix/server/src/server/Application"
 
 export class ExpressDataSetController {
     constructor(private processorProvider: () => DataSetProcessor) {
@@ -21,19 +22,32 @@ export class ExpressDataSetController {
         return paramMap
     }
 
-    fetchCallback() {
+    fetchCallback(contextCreator: (request: Request, response: Response) => Promise<CallContext>) {
         return async (request: Request, response: Response) => {
-            response.json(await this.getProcessor().fetch(this.collectParams(request)))
-            response.status(200)
+            try {
+                response.json(await this.getProcessor().fetch(
+                    this.collectParams(request),
+                    await contextCreator(request, response)))
+                response.status(200)
+            }
+            catch (e) {
+                console.log(e)
+
+                response
+                    .status(500)
+                    .send("Internal server error")
+            }
         }
     }
 
-    syncCallback() {
+    syncCallback(contextCreator: (request: Request, response: Response) => Promise<CallContext>) {
         return async (request: Request, response: Response) => {
             try {
-                const data = await this.getProcessor().sync(request.body)
+                const { data, status } = await this.getProcessor().sync(
+                    request.body,
+                    await contextCreator(request, response))
                 response
-                    .status(200)
+                    .status(status)
                     .json(data)
             }
             catch (e) {
