@@ -61,10 +61,6 @@ export class PersistenceBuilder implements IPersistenceExtender {
                 rules)
         })
 
-        /*this.eventHandlers.forEach(({entityClass, handler}) => {
-            persistence.getEntityIO(entityClass).addEventHandler(handler.bind(manager))
-        })*/
-
         return persistence
     }
 

@@ -1,4 +1,4 @@
-import { EntityClass, EntityIO, IPersistenceManager, PersistenceContext, Transaction, TransactionEventKind, TransactionManager } from "@adronix/persistence/src"
+import { EntityClass, EntityIO, IPersistenceManager, PersistenceContext, TransactionEventKind } from "@adronix/persistence/src"
 import { EntityEventKind } from "@adronix/persistence"
 import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { DataSetProcessor } from "./DataSetProcessor"
@@ -18,55 +18,14 @@ export class CallContext implements ServiceContext {
         public readonly tenantId: string) { }
 }
 
-export abstract class Application implements IPersistenceManager {
+export abstract class Application /* implements IPersistenceManager */ {
     readonly modules: Module<Application>[] = []
     readonly defaultNotificationChannel: NotificationChannel  = new BetterSseNotificationChannel()
-
-    public readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: PersistenceContext) => EntityIO<unknown>>()
-    public readonly transactonManagerCreators: ((context: PersistenceContext) => TransactionManager)[] = []
 
     protected readonly serviceMap: Map<String, AbstractService<Application>> = new Map();
 
     constructor() {
     }
-
-    getEntityClasses() {
-        return Array.from(this.entityIOCreatorMap.keys())
-    }
-
-    addEntityIOCreator<T>(
-        entityClass: EntityClass<T>,
-        entityIOCreator: (context: PersistenceContext) => EntityIO<T>) {
-
-        this.entityIOCreatorMap.set(entityClass, entityIOCreator)
-    }
-
-    getEntityClassByName(name: string) {
-        return Array.from(this.entityIOCreatorMap.keys()).find(c => c.name == name)
-    }
-
-    createTransactionManagers(context: PersistenceContext) {
-        return this.transactonManagerCreators.map(c => c(context))
-    }
-
-    getEntityIO(type: string | EntityClass<unknown>, context: PersistenceContext): EntityIO<unknown> {
-        const entityClass = typeof type == "string" ? this.getEntityClassByName(type) : type
-        const entityIOCreator = this.entityIOCreatorMap.get(entityClass)
-
-        return entityIOCreator(context)
-            .addEventHandler(async (entityEventKind, entity, transaction) => {
-                if (entityEventKind == EntityEventKind.Deleted ||
-                    entityEventKind == EntityEventKind.Updated ||
-                    entityEventKind == EntityEventKind.Inserted) {
-                    transaction.addEventHandler((transactionEventKind) => {
-                        if (transactionEventKind == TransactionEventKind.Commit) {
-                            this.defaultNotificationChannel.broadcast(entity, entity.constructor.name)
-                        }
-                    })
-                }
-            })
-    }
-
 
     setDefaultNotificationChannel(path: string) {
         this.registerNotificationChannel(path, this.defaultNotificationChannel, false)

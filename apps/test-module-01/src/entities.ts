@@ -11,6 +11,16 @@ export class TcmIngredient {
 }
 
 @Entity()
+export class TcmShop {
+
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    name: string;
+}
+
+@Entity()
 export class TcmProductOption {
 
     constructor() {}
@@ -21,9 +31,15 @@ export class TcmProductOption {
     @Column()
     name: string;
 
+    @Column({ type: "integer" })
+    quantity: number;
+
     @ManyToMany(() => TcmIngredient)
     @JoinTable()
     ingredients: TcmIngredient[];
+
+    @ManyToOne(() => TcmShop)
+    shop: TcmShop;
 }
 
 @Entity()

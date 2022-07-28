@@ -1,5 +1,5 @@
 export { VueDataSet, dataSet } from './client/VueDataSet'
-import { Component, computed, reactive, Ref } from 'vue'
+import { Component, computed, onMounted, reactive, ref, Ref } from 'vue'
 import { GetParams, urlComposer } from './client/UrlComposer'
 import { dataSet, VueDataSet } from './client/VueDataSet'
 import AdronixPlugin from './ui/AdronixPlugin'
@@ -44,7 +44,7 @@ export function dataTable(
     }
   }
 
-export function dialog(component: Component, props?: any): void {
+export function openDialog(component: Component, props?: any): void {
     throw "not implemented";
 }
 
@@ -52,23 +52,23 @@ const implementation = {
     urlComposer,
     dataSet,
     dataTable,
-    dialog,
+    openDialog,
     components: {} as {
-        [name: string]: Component
+        [name: string]: Component<{}, {}, any>
     },
     useImpl: () => null
 }
 
 type LibraryImplementation = {
-    dialog: typeof dialog,
+    openDialog: typeof openDialog,
     useImpl: () => any,
     components: {
-        [name: string]: Component
+        [name: string]: Component<{}, {}, any>
     },
 }
 
-export function registerImplementation({ dialog, useImpl, components }: LibraryImplementation) {
-    implementation.dialog = dialog
+export function registerImplementation({ openDialog, useImpl, components }: LibraryImplementation) {
+    implementation.openDialog = openDialog
     implementation.useImpl = useImpl
     implementation.components = { ...implementation.components, ...components }
 }
@@ -76,7 +76,20 @@ export function registerImplementation({ dialog, useImpl, components }: LibraryI
 export function useAdronix() {
     return {
         ...implementation,
-        dialog: implementation.dialog.bind(implementation.useImpl())
+        openDialog: implementation.openDialog.bind(implementation.useImpl()),
+
+        dialog: (
+          onOk: () => Promise<boolean>,
+          onCancel: () => Promise<boolean> = () => Promise.resolve(true)
+        ) => {
+          const dialog = ref()
+
+          onMounted(() => {
+            dialog.value.setCloseHandler(onOk, onCancel)
+          })
+
+          return { dialog }
+        }
     }
 }
 

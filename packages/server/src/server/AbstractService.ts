@@ -4,7 +4,7 @@ import { Application } from "./Application";
 export interface ServiceContext extends PersistenceContext {
 }
 
-export class AbstractService<A extends Application> {
+export class AbstractService<A extends Application = Application> {
     constructor(
         public readonly app: A,
         public readonly context: ServiceContext) { }

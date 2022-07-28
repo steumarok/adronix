@@ -7,7 +7,6 @@
 
       <!-- buttons example -->
       <q-card-actions align="right">
-        <q-btn color="primary" label="Refresh" @click="onRefresh" />
         <q-btn color="primary" label="OK" @click="onOKClick" />
         <q-btn color="primary" label="Cancel" @click="onCancelClick" />
       </q-card-actions>
@@ -16,56 +15,38 @@
 </template>
 
 
-<script>
+<script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
+import { ref } from 'vue'
 
-export default {
-  props: {
-    // ...your custom props
-  },
+defineEmits({
+  ...useDialogPluginComponent.emitsObject
+})
 
-  emits: [
-    // REQUIRED; need to specify some events that your
-    // component will emit through useDialogPluginComponent()
-    ...useDialogPluginComponent.emits,
-    'confirm'
-  ],
+const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 
-  setup (props, { emit }) {
-    // REQUIRED; must be called inside of setup()
-    const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-    // dialogRef      - Vue ref to be applied to QDialog
-    // onDialogHide   - Function to be used as handler for @hide on QDialog
-    // onDialogOK     - Function to call to settle dialog with "ok" outcome
-    //                    example: onDialogOK() - no payload
-    //                    example: onDialogOK({ /*.../* }) - with payload
-    // onDialogCancel - Function to call to settle dialog with "cancel" outcome
+const okHandler = ref(() => Promise.resolve(true))
+const cancelHandler = ref(() => Promise.resolve(true))
 
-    return {
-      // This is REQUIRED;
-      // Need to inject these (from useDialogPluginComponent() call)
-      // into the vue scope for the vue html template
-      dialogRef,
-      onDialogHide,
-
-      // other methods that we used in our vue html template;
-      // these are part of our example (so not required)
-      onOKClick () {
-        // on OK, it is REQUIRED to
-        // call onDialogOK (with optional payload)
-        emit('confirm', {
-            ok() {
-                onDialogOK()
-            }
-        })
-
-        // or with payload: onDialogOK({ ... })
-        // ...and it will also hide the dialog automatically
-      },
-
-      // we can passthrough onDialogCancel directly
-      onCancelClick: onDialogCancel
-    }
+async function onOKClick () {
+  const result = await okHandler.value()
+  if (result) {
+    onDialogOK()
   }
 }
+
+async function onCancelClick () {
+  const result = await cancelHandler.value()
+  if (result) {
+    onDialogCancel()
+  }
+}
+
+defineExpose({
+  setCloseHandler: function (onOk: () => Promise<boolean>, onCancel: () => Promise<boolean>) {
+    okHandler.value = onOk
+    cancelHandler.value = onCancel
+  }
+})
+
 </script>

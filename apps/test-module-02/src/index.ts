@@ -1,11 +1,12 @@
 import { Module1, TcmProductOption } from "@adronix/test-module-01";
-import { Application, DataProviderDefintions, defineModule, FormDefinitions } from "@adronix/server";
+import { Application, DataProviderDefintions, defineModule, FormDefinitions, IOService, ServiceContext } from "@adronix/server";
 import { ITypeORMAware, TypeORMPersistence } from "@adronix/typeorm";
 import { TcaProductOptionExt } from "./entities/TcaProductOptionExt";
 import { ISequelizeAware, SequelizePersistence } from "@adronix/sequelize";
-import { EntityEventKind, EntityIODefinitions, PersistenceExtension, Transaction } from "@adronix/persistence";
+import { EntityClass, EntityEventKind, EntityIODefinitions, IPersistenceExtender, IPersistenceManager, PersistenceExtension, Transaction } from "@adronix/persistence";
 import { TcaTest } from "./entities/TcaTest";
 import { In } from "typeorm";
+import { Objects } from "@adronix/base/src";
 
 export { TcaProductOptionExt, TcaTest }
 export const TcaEntities = [ TcaProductOptionExt ]
@@ -34,7 +35,7 @@ const ioDefinitions: EntityIODefinitions = [
     }
 ]
 
-const forms: FormDefinitions<TestApplication> = {
+const forms: FormDefinitions = {
     '/login': {
         handler: async function ({ username }) {
             // SysAuthService.authenticate(username)
@@ -45,18 +46,18 @@ const forms: FormDefinitions<TestApplication> = {
     }
 }
 
-export const Module2 = defineModule<TestApplication>()
+export const Module2 = defineModule()
     .addForms(forms)
     .buildPersistence(TypeORMPersistence.build().addDefinitions(ioDefinitions));
 
-const providers: DataProviderDefintions<TestApplication> = {
+const providers: DataProviderDefintions<Application & ITypeORMAware> = {
 
     '/listProductOption': {
-        handler: async function (ctx, { }, items: any[]) {
+        handler: async function ({ }, items: any[]) {
 
             const productOptions = items.filter(item => item instanceof TcmProductOption)
 
-            const poes = await this.app.getDataSource(ctx).getRepository(TcaProductOptionExt)
+            const poes = await this.app.getDataSource(this.context).getRepository(TcaProductOptionExt)
                 .find({
                     where: { productOption: { id: In(productOptions.map(item => item.id)) } },
                     relations: ['productOption'] })
@@ -69,7 +70,7 @@ const providers: DataProviderDefintions<TestApplication> = {
     },
 
     '/editProductOption': {
-        handler: async function (ctx, { id }, items: any[]) {
+        handler: async function ({ _id }, items: any[]) {
 
             const productOption = items.find(item => item instanceof TcmProductOption)
 
@@ -82,8 +83,10 @@ const providers: DataProviderDefintions<TestApplication> = {
                 return poe
             }
 
-            const poe = await this.app.getDataSource(ctx).getRepository(TcaProductOptionExt)
-                .findOne({ relations: [ 'productOption' ], where: { productOption: { id } }})
+            const poe = productOption.id
+                ? await this.app.getDataSource(this.context).getRepository(TcaProductOptionExt)
+                    .findOne({ relations: [ 'productOption' ], where: { productOption: { id: productOption.id } }})
+                : null
 
             return [poe ? poe : await newExt(productOption)]
         },
@@ -94,6 +97,7 @@ const providers: DataProviderDefintions<TestApplication> = {
 }
 
 
+/*
 const persistenceExtension: PersistenceExtension = {
     eventHandlers: [
         [TcmProductOption, async function(
@@ -113,7 +117,38 @@ const persistenceExtension: PersistenceExtension = {
         }]
     ]
 }
+*/
 
 Module1.extend()
     .extendDataProviders(providers)
-    .extendPersistence(persistenceExtension)
+
+
+Objects.override(IOService, base => {
+    return class extends base {
+        constructor(app: Application, context: ServiceContext) {
+            super(app, context)
+        }
+
+        delete<T>(type: string | EntityClass<T>, entity: T): (t: Transaction) => Promise<void> {
+            const op = super.delete(type, entity)
+
+            if (this.getEntityClass(type) == TcmProductOption) {
+                return async (t: Transaction) => {
+                    const io = this.getEntityIO(TcaProductOptionExt)
+                    const productOption = entity as any as TcmProductOption
+
+                    const poe = await (this.app as IPersistenceManager as ITypeORMAware).getDataSource(this.context).getRepository(TcaProductOptionExt)
+                        .findOne({ where: { productOption: { id: productOption.id } }})
+
+                    if (poe) {
+                        await io.delete(poe)(t)
+                    }
+
+                    await op(t)
+                }
+            }
+
+            return op
+        }
+    }
+})

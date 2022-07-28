@@ -36,7 +36,7 @@ export function useQTableHandler(totalCount: ComputedRef<any>, params: GetParams
 
 
 
-export function dialog(
+export function openDialog(
   this: ReturnType<typeof useQuasar>,
   component: Component,
   props?: any) {

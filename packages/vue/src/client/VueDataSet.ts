@@ -147,11 +147,11 @@ export class VueDataSet extends DataSet {
       return this.query(type, expr).reactive().list()
     }
 
-    ref(type: string, expr: ItemId | ItemFilter = () => true) {
+    ref(type: string, expr: ItemId | ItemFilter = () => true): Ref<Item> {
       const list = this.list(type, expr)
       const result = ref(list.length > 0 ? list[0] : null)
       watch(list, () => result.value = list.length > 0 ? list[0] : null)
-      return result
+      return result as Ref<Item>
     }
 
     query(type: string, expr: ItemId | ItemFilter = () => true): IReactiveQuery {

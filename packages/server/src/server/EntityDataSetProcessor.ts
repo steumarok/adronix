@@ -5,6 +5,7 @@ import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
 import { Application, CallContext } from "./Application"
 import { IncomingMessage, ServerResponse } from "http"
+import { IOService } from "./IOService"
 
 function groupBy<K, V>(array: V[], grouper: (item: V) => K) {
     return array.reduce((store, item) => {
@@ -43,21 +44,17 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         super(module)
     }
 
-    /*protected getEntityIOMap() {
-        return this.module.app.getEntityIOMap()
-    }*/
-
     protected mapEntityId(idMap: Map<string, any>, type: string, tempId: EntityId, entity: any) {
         idMap.set(`${tempId}@${type}`, entity)
     }
 
     validate(data: ItemData[]) { }
 
-    protected getEntityClassByName(name: string) {
-        return this.module.app.getEntityClassByName(name)
+    protected getEntityClassByName(name: string, ioService: IOService) {
+        return ioService.getEntityClassByName(name)
     }
 
-    protected prepareDataForIO(itemData: ItemData, idMap: Map<string, any>, context: CallContext) {
+    protected prepareDataForIO(itemData: ItemData, idMap: Map<string, any>, ioService: IOService) {
         const data = {}
         for (let key in itemData) {
             if (!key.startsWith("$")) {
@@ -68,7 +65,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
                             value.$type,
                             value.$idRef,
                             idMap,
-                            context)
+                            ioService)
                     }
                 }
                 else {
@@ -79,43 +76,44 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         return data
     }
 
-    protected resolveEntityRef(type: string, idRef: ItemId, idMap: Map<string, any>, context: CallContext) {
+    protected resolveEntityRef(type: string, idRef: ItemId, idMap: Map<string, any>, ioService: IOService) {
         const tempKey = `${idRef}@${type}`
 
         if (idMap.has(tempKey)) {
             return Promise.resolve(idMap.get(tempKey))
         }
         else {
-            const entityIO = this.getEntityIO(type, context)
-            return entityIO.get(idRef)
+            return ioService.get(type, idRef)
         }
     }
 
-    protected getEntityIO(type: string | EntityClass<unknown>, context: CallContext) {
+   /* protected _getEntityIO(type: string | EntityClass<unknown>, context: CallContext) {
        return this.module.app.getEntityIO(type, context)
-    }
+    }*/
 
-    protected async processItem(itemData: ItemData, idMap: Map<string, any>, context: CallContext) {
-        const entityIO = this.getEntityIO(itemData.$type, context)
+    protected async processItem(itemData: ItemData, idMap: Map<string, any>, ioService: IOService) {
+        //const entityIO = this.getEntityIO(itemData.$type, context)
 
-        const changes = this.prepareDataForIO(itemData, idMap, context)
+        const changes = this.prepareDataForIO(itemData, idMap, ioService)
 
         if (itemData.$inserted) {
-            return await entityIO.insert(changes)
+            return await ioService.insert(itemData.$type, changes)
         }
         else if (itemData.$deleted) {
-            const entity = await entityIO.get(itemData.$id)
-            return entityIO.delete(entity)
+            const entity = await ioService.get(itemData.$type, itemData.$id)
+            return ioService.delete(itemData.$type, entity)
         }
         else {
-            const entity = await entityIO.get(itemData.$id)
-            return await entityIO.update(entity, changes)
+            const entity = await ioService.get(itemData.$type, itemData.$id)
+            return await ioService.update(itemData.$type, entity, changes)
         }
     }
 
     async sync(
         data: ItemData[],
         context: CallContext) {
+
+        const ioService = IOService.get({ app: this.module.app, context })
 
         const graph = Graph()
         data.map(itemData => {
@@ -147,15 +145,15 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
         const idMap: Map<string, any> = new Map()
 
-        const transactionManagerMap = this.getTransactionManagerMap(data, context)
+        const transactionManagerMap = this.getTransactionManagerMap(data, ioService)
 
         const processedItems = await Promise.all(
             data.map(async itemData => {
-                const entityClass = this.getEntityClassByName(itemData.$type)
+                const entityClass = this.getEntityClassByName(itemData.$type, ioService)
                 return {
                     itemData,
                     entityClass,
-                    actionOrErrors: await this.processItem(itemData, idMap, context)
+                    actionOrErrors: await this.processItem(itemData, idMap, ioService)
                 }
             })
         )
@@ -191,19 +189,17 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
         const transactionMap = this.createTransactions(transactionManagerMap)
 
-        const transactions = Array.from(transactionMap.values())
+        const transactions = Array.from(new Set(transactionMap.values()))
         await Promise.all(transactions.map(t => t.start()))
 
         try {
-            const collector = this.module.app.getEntityClasses()
+            const collector = ioService.getEntityClasses()
                 .reduce((c, entityClass) => c.describe(entityClass), this.createCollector())
 
             for (const op of operations) {
                 const entity = await op.action(transactionMap.get(op.entityClass))
 
                 if (entity) {
-                    const io = this.getEntityIO(op.entityClass, context)
-
                     this.mapEntityId(
                         idMap,
                         op.entityClass.name,
@@ -212,7 +208,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
                     collector.addOne(entity)
 
-                    const id = io.getEntityId(entity)
+                    const id = ioService.getEntityId(op.entityClass, entity)
 
                     if (id != op.entityId) {
                         collector.addMappedId(id, op.entityId)
@@ -233,11 +229,11 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
     protected getTransactionManagerMap(
         data: ItemData[],
-        context: CallContext): Map<EntityClass<unknown>, TransactionManager> {
+        ioService: IOService): Map<EntityClass<unknown>, TransactionManager> {
         return new Map(
             data.map(itemData => {
-                const entityClass = this.getEntityClassByName(itemData.$type)
-                return [ entityClass, this.getEntityIO(entityClass, context).transactionManager ]
+                const entityClass = this.getEntityClassByName(itemData.$type, ioService)
+                return [ entityClass, ioService.getTransactionManager(entityClass) ]
             })
         )
     }
@@ -245,11 +241,12 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
     protected createTransactions(
         transactionManagerMap: Map<EntityClass<unknown>, TransactionManager>): Map<EntityClass<unknown>, Transaction> {
         const a = Array.from(transactionManagerMap.entries())
-        const r = groupByAndMap(a, x => x[1].createTransaction(), x => x.reduce((v, c) => v.concat([c[0]]), [] as EntityClass<unknown>[]))
+        const r = groupByAndMap(a, x => x[1], x => x.reduce((v, c) => v.concat([c[0]]), [] as EntityClass<unknown>[]))
         const map: Map<EntityClass<unknown>, Transaction> = new Map()
         r.forEach((entityClasses, tm) => {
+            const transaction = tm.createTransaction()
             entityClasses.forEach(entityClass => {
-                map.set(entityClass, tm)
+                map.set(entityClass, transaction)
             })
         })
         return map

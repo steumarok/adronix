@@ -36,15 +36,19 @@ export type Rule = {
 export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
+export type ThisModule<A extends Application> = {
+    module: Module<A>,
+    app: A;
+    context: CallContext;
+}
 
 export type DataProvider<A extends Application> = (
-    this: Module<A>,
-    context: CallContext,
+    this: ThisModule<A>,
     params: Partial<Params>,
     items?: any[]
 ) => Promise<ReturnType[]>
 
-export type DataProviderDefintions<A extends Application> =  {
+export type DataProviderDefintions<A extends Application = Application> =  {
     [key: string]: {
         handler: DataProvider<A>,
         output: [ EntityClass<unknown>, ...string[] ][]
@@ -56,13 +60,17 @@ export type ModuleOptions = {
     secured?: boolean
 }
 
+export type FormThis<A extends Application> = {
+    app: A;
+    context: CallContext;
+}
 
-export type FormRuleExpr<A extends Application> = (this: A, payload: any) => boolean
-export type AsyncFormRuleExpr<A extends Application> = (this: A, payload: any) => Promise<boolean>
+export type FormRuleExpr<A extends Application> = (this: FormThis<A>, payload: any) => boolean
+export type AsyncFormRuleExpr<A extends Application> = (this: FormThis<A>, payload: any) => Promise<boolean>
 
-export type FormHandler<A extends Application> = (this: Module<A>, payload: any) => Promise<any>
+export type FormHandler<A extends Application> = (this: FormThis<A>, payload: any) => Promise<any>
 
-export type FormDefinitions<A extends Application> =  {
+export type FormDefinitions<A extends Application = Application> =  {
     [key: string]: {
         handler: FormHandler<A>,
         rules: [ string, FormRuleExpr<A> | AsyncFormRuleExpr<A>, ItemError][]

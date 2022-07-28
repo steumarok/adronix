@@ -10,5 +10,8 @@
       "composite": true
    },
    "include": ["./**/*.ts"],
-   "references": [{ "path": "../client/tsconfig.json" }]
+   "references": [
+      { "path": "../client/tsconfig.json" },
+      { "path": "../vue/tsconfig.json" }
+   ]
 }

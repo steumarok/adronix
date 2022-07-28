@@ -6,6 +6,7 @@
     >
       <template #actions="{ row }">
         <q-btn icon="edit" flat size="sm" @click="edit(row.id)"/>
+        <q-btn icon="delete" flat size="sm" @click="del(row.id)"/>
       </template>
     </adx-data-table>
 
@@ -36,6 +37,7 @@ export default {
           actions:  { label: 'Azioni' },
           name:     { label: 'Nome',      field: (row: Item) => row.name },
           nameExt:  { label: 'Nome ext',  field: getNameExt },
+          shop:     { label: 'Shop',      field: (row: Item) => (row.shop as Item).name },
         })
 
       const ds = $adx.dataSet(urlComposer(dataTable.params));
@@ -54,7 +56,7 @@ export default {
 
         return {
             insert() {
-                $adx.dialog(EditProductOption2)
+                $adx.openDialog(EditProductOption2)
             },
             async del(key: string) {
                 const item = ds.query("TcmProductOption", key).single();
@@ -70,7 +72,7 @@ export default {
             },
             edit(key: string) {
 
-                $adx.dialog(EditProductOption2, { id: key })
+                $adx.openDialog(EditProductOption2, { id: key })
 
             },
             dataBindings: dataTable.bind(ds)

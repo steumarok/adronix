@@ -4,15 +4,16 @@ import { AbstractService } from "./AbstractService"
 import { Application, CallContext } from "./Application"
 import { EntityDataSetProcessor } from "./EntityDataSetProcessor"
 import { FormProcessor } from "./FormProcessor"
+import { IOService } from "./IOService"
 import { ItemCollector } from "./ItemCollector"
-import { DataProvider, DataProviderDefintions, FormDefinitions, FormHandler, ModuleOptions, Params, ReturnType } from "./types"
+import { DataProvider, DataProviderDefintions, FormDefinitions, FormHandler, ModuleOptions, Params, ReturnType, ThisModule } from "./types"
 
 
 
 type Descriptor = (collector: ItemCollector) => ItemCollector
 
 
-export abstract class Module<A extends Application> {
+export abstract class Module<A extends Application = Application> {
     readonly providers: Map<string, { dataProvider: DataProvider<A>, descriptor: Descriptor}[]> = new Map()
     readonly formHandlers: Map<string, FormHandler<A>[]> = new Map()
 
@@ -23,7 +24,7 @@ export abstract class Module<A extends Application> {
 
     usePersistence(persistence: Persistence) {
         persistence.entityIOCreatorMap.forEach(
-            (value, entityClass) => this.app.addEntityIOCreator(entityClass, value))
+            (value, entityClass) => IOService.addEntityIOCreator(entityClass, value))
     }
 
     bind(fn: (changes: EntityProps, entity: any, module: Module<A>) => Promise<boolean>) {
@@ -92,9 +93,17 @@ export abstract class Module<A extends Application> {
                 super(module)
             }
 
-            async submit(payload: any) {
+            async submit(
+                payload: any,
+                context: CallContext) {
+
+                const this_: ThisModule<A> = {
+                    module,
+                    app: module.app,
+                    context
+                }
                 await Promise.all(
-                    module.formHandlers.get(path).map(handler => handler.call(module.app, payload))
+                    module.formHandlers.get(path).map(handler => handler.call(this_, payload))
                 )
                 return { status: 200 }
             }
@@ -126,7 +135,12 @@ export abstract class Module<A extends Application> {
                     async (collector, provider) => {
                         const c = await collector
                         const items = c.getCollectedItems()
-                        const newItems = await provider.call(module, context, p, items)
+                        const this_: ThisModule<A> = {
+                            module,
+                            app: module.app,
+                            context
+                        }
+                        const newItems = await provider.call(this_, p, items)
 
                         return newItems.reduce(
                             (collector, item) => this.add(collector, item),
@@ -154,7 +168,7 @@ export abstract class Module<A extends Application> {
 
 type EntityDescriptor = { entityClass: EntityClass<unknown>, propNames: string[] }
 
-export function defineModule<A extends Application>() {
+export function defineModule<A extends Application = Application>() {
     var persistenceBuilder: PersistenceBuilder
     var persistenceBuilderCallback: (extender: IPersistenceExtender) => IPersistenceExtender
     var currentProviderPath: string
@@ -178,10 +192,11 @@ export function defineModule<A extends Application>() {
             }
 
             dataProviders.forEach((provider, path) => {
-                this.registerProvider(path, (context, params: Params, items) => {
-                    return provider.bind(this)(context, params, items)
-                },
-                this.describe(path))
+                this.registerProvider(
+                    path,
+                    provider,
+                    this.describe(path)
+                )
             })
 
             formHandlers.forEach((handler, path) => {
