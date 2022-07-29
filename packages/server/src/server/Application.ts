@@ -1,5 +1,4 @@
-import { EntityClass, EntityIO, IPersistenceManager, PersistenceContext, TransactionEventKind } from "@adronix/persistence/src"
-import { EntityEventKind } from "@adronix/persistence"
+import { IPersistenceManager } from "@adronix/persistence"
 import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
@@ -18,7 +17,7 @@ export class CallContext implements ServiceContext {
         public readonly tenantId: string) { }
 }
 
-export abstract class Application /* implements IPersistenceManager */ {
+export abstract class Application implements IPersistenceManager {
     readonly modules: Module<Application>[] = []
     readonly defaultNotificationChannel: NotificationChannel  = new BetterSseNotificationChannel()
 

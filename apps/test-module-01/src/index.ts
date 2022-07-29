@@ -1,15 +1,20 @@
-import { AsyncRuleExpr, EntityIODefinitions, IPersistenceManager } from "@adronix/persistence";
-import { Application, defineModule, Module, PaginatedList, ServiceContext } from "@adronix/server";
+import { AsyncRuleExpr, EntityIODefinitions, RulePatterns } from "@adronix/persistence";
+import { Application, defineModule, PaginatedList } from "@adronix/server";
 import { DataProviderDefintions } from "@adronix/server/src/server/types";
 import { ITypeORMAware, TypeORMPersistence } from "@adronix/typeorm";
 import { Not } from "typeorm";
 import { TcmProductOptionValue, TcmProductOption, TcmIngredient, TcmShop } from "./entities";
 import { Service1 } from "./services";
 import { Request as JWTRequest } from "express-jwt";
+import { VirtualItem } from "@adronix/server/src/server/ItemCollector";
 
 export { TcmIngredient, TcmProductOption, TcmProductOptionValue, TcmShop }
 export const TcmEntities = [ TcmIngredient, TcmProductOption, TcmProductOptionValue, TcmShop ]
 
+@VirtualItem
+class TcmProductOptionExtra {
+    constructor(public productOption: TcmProductOption, public ingredientNames: string[]) {}
+}
 
 const providers: DataProviderDefintions<Application & ITypeORMAware> = {
 
@@ -20,11 +25,15 @@ const providers: DataProviderDefintions<Application & ITypeORMAware> = {
 
             const { rows, count } = await Service1.get(this).listProductOptions(page, limit)
 
-            return [PaginatedList(TcmProductOption, rows, count)].concat(rows.map(r => r.shop))
+            return [PaginatedList(TcmProductOption, rows, count)]
+                .concat(rows.map(r => r.shop))
+                .concat(rows.map(r => new TcmProductOptionExtra(r, r.ingredients.map(i => i.name))))
         },
         output: [
             [TcmProductOption, 'name', 'quantity', 'shop'],
-            [TcmShop, 'name']
+            [TcmShop, 'name'],
+            [TcmProductOptionExtra, 'productOption', 'ingredientNames']
+
         ]
     },
 
@@ -33,7 +42,9 @@ const providers: DataProviderDefintions<Application & ITypeORMAware> = {
             const po =
                 id
                     ? await this.app.getDataSource(this.context).getRepository(TcmProductOption)
-                        .findOne({ relations: { ingredients: true }, where: { id }})
+                        .findOne({
+                            relations: { ingredients: true, shop: true },
+                            where: { id }})
                     : new TcmProductOption()
 
             return [po]
@@ -43,7 +54,34 @@ const providers: DataProviderDefintions<Application & ITypeORMAware> = {
             [TcmShop, 'name'],
             [TcmIngredient, 'name', 'price']
         ]
-    }
+    },
+
+    '/lookupIngredients': {
+        handler: async function ({ }) {
+
+            return this.app.getDataSource(this.context).getRepository(TcmIngredient)
+                .createQueryBuilder()
+                .getMany()
+
+        },
+        output: [
+            [TcmIngredient, 'name']
+        ]
+    },
+
+    '/lookupShops': {
+        handler: async function ({ }) {
+
+            return this.app.getDataSource(this.context).getRepository(TcmShop)
+                .createQueryBuilder()
+                .orderBy('name')
+                .getMany()
+
+        },
+        output: [
+            [TcmShop, 'name']
+        ]
+    },
 }
 
 
@@ -57,13 +95,24 @@ const checkNameDup: AsyncRuleExpr = async function({ name }, entity: TcmProductO
 }
 
 
+
+
 const ioDefinitions: EntityIODefinitions = [
     {
         entityClass: TcmProductOption,
-        rules: [
-            [ 'name', changes => !!changes.name, { message: 'empty' } ],
-            [ 'name', checkNameDup, { message: 'name not valid' } ]
-        ]
+        rules: {
+            'name': [
+                [ RulePatterns.notBlank(),   'empty'],
+                [ RulePatterns.minLength(3), 'min length 3' ],
+                [ checkNameDup,              { code: 'CHK001', message: 'name not valid' } ]
+            ]
+        }
+    },
+    {
+        entityClass: TcmIngredient
+    },
+    {
+        entityClass: TcmShop
     }
 ]
 

@@ -8,4 +8,4 @@ export { Persistence } from './persistence/Persistence'
 export { IPersistenceManager } from './persistence/IPersistenceManager'
 export { PersistenceBuilder, IPersistenceExtender } from './persistence/PersistenceBuilder'
 export { PersistenceContext } from './persistence/PersistenceContext'
-
+export { RulePatterns } from './persistence/RulePatterns'

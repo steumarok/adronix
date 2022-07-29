@@ -1,7 +1,7 @@
 import { IPersistenceManager } from "./IPersistenceManager"
 import { Persistence } from "./Persistence"
 import { ItemError } from "@adronix/base"
-import { AsyncRuleExpr, EntityClass, EntityEventHandler, EntityIODefinitions, Rule, RuleExpr } from "./types"
+import { AsyncRuleExpr, EntityClass, EntityEventHandler, EntityIODefinitions, EntityIORules, Rule, RuleExpr } from "./types"
 
 
 export interface IPersistenceExtender {
@@ -29,10 +29,17 @@ export class PersistenceBuilder implements IPersistenceExtender {
         definitions.forEach(definition => {
             this.defineEntityIO(definition.entityClass)
                 .rules(definition.rules ?
-                    definition.rules.map(r => ({ name: r[0], expr: r[1], error: r[2] })) :
+                    this.denormalizeRules(definition.rules) :
                     [])
         })
         return this
+    }
+
+    private denormalizeRules(rules: EntityIORules) {
+        return Object.entries(rules)
+            .reduce((arr, rule) => arr.concat(
+                (Array.isArray(rule[1]) ? rule[1] : [rule[1]])
+                    .map(s => ({name: rule[0], expr: s[0], error: s[1]}))), [])
     }
 
     rule(

@@ -32,15 +32,15 @@ export type RuleThis = {
     context: PersistenceContext;
 }
 
-export type RuleExpr = (this: RuleThis, changes: EntityProps, entity?: any) => boolean
-export type AsyncRuleExpr = (this: RuleThis, changes: EntityProps, entity?: any) => Promise<boolean>
+export type RuleExpr = (this: RuleThis, changes: EntityProps, entity: any, ruleName: string) => boolean
+export type AsyncRuleExpr = (this: RuleThis, changes: EntityProps, entity: any, ruleName: string) => Promise<boolean>
 export type Rule = {
     name: string,
     expr: RuleExpr | AsyncRuleExpr,
     error: ItemError
 }
 
-export type EntityClass<T> = new () => T
+export type EntityClass<T> = new (...args: any[]) => T
 
 export enum EntityEventKind {
     Inserting,
@@ -61,9 +61,11 @@ export type TransactionEventHandler = (eventKind: TransactionEventKind) => void
 
 export type ValidationHandler<T> = (validator: Validator, changes: EntityProps, entity?: T) => Validator
 
+export type EntityIORule = [ AsyncRuleExpr | RuleExpr, ItemError]
+export type EntityIORules = { [name: string]: EntityIORule[] | EntityIORule }
 export type EntityIODefinitions = {
     entityClass: EntityClass<unknown>,
-    rules: [ string, AsyncRuleExpr | RuleExpr, ItemError][]
+    rules?: EntityIORules
 }[]
 
 export type PersistenceExtension = { eventHandlers: [ EntityClass<unknown>, EntityEventHandler ][]}

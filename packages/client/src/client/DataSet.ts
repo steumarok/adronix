@@ -156,6 +156,10 @@ export class DataSet {
       }
     }
 
+    join(item: Item, type: string, property: string) {
+      return this.query(type, poe => (poe[property] as Item).id == item.id).single()
+    }
+
     query(type: string, expr: ItemId | ItemFilter = () => true): IQuery {
       return new Query(this, type, expr)
     }

@@ -1,4 +1,4 @@
-export type ItemError = {
+export type ItemError = string | {
     code?: string,
     message: string
 }

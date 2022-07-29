@@ -59,7 +59,18 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         for (let key in itemData) {
             if (!key.startsWith("$")) {
                 const value = itemData[key]
-                if (typeof value == "object") {
+                if (Array.isArray(value)) {
+                    data[key] = () => {
+                        return Promise.all(value.map(element => {
+                            return this.resolveEntityRef(
+                                element.$type,
+                                element.$idRef,
+                                idMap,
+                                ioService)
+                        }))
+                    }
+                }
+                else if (value != null && typeof value == "object") {
                     if (value.$idRef) {
                         data[key] = () => this.resolveEntityRef(
                             value.$type,
@@ -120,7 +131,8 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
             const parentNode = `${itemData.$id}@${itemData.$type}`
             graph.addNode(parentNode)
             for (let propName in itemData) {
-                if (!propName.startsWith("$")) {
+                if (!propName.startsWith("$") &&
+                    itemData[propName] != null) {
                     if (typeof itemData[propName] == "object" && itemData[propName].$idRef) {
                         const childNode = `${itemData[propName].$idRef}@${itemData[propName].$type}`
                         graph.addNode(childNode)
@@ -130,7 +142,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
                     else if (Array.isArray(itemData[propName])) {
                         for (let element of itemData[propName]) {
                             if (typeof element == "object" && element.$idRef) {
-                                const childNode = `${element[propName].$idRef}@${element[propName].$type}`
+                                const childNode = `${element.$idRef}@${element.$type}`
                                 graph.addNode(childNode)
                                 graph.addEdge(childNode, parentNode)
                             }

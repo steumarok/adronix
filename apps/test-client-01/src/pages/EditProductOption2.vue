@@ -4,13 +4,34 @@
     <adx-input
       v-if="productOption"
       v-model="productOption.name"
+      label="Name"
+      :errors="productOption.errors.name"
+      />
+
+    <adx-input
+      v-if="productOption"
+      v-model="productOption.quantity"
+      label="Quantity"
       />
 
     <adx-select
-      item="productOption"
-      property="ingredients"
+      v-if="productOption"
+      v-model="productOption.ingredients"
       multiple
-      lookupDataSet=""
+      label="Ingredients"
+      :lookup-dataSet="dsIngredients"
+      lookup-type="TcmIngredient"
+      lookup-display-property="name"
+      />
+
+    <adx-select
+      v-if="productOption"
+      v-model="productOption.shop"
+      label="Shops"
+      :lookup-dataSet="dsShops"
+      lookup-type="TcmShop"
+      lookup-display-property="name"
+      clearable
       />
 <!--
     <q-input v-if="productOption"
@@ -19,6 +40,7 @@
       :error-message="productOption.errors.name && productOption.errors.name[0].message"
       :error="!!productOption.errors.name"/>
 -->
+<q-btn @click="showContent">content</q-btn>
   </adx-dialog>
 </template>
 
@@ -39,32 +61,16 @@ const ds = $adx.dataSet(url)
 
 const productOption = ds.ref('TcmProductOption')
 
-/*
-function adapt(): Ref<string> {
-  return ref("k")
-}
-const y: Ref<string> = ref("s")
-
-const x = ref<Item>()
-onMounted(() => {
-console.log(productOption)
-  watch(productOption, (value) => {
-  x.value = new Proxy<Item>(value as Item, {
-    get(target, name, receiver) {
-      let rv = Reflect.get(target, name, receiver);
-      if (typeof rv === "string") {
-        rv = rv.toUpperCase();
-      }
-      return rv as string;
-    },
-    set(target, name, value, receiver) {
-      return Reflect.set(target, name, value as string, receiver);
-    }
-  });
-  })
-})*/
+const dsIngredients = $adx.dataSet('/api/module1/lookupIngredients')
+const dsShops = $adx.dataSet('/api/module1/lookupShops')
 
 const { dialog } = $adx.dialog(
   () => { return ds.commit() }
 )
+
+
+
+function showContent() {
+  console.log(ds.getDelta())
+}
 </script>

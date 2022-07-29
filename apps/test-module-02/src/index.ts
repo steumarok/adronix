@@ -3,10 +3,10 @@ import { Application, DataProviderDefintions, defineModule, FormDefinitions, IOS
 import { ITypeORMAware, TypeORMPersistence } from "@adronix/typeorm";
 import { TcaProductOptionExt } from "./entities/TcaProductOptionExt";
 import { ISequelizeAware, SequelizePersistence } from "@adronix/sequelize";
-import { EntityClass, EntityEventKind, EntityIODefinitions, IPersistenceExtender, IPersistenceManager, PersistenceExtension, Transaction } from "@adronix/persistence";
+import { EntityClass, EntityEventKind, EntityIODefinitions, EntityProps, IPersistenceExtender, IPersistenceManager, PersistenceExtension, Transaction } from "@adronix/persistence";
 import { TcaTest } from "./entities/TcaTest";
 import { In } from "typeorm";
-import { Objects } from "@adronix/base/src";
+import { Errors, Objects } from "@adronix/base/src";
 
 export { TcaProductOptionExt, TcaTest }
 export const TcaEntities = [ TcaProductOptionExt ]
@@ -29,9 +29,9 @@ class Module2Persistence1 extends SequelizePersistence {
 const ioDefinitions: EntityIODefinitions = [
     {
         entityClass: TcaProductOptionExt,
-        rules: [
-            [ 'nameExt', (ctx, changes) => !!changes.nameExt, { message: 'empty' } ]
-        ]
+        //rules: [
+            //[ 'nameExt', changes => !!changes.nameExt, { message: 'empty' } ]
+        //]
     }
 ]
 
@@ -127,6 +127,22 @@ Objects.override(IOService, base => {
     return class extends base {
         constructor(app: Application, context: ServiceContext) {
             super(app, context)
+        }
+
+        update<T>(type: string | EntityClass<T>, entity: T, changes: EntityProps) {
+            const op = super.update(type, entity, changes)
+
+            return op
+        }
+
+        insert<T>(type: string | EntityClass<T>, changes: EntityProps) {
+            if (this.getEntityClass(type) == TcaProductOptionExt) {
+                if (!changes.name) {
+                    changes.nameExt = "prova"
+                }
+            }
+
+            return super.insert(type, changes)
         }
 
         delete<T>(type: string | EntityClass<T>, entity: T): (t: Transaction) => Promise<void> {

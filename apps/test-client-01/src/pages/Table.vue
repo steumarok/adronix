@@ -5,8 +5,8 @@
       :data-bindings='dataBindings'
     >
       <template #actions="{ row }">
-        <q-btn icon="edit" flat size="sm" @click="edit(row.id)"/>
-        <q-btn icon="delete" flat size="sm" @click="del(row.id)"/>
+        <q-btn icon="edit" flat size="sm" @click="onEdit(row.id)"/>
+        <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
       </template>
     </adx-data-table>
 
@@ -14,69 +14,54 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useAdronix } from '@adronix/vue';
 import { Item } from '@adronix/client';
 import EditProductOption2 from './EditProductOption2.vue'
 
 
-export default {
-    setup() {
+function getNameExt(row: Item) {
+  const ext = ds.query("TcaProductOptionExt", item => (item.productOption as Item)?.id == row.id).single();
+  return ext?.nameExt as string;
+}
 
-      function getNameExt(row: Item) {
-        const ext = ds.query("TcaProductOptionExt", item => (item.productOption as Item)?.id == row.id).single();
-        return ext?.nameExt as string;
-      }
-
-      const $adx = useAdronix()
-
-      const urlComposer = $adx.urlComposer('/api/module1/listProductOption')
-      const dataTable = $adx.dataTable(
-        'TcmProductOption',
-        {
-          actions:  { label: 'Azioni' },
-          name:     { label: 'Nome',      field: (row: Item) => row.name },
-          nameExt:  { label: 'Nome ext',  field: getNameExt },
-          shop:     { label: 'Shop',      field: (row: Item) => (row.shop as Item).name },
-        })
-
-      const ds = $adx.dataSet(urlComposer(dataTable.params));
-/*
-      const dt = dataTable.bind('/api/module1/listProductOption')
-
-      const dataTable = $adx.dataTable(
-        'TcmProductOption',
-        {
-          actions:  { label: 'Azioni' },
-          name:     { label: 'Nome',      field: (row: Item) => row.name },
-          nameExt:  { label: 'Nome ext',  field: getNameExt },
-        })*/
+const $adx = useAdronix()
 
 
+const urlComposer = $adx.urlComposer('/api/module1/listProductOption')
+const dataTable = $adx.dataTable(
+  'TcmProductOption',
+  {
+    actions:      { label: 'Azioni' },
+    name:         { label: 'Nome',        field: (row: Item) => row.name },
+    nameExt:      { label: 'Nome ext',    field: getNameExt },
+    shop:         { label: 'Shop',        field: (row: Item) => (row.shop as Item)?.name },
+    ingredients:  { label: 'Ingredients', field: (row: Item) => (ds.join(row, 'TcmProductOptionExtra', 'productOption')?.ingredientNames as []).join(', ') },
+  })
 
-        return {
-            insert() {
-                $adx.openDialog(EditProductOption2)
-            },
-            async del(key: string) {
-                const item = ds.query("TcmProductOption", key).single();
-                if (item) {
-                    ds.delete(item);
-                    try {
-                        await ds.commit();
-                    }
-                    catch (e) {
-                        alert(e);
-                    }
-                }
-            },
-            edit(key: string) {
+const ds = $adx.dataSet(urlComposer(dataTable.params));
 
-                $adx.openDialog(EditProductOption2, { id: key })
+function insert() {
+    $adx.openDialog(EditProductOption2)
+}
 
-            },
-            dataBindings: dataTable.bind(ds)
-        };
+async function onDelete(key: string) {
+    const item = ds.query("TcmProductOption", key).single();
+    if (item) {
+        ds.delete(item);
+        try {
+            await ds.commit();
+        }
+        catch (e) {
+            alert(e);
+        }
     }
 }
+
+function onEdit(key: string) {
+  $adx.openDialog(EditProductOption2, { id: key })
+}
+
+const dataBindings = dataTable.bind(ds)
+
 </script>

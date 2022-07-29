@@ -36,7 +36,7 @@ export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
         return this.rules.reduce(
             (validator, rule) => validator.addRule(
                 async () => {
-                    const result = await rule.expr.bind(this_)(changes, entity)
+                    const result = await rule.expr.bind(this_)(changes, entity, rule.name)
                     if (!result) {
                         return { name: rule.name, error: rule.error }
                     }

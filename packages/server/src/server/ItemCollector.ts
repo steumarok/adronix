@@ -1,5 +1,17 @@
-import { Metadata } from "./Metadata"
 import { DataMap, DescriptorMap, IdGetter, ItemData, ItemId, ItemRef } from "./types"
+
+
+const VirtualItemKey = Symbol('adronix:VirtualItem')
+
+export function VirtualItem(constructor: Function) {
+    Reflect.defineMetadata(VirtualItemKey, true, constructor)
+}
+
+@VirtualItem
+export class Metadata {
+    constructor(private id: ItemId, private value: any) {}
+}
+
 
 export class ItemCollector {
     public descriptors: DescriptorMap = new Map()
@@ -49,6 +61,10 @@ export class ItemCollector {
         return --this.idCounter
     }
 
+    protected isVirtualItem(item: any): boolean {
+        return Reflect.getMetadata(VirtualItemKey, item)
+    }
+
     protected isInsertion(item: any): boolean {
         const { idGetter } = this.getDescriptor(item)
         return !idGetter(item)
@@ -90,7 +106,9 @@ export class ItemCollector {
         })
 
         if (insertion) {
-            itemData.$inserted = true
+            if (!this.isVirtualItem(item.constructor)) {
+                itemData.$inserted = true
+            }
         }
 
         if (this.mappedIds.has(id)) {
@@ -113,7 +131,9 @@ export class ItemCollector {
     }
 
     readValue(value: any, dataMap: DataMap) {
-        if (typeof value == "object" && this.descriptors.has(value.constructor)) {
+        if (value != null &&
+            typeof value == "object" &&
+            this.descriptors.has(value.constructor)) {
             return this.getItemRef(value, dataMap)
         }
         else {
