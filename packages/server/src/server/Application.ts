@@ -4,7 +4,7 @@ import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
 import { NotificationChannel } from "./NotificationChannel"
 import { Objects } from "@adronix/base/src"
-import { ModuleOptions } from "./types"
+import { ModuleOptions, ServiceOptions, WebModuleOptions } from "./types"
 import { FormProcessor } from "./FormProcessor"
 import { AbstractService, ServiceContext } from "./AbstractService"
 import { IncomingMessage, ServerResponse } from "http"
@@ -18,12 +18,53 @@ export class CallContext implements ServiceContext {
 }
 
 export abstract class Application implements IPersistenceManager {
-    readonly modules: Module<Application>[] = []
-    readonly defaultNotificationChannel: NotificationChannel  = new BetterSseNotificationChannel()
 
-    protected readonly serviceMap: Map<String, AbstractService<Application>> = new Map();
+    protected readonly modules: Module<Application>[] = []
+    protected readonly serviceClassMap: Map<typeof AbstractService<Application>, ServiceOptions> = new Map();
+
+    services<S extends AbstractService<Application>>(
+        cls: typeof AbstractService<Application> | string,
+        context: ServiceContext): S {
+
+        if (typeof cls == "string") {
+            cls = Array.from(this.serviceClassMap.keys()).find(serviceClass => cls == serviceClass.name)
+        }
+
+        const service = Objects.create(cls, this, context) as S
+
+        if (this.serviceClassMap.has(cls)) {
+            const options = this.serviceClassMap.get(cls)
+            if (options?.proxy) {
+                return options.proxy.wrap(service)
+            }
+        }
+
+        return service
+    }
+
+    getTenantId(_request: IncomingMessage): string {
+        return null
+    }
+
+    addModule(
+        moduleClass: new (app: Application) => Module<Application>,
+        options?: ModuleOptions) {
+        const module = Objects.create(moduleClass, this, options)
+
+        module.serviceClasses.forEach(serviceClass => {
+            this.serviceClassMap.set(serviceClass, options?.services?.find(([cls]) => cls == serviceClass)[1])
+        })
+
+        this.modules.push(module)
+        return module
+    }
+}
+
+export abstract class WebApplication extends Application {
+    readonly defaultNotificationChannel: NotificationChannel = new BetterSseNotificationChannel()
 
     constructor() {
+        super()
     }
 
     setDefaultNotificationChannel(path: string) {
@@ -36,25 +77,30 @@ export abstract class Application implements IPersistenceManager {
         return channel
     }
 
+    composePath(path: string, options?: WebModuleOptions) {
+        return (options?.web?.urlContext ? options?.web.urlContext : '') + path
+    }
+
     addModule(
         moduleClass: new (app: Application) => Module<Application>,
-        options?: ModuleOptions) {
-        this.modules.push(Objects.create(moduleClass, this, options))
-    }
+        options?: WebModuleOptions) {
+        const module = super.addModule(moduleClass, options)
 
-    services<S extends AbstractService<Application>>(
-        cls: typeof AbstractService<Application>,
-        context: ServiceContext): S {
-        return Objects.create(cls, this, context) as S
-    }
+        module.providers.forEach((_value, path) => {
+            this.registerProcessor(
+                this.composePath(path, options),
+                () => module.createDataSetProcessor(path),
+                options.secured)
+        })
 
-    registerService(cls: typeof AbstractService<Application>) {
-        const name = cls.prototype.constructor.name
-        //this.serviceMap.set(name, Objects.create(cls, this))
-    }
+        module.formHandlers.forEach((_value, path) => {
+            this.registerFormProcessor(
+                this.composePath(path, options),
+                () => module.createFormProcessor(path),
+                options.secured)
+        })
 
-    getTenantId(request: IncomingMessage): string {
-        return null
+        return module
     }
 
     async createCallContext(

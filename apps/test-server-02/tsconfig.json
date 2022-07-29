@@ -1,0 +1,16 @@
+{
+   "extends": "../../tsconfig.base.json",
+   "compilerOptions": {
+      "lib": [
+         "es2021",
+         "dom"
+      ],
+      "outDir": "dist",
+      "rootDir": "src",
+   },
+   "include": ["./**/*.ts"],
+   "references": [
+      { "path": "../../packages/rabbitmq/tsconfig.json" },
+      { "path": "../../packages/typeorm/tsconfig.json" }
+   ]
+}

@@ -12,6 +12,9 @@
    "references": [
       { "path": "../../packages/sequelize/tsconfig.json" },
       { "path": "../../packages/express/tsconfig.json" },
-      { "path": "../../packages/typeorm/tsconfig.json" }
+      { "path": "../../packages/typeorm/tsconfig.json" },
+      { "path": "../../apps/test-module-01/tsconfig.json" },
+      { "path": "../../packages/rabbitmq/tsconfig.json" }
+
    ]
 }

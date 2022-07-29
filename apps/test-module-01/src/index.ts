@@ -124,5 +124,6 @@ export const Module1 = defineModule()
         .addDefinitions(ioDefinitions)
     )
     .addDataProviders(providers)
+    .addServices(Service1)
 
-
+export { Service1 }

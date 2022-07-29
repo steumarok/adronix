@@ -1,6 +1,8 @@
 import { Errors, ItemError } from "@adronix/base/src"
 import { EntityClass } from "@adronix/persistence/src"
+import { AbstractService } from "./AbstractService"
 import { Application, CallContext } from "./Application"
+import { IServiceProxy } from "./IServiceProxy"
 import { ItemCollector } from "./ItemCollector"
 import { Module } from "./Module"
 
@@ -54,9 +56,20 @@ export type DataProviderDefintions<A extends Application = Application> =  {
     }
 }
 
+
+export type ServiceOptions = {
+    proxy?: IServiceProxy
+}
+
 export type ModuleOptions = {
-    urlContext?: string,
     secured?: boolean
+    services?: [ typeof AbstractService<Application>, ServiceOptions ][]
+}
+
+export type WebModuleOptions = ModuleOptions & {
+    web: {
+        urlContext?: string,
+    }
 }
 
 export type FormThis<A extends Application> = {

@@ -49,6 +49,7 @@ export class Service1 extends AbstractService {
             .skip((page - 1) * limit)
             .take(limit)
             .getManyAndCount()
+
         return { rows, count }
     }
 

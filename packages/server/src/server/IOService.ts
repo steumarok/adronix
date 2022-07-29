@@ -1,6 +1,8 @@
 import { EntityClass, EntityEventKind, EntityId, EntityIO, EntityProps, PersistenceContext, TransactionEventKind } from "@adronix/persistence/src"
 import { AbstractService, ServiceContext } from "./AbstractService"
 import { Application } from "./Application"
+import { InjectService } from "./InjectService"
+import { NotificationService } from "./NotificationService"
 
 type EntityType<T> = string | EntityClass<T>
 
@@ -8,6 +10,8 @@ export class IOService extends AbstractService {
 
     static readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: PersistenceContext) => EntityIO<unknown>>()
 
+    @InjectService
+    notificationService: NotificationService
 
     constructor(app: Application, context: ServiceContext) {
         super(app, context)
@@ -72,7 +76,8 @@ export class IOService extends AbstractService {
                     entityEventKind == EntityEventKind.Inserted) {
                     transaction.addEventHandler((transactionEventKind) => {
                         if (transactionEventKind == TransactionEventKind.Commit) {
-                            this.app.defaultNotificationChannel.broadcast(entity, entity.constructor.name)
+                            this.notificationService.broadcast('io', entity.constructor.name, entity)
+                            //this.app.defaultNotificationChannel.broadcast(entity, entity.constructor.name)
                         }
                     })
                 }

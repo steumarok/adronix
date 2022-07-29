@@ -1,4 +1,4 @@
-import { Application, DataSetProcessor, FormProcessor } from "@adronix/server"
+import { WebApplication, DataSetProcessor, FormProcessor } from "@adronix/server"
 import { NotificationChannel } from "@adronix/server"
 import { ExpressDataSetController } from "./ExpressDataSetController"
 import { ExpressFormController } from "./ExpressFormController"
@@ -6,8 +6,8 @@ import { ExpressNotificationController } from "./ExpressNotificationController"
 import e, { NextFunction, Request, Response } from "express";
 
 
-export class ExpressApplication extends Application {
-    voidHandler: (req: Request, res: Response, next: NextFunction) => void = (req, resp, next) => { next() }
+export class ExpressApplication extends WebApplication {
+    voidHandler: (req: Request, res: Response, next: NextFunction) => void = (_req, _resp, next) => { next() }
     securityHandler: (req: Request, res: Response, next: NextFunction) => void = this.voidHandler
 
     constructor(protected express: e.Application) {

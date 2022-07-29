@@ -16,10 +16,10 @@ type Descriptor = (collector: ItemCollector) => ItemCollector
 export abstract class Module<A extends Application = Application> {
     readonly providers: Map<string, { dataProvider: DataProvider<A>, descriptor: Descriptor}[]> = new Map()
     readonly formHandlers: Map<string, FormHandler<A>[]> = new Map()
+    readonly serviceClasses: Array<typeof AbstractService<A>> = []
 
     constructor(
-        readonly app: A,
-        readonly options?: ModuleOptions) {
+        readonly app: A) {
     }
 
     usePersistence(persistence: Persistence) {
@@ -50,12 +50,8 @@ export abstract class Module<A extends Application = Application> {
             })
     }
 
-    composePath(path: string) {
-        return (this.options?.urlContext ? this.options?.urlContext : '') + path
-    }
-
-    registerService(service: typeof AbstractService<A>) {
-        this.app.registerService(service)
+    registerService(serviceClass: typeof AbstractService<A>) {
+        this.serviceClasses.push(serviceClass)
     }
 
     registerFormHandler(
@@ -63,10 +59,6 @@ export abstract class Module<A extends Application = Application> {
         handler: FormHandler<A>) {
 
         this.formHandlers.set(path, [handler])
-        this.app.registerFormProcessor(
-            this.composePath(path),
-            () => this.createFormProcessor(path),
-            this.options.secured)
     }
 
     registerProvider(
@@ -78,10 +70,6 @@ export abstract class Module<A extends Application = Application> {
             dataProvider,
             descriptor
         }])
-        this.app.registerProcessor(
-            this.composePath(path),
-            () => this.createDataSetProcessor(path),
-            this.options.secured)
     }
 
     createFormProcessor(
@@ -173,7 +161,7 @@ export function defineModule<A extends Application = Application>() {
     var persistenceBuilderCallback: (extender: IPersistenceExtender) => IPersistenceExtender
     var currentProviderPath: string
 
-    const moduleServices: Array<typeof AbstractService<A>> = []
+    const serviceClasses: Array<typeof AbstractService<A>> = []
 
     const formHandlers: Map<string, FormHandler<A>> = new Map()
 
@@ -181,8 +169,8 @@ export function defineModule<A extends Application = Application>() {
     const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
 
     return class extends Module<A> {
-        constructor(app: A, options?: ModuleOptions) {
-            super(app, options)
+        constructor(app: A) {
+            super(app)
 
             if (persistenceBuilder) {
                 if (persistenceBuilderCallback) {
@@ -203,7 +191,7 @@ export function defineModule<A extends Application = Application>() {
                 this.registerFormHandler(path, handler)
             })
 
-            moduleServices.forEach(service => this.registerService(service))
+            serviceClasses.forEach(service => this.registerService(service))
         }
         getDescriptors(path: string) {
             return descriptorsMap.get(path) || []
@@ -231,8 +219,8 @@ export function defineModule<A extends Application = Application>() {
             return this
         }
 
-        static addServices(...serviceClasses: typeof AbstractService<A>[]) {
-            serviceClasses.forEach(cls => moduleServices.push(cls))
+        static addServices(...classes: typeof AbstractService<A>[]) {
+            classes.forEach(cls => serviceClasses.push(cls))
             return this
         }
 
