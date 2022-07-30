@@ -1,10 +1,10 @@
-import { EntityClass, EntityEventKind, EntityId, EntityIO, EntityProps, PersistenceContext, TransactionEventKind } from "@adronix/persistence/src"
-import { AbstractService, ServiceContext } from "./AbstractService"
+import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
+import { Context } from "./Context"
 
 export class NotificationService extends AbstractService {
 
-    constructor(app: Application, context: ServiceContext) {
+    constructor(app: Application, context: Context) {
         super(app, context)
     }
 

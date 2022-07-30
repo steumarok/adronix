@@ -1,14 +1,10 @@
-import { PersistenceContext } from "@adronix/persistence/src";
-import { AbstractService, Application } from "@adronix/server";
-import { ITypeORMAware } from "../persistence/ITypeORMAware";
+import { TypeORMContext } from "../persistence/TypeORMContext";
 
 export const InjectDataSource = (target: any, memberName: string) => {
     Object.defineProperty(target, memberName, {
         get: function () {
-            const service = this as AbstractService<Application>
-            const app = service.app as any as ITypeORMAware
-            const ctx = service.context as PersistenceContext
-            return app.getDataSource(ctx)
+            const ctx = this.context as TypeORMContext
+            return ctx.dataSources['default']
         }
     });
 };

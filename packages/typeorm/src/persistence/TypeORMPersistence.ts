@@ -1,24 +1,22 @@
-import { EntityClass, EntityIO, EntityProps, IPersistenceManager, Persistence, PersistenceBuilder, TransactionManager, ValidationHandler } from '@adronix/persistence'
+import { EntityClass, EntityProps, Persistence, PersistenceBuilder, TransactionManager } from '@adronix/persistence'
 import { TypeORMEntityIO } from "./TypeORMEntityIO"
-import { ITypeORMAware } from "./ITypeORMAware"
+import { TypeORMContext } from "./TypeORMContext"
 import { TypeORMTransactionManager } from "./TypeORMTransactionManager"
 import { EntityEventHandler, Rule } from "@adronix/persistence"
-import { PersistenceContext } from '@adronix/persistence'
-import { RuleThis } from '@adronix/persistence'
+import { Context } from '@adronix/server'
 
 export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
     constructor(
-        protected readonly transactionManagerGetter: (context: PersistenceContext) => TransactionManager,
-        protected readonly manager: ITypeORMAware,
+        protected readonly transactionManagerGetter: (context: Context) => TransactionManager,
         protected readonly name: string,
-        protected readonly context: PersistenceContext,
+        protected readonly context: TypeORMContext,
         protected readonly entityClass: new () => T,
         eventHandlers: EntityEventHandler<T>[],
         protected readonly rules: Rule[]) {
 
         super(
             transactionManagerGetter(context),
-            manager.getDataSource(context, name),
+            context.dataSources[name],
             entityClass)
 
         eventHandlers.forEach(handler => this.addEventHandler(handler))
@@ -28,15 +26,15 @@ export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
         changes: EntityProps,
         entity?: T) {
 
-        const this_: RuleThis = {
+/*        const this_: RuleThis = {
             manager: this.manager,
             context: this.context
-        }
+        }*/
 
         return this.rules.reduce(
             (validator, rule) => validator.addRule(
                 async () => {
-                    const result = await rule.expr.bind(this_)(changes, entity, rule.name)
+                    const result = await rule.expr.bind(this.context)(changes, entity, rule.name)
                     if (!result) {
                         return { name: rule.name, error: rule.error }
                     }
@@ -51,29 +49,28 @@ export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
 export class TypeORMPersistence extends Persistence {
 
     static build(
-        name: string = null) {
+        name: string = 'default') {
         return new PersistenceBuilder(
-            manager => new TypeORMPersistence(manager as ITypeORMAware, name))
+            () => new TypeORMPersistence(name))
     }
 
     protected static transactionManagerMap: Map<string, TransactionManager> = new Map()
 
     constructor(
-        protected manager: ITypeORMAware,
         protected name: string) {
         super()
     }
 
     getTransactionManager() {
-        return (context: PersistenceContext) => {
-            const tmKey = `${this.name || 'default'}_${context.tenantId || 0}`
+        return (context: TypeORMContext) => {
+            const tmKey = `${this.name}_${context.tenantId || 0}`
 
             if (!TypeORMPersistence.transactionManagerMap.has(tmKey)) {
                 TypeORMPersistence.transactionManagerMap.set(
                     tmKey,
                     new TypeORMTransactionManager(
                         context,
-                        this.manager.getDataSource(context, this.name)))
+                        context.dataSources[this.name]))
             }
 
             return TypeORMPersistence.transactionManagerMap.get(tmKey)
@@ -87,9 +84,8 @@ export class TypeORMPersistence extends Persistence {
 
         this.addEntityIOCreator(
             entityClass,
-            (context: PersistenceContext) => new GenericEntityIO<T>(
+            (context: TypeORMContext) => new GenericEntityIO<T>(
                 this.getTransactionManager(),
-                this.manager,
                 this.name,
                 context,
                 entityClass,

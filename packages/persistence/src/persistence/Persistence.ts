@@ -1,12 +1,12 @@
+import { Context } from "packages/server"
 import { EntityIO } from "./EntityIO"
-import { PersistenceContext } from "./PersistenceContext"
-import { TransactionManager } from "./TransactionManager"
 import { EntityClass, EntityEventHandler, Rule } from "./types"
 
 
 export abstract class Persistence {
 
-    public readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: PersistenceContext) => EntityIO<unknown>>()
+    public readonly entityIOCreatorMap
+        = new Map<EntityClass<unknown>, (context: Context) => EntityIO<unknown>>()
 
     abstract createEntityIO<T>(
         entityClass: EntityClass<T>,
@@ -15,7 +15,7 @@ export abstract class Persistence {
 
     protected addEntityIOCreator<T>(
         entityClass: EntityClass<T>,
-        entityIOCreator: (context: PersistenceContext) => EntityIO<unknown>) {
+        entityIOCreator: (context: Context) => EntityIO<unknown>) {
         this.entityIOCreatorMap.set(entityClass, entityIOCreator)
     }
 

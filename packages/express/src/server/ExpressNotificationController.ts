@@ -1,6 +1,5 @@
 import { Request, Response } from "express"
-import { BetterSseNotificationSession, DataSetProcessor, NotificationChannel } from '@adronix/server'
-import { Objects } from "@adronix/base"
+import { BetterSseNotificationSession, NotificationChannel } from '@adronix/server'
 
 export class ExpressNotificationController {
     constructor(private channel: NotificationChannel) {

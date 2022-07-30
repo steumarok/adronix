@@ -1,12 +1,13 @@
-import { Objects } from "@adronix/base/src"
+import { Objects } from "@adronix/base"
 import { EntityClass, EntityProps, IPersistenceExtender, Persistence, PersistenceBuilder, PersistenceExtension } from "@adronix/persistence"
 import { AbstractService } from "./AbstractService"
-import { Application, CallContext } from "./Application"
+import { Application } from "./Application"
+import { HttpContext } from "./Context"
 import { EntityDataSetProcessor } from "./EntityDataSetProcessor"
 import { FormProcessor } from "./FormProcessor"
 import { IOService } from "./IOService"
 import { ItemCollector } from "./ItemCollector"
-import { DataProvider, DataProviderDefintions, FormDefinitions, FormHandler, ModuleOptions, Params, ReturnType, ThisModule } from "./types"
+import { DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, ModuleOptions, Params, ReturnType } from "./types"
 
 
 
@@ -14,8 +15,8 @@ type Descriptor = (collector: ItemCollector) => ItemCollector
 
 
 export abstract class Module<A extends Application = Application> {
-    readonly providers: Map<string, { dataProvider: DataProvider<A>, descriptor: Descriptor}[]> = new Map()
-    readonly formHandlers: Map<string, FormHandler<A>[]> = new Map()
+    readonly providers: Map<string, { dataProvider: DataProvider, descriptor: Descriptor}[]> = new Map()
+    readonly formHandlers: Map<string, FormHandler[]> = new Map()
     readonly serviceClasses: Array<typeof AbstractService<A>> = []
 
     constructor(
@@ -35,7 +36,7 @@ export abstract class Module<A extends Application = Application> {
 
     overrideProvider(
         path: string,
-        dataProvider: DataProvider<A>,
+        dataProvider: DataProvider,
         descriptor: Descriptor) {
 
         if (!this.providers.has(path)) {
@@ -56,14 +57,14 @@ export abstract class Module<A extends Application = Application> {
 
     registerFormHandler(
         path: string,
-        handler: FormHandler<A>) {
+        handler: FormHandler) {
 
         this.formHandlers.set(path, [handler])
     }
 
     registerProvider(
         path: string,
-        dataProvider: DataProvider<A>,
+        dataProvider: DataProvider,
         descriptor: Descriptor) {
 
         this.providers.set(path, [{
@@ -83,15 +84,10 @@ export abstract class Module<A extends Application = Application> {
 
             async submit(
                 payload: any,
-                context: CallContext) {
+                context: HttpContext) {
 
-                const this_: ThisModule<A> = {
-                    module,
-                    app: module.app,
-                    context
-                }
                 await Promise.all(
-                    module.formHandlers.get(path).map(handler => handler.call(this_, payload))
+                    module.formHandlers.get(path).map(handler => handler.call(context, payload))
                 )
                 return { status: 200 }
             }
@@ -109,7 +105,7 @@ export abstract class Module<A extends Application = Application> {
 
             protected async getItems(
                 params: Map<String, any>,
-                context: CallContext): Promise<ItemCollector> {
+                context: HttpContext): Promise<ItemCollector> {
 
                 const dataProviders = module.providers.get(path).map(({ dataProvider }) => dataProvider)
                 const descriptors = module.providers.get(path).map(({ descriptor }) => descriptor)
@@ -123,12 +119,7 @@ export abstract class Module<A extends Application = Application> {
                     async (collector, provider) => {
                         const c = await collector
                         const items = c.getCollectedItems()
-                        const this_: ThisModule<A> = {
-                            module,
-                            app: module.app,
-                            context
-                        }
-                        const newItems = await provider.call(this_, p, items)
+                        const newItems = await provider.call(context, p, items)
 
                         return newItems.reduce(
                             (collector, item) => this.add(collector, item),
@@ -163,9 +154,9 @@ export function defineModule<A extends Application = Application>() {
 
     const serviceClasses: Array<typeof AbstractService<A>> = []
 
-    const formHandlers: Map<string, FormHandler<A>> = new Map()
+    const formHandlers: Map<string, FormHandler> = new Map()
 
-    const dataProviders: Map<string, DataProvider<A>> = new Map()
+    const dataProviders: Map<string, DataProvider> = new Map()
     const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
 
     return class extends Module<A> {
@@ -176,7 +167,7 @@ export function defineModule<A extends Application = Application>() {
                 if (persistenceBuilderCallback) {
                     persistenceBuilder = persistenceBuilderCallback(persistenceBuilder) as PersistenceBuilder
                 }
-                this.usePersistence(persistenceBuilder.create(app))
+                this.usePersistence(persistenceBuilder.create())
             }
 
             dataProviders.forEach((provider, path) => {
@@ -208,13 +199,13 @@ export function defineModule<A extends Application = Application>() {
             return this
         }
 
-        static addForms(formDefinitions: FormDefinitions<A>) {
+        static addForms(formDefinitions: FormDefinitions) {
             for (const path in formDefinitions) {
                 const self = this.addFormHandler(path, formDefinitions[path].handler)
             }
             return this
         }
-        static addFormHandler(path: string, handler: FormHandler<A>) {
+        static addFormHandler(path: string, handler: FormHandler) {
             formHandlers.set(path, handler)
             return this
         }
@@ -224,18 +215,20 @@ export function defineModule<A extends Application = Application>() {
             return this
         }
 
-        static addDataProvider(path: string, provider: DataProvider<A>) {
+        static addDataProvider(path: string, provider: DataProvider) {
             dataProviders.set(path, provider)
             currentProviderPath = path
             return this
         }
-        static addDataProviders(providers: DataProviderDefintions<A>) {
-            for (const path in providers) {
-                const self = this.addDataProvider(path, providers[path].handler)
-                providers[path].output.forEach(([entityClass, ...propNames]) => {
-                    self.describe(entityClass, propNames)
-                })
-            }
+        static addDataProviders(...providersList: DataProviderDefinitions[]) {
+            providersList.forEach(providers => {
+                for (const path in providers) {
+                    const self = this.addDataProvider(path, providers[path].handler)
+                    providers[path].output.forEach(([entityClass, ...propNames]) => {
+                        self.describe(entityClass, propNames)
+                    })
+                }
+            })
             return this
         }
         static describe(entityClass: EntityClass<unknown>, propNames: string[]) {
@@ -245,7 +238,7 @@ export function defineModule<A extends Application = Application>() {
             return this
         }
         static extend() {
-            const dataProviders: Map<string, DataProvider<A>> = new Map()
+            const dataProviders: Map<string, DataProvider> = new Map()
             const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
 
             function describe(path: string) {
@@ -270,16 +263,18 @@ export function defineModule<A extends Application = Application>() {
             })
 
             const overrider = {
-                extendDataProviders(providers: DataProviderDefintions<A>) {
-                    for (const path in providers) {
-                        const self = this.extendDataProvider(path, providers[path].handler)
-                        providers[path].output.forEach(([entityClass, ...propNames]) => {
-                            self.describe(entityClass, propNames)
+                extendDataProviders(...providersList: DataProviderDefinitions[]) {
+                    providersList.forEach(providers => {
+                        for (const path in providers) {
+                            const self = this.extendDataProvider(path, providers[path].handler)
+                            providers[path].output.forEach(([entityClass, ...propNames]) => {
+                                self.describe(entityClass, propNames)
+                            })
+                        }
                         })
-                    }
                     return overrider
                 },
-                extendDataProvider(path: string, provider: DataProvider<A>) {
+                extendDataProvider(path: string, provider: DataProvider) {
                     dataProviders.set(path, provider)
                     currentProviderPath = path
                     return overrider

@@ -1,11 +1,8 @@
-import { PersistenceContext } from "@adronix/persistence/src";
 import { Application } from "./Application";
-
-export interface ServiceContext extends PersistenceContext {
-}
+import { Context } from "./Context";
 
 export class AbstractService<A extends Application = Application> {
     constructor(
         public readonly app: A,
-        public readonly context: ServiceContext) { }
+        public readonly context: Context) { }
 }

@@ -3,9 +3,9 @@ import { EntityClass, EntityId, Transaction, TransactionManager } from '@adronix
 import { ItemData, ItemId } from "./types"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
-import { Application, CallContext } from "./Application"
-import { IncomingMessage, ServerResponse } from "http"
+import { Application } from "./Application"
 import { IOService } from "./IOService"
+import { HttpContext } from "./Context"
 
 function groupBy<K, V>(array: V[], grouper: (item: V) => K) {
     return array.reduce((store, item) => {
@@ -122,9 +122,9 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
 
     async sync(
         data: ItemData[],
-        context: CallContext) {
+        context: HttpContext) {
 
-        const ioService = IOService.get({ app: this.module.app, context })
+        const ioService = context.service(IOService)
 
         const graph = Graph()
         data.map(itemData => {

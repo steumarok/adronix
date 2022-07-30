@@ -1,4 +1,3 @@
-import { IPersistenceManager } from "@adronix/persistence"
 import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
@@ -6,40 +5,44 @@ import { NotificationChannel } from "./NotificationChannel"
 import { Objects } from "@adronix/base/src"
 import { ModuleOptions, ServiceOptions, WebModuleOptions } from "./types"
 import { FormProcessor } from "./FormProcessor"
-import { AbstractService, ServiceContext } from "./AbstractService"
+import { AbstractService } from "./AbstractService"
 import { IncomingMessage, ServerResponse } from "http"
+import { Context, HttpContext } from "./Context"
 
 
-export class CallContext implements ServiceContext {
-    constructor (
-        public readonly request: IncomingMessage,
-        public readonly response: ServerResponse,
-        public readonly tenantId: string) { }
-}
 
-export abstract class Application implements IPersistenceManager {
+export abstract class Application {
 
     protected readonly modules: Module<Application>[] = []
-    protected readonly serviceClassMap: Map<typeof AbstractService<Application>, ServiceOptions> = new Map();
+    protected readonly serviceClassMap: Map<new (app: Application, context: Context) => AbstractService, ServiceOptions> = new Map();
+    protected readonly contextExtenders: ((context: Context) => any)[] = []
 
-    services<S extends AbstractService<Application>>(
-        cls: typeof AbstractService<Application> | string,
-        context: ServiceContext): S {
+    service<S extends AbstractService<Application>>(
+        cls: (new (app: Application, context: Context) => S) | string,
+        context: Context): S {
 
-        if (typeof cls == "string") {
-            cls = Array.from(this.serviceClassMap.keys()).find(serviceClass => cls == serviceClass.name)
+        let serviceClass: new (app: Application, context: Context) => AbstractService
+        if (typeof cls === "string") {
+            serviceClass = Array.from(this.serviceClassMap.keys()).find(serviceClass => cls == serviceClass.name)
+        }
+        else {
+            serviceClass = cls
         }
 
-        const service = Objects.create(cls, this, context) as S
+        const service = Objects.create(serviceClass, this, context) as S
 
-        if (this.serviceClassMap.has(cls)) {
-            const options = this.serviceClassMap.get(cls)
+        if (this.serviceClassMap.has(serviceClass)) {
+            const options = this.serviceClassMap.get(serviceClass)
             if (options?.proxy) {
                 return options.proxy.wrap(service)
             }
         }
 
         return service
+    }
+
+    protected extendContext<E>(extender: (context: Context) => E) {
+        this.contextExtenders.push(extender)
     }
 
     getTenantId(_request: IncomingMessage): string {
@@ -78,7 +81,7 @@ export abstract class WebApplication extends Application {
     }
 
     composePath(path: string, options?: WebModuleOptions) {
-        return (options?.web?.urlContext ? options?.web.urlContext : '') + path
+        return (options?.http?.urlContext || '') + path
     }
 
     addModule(
@@ -103,10 +106,18 @@ export abstract class WebApplication extends Application {
         return module
     }
 
-    async createCallContext(
+    async createHttpContext(
         request: IncomingMessage,
         response: ServerResponse) {
-        return new CallContext(request, response, this.getTenantId(request))
+        const ctx = new HttpContext(this, request, response, this.getTenantId(request))
+        const extCtx = this.contextExtenders.reduce((c, e) => ({ ...c, ...e(c) }), ctx)
+
+        return {
+            ...extCtx,
+            service<S extends AbstractService>(cls: new (app: Application, context: Context) => S): S {
+                return this.application.service(cls, this)
+            }
+        }
     }
 
     abstract registerProcessor(

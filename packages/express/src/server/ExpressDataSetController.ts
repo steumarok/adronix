@@ -1,7 +1,6 @@
 import { Request, Response } from "express"
 import { DataSetProcessor } from '@adronix/server'
-import { Objects } from "@adronix/base"
-import { CallContext } from "@adronix/server/src/server/Application"
+import { HttpContext } from "@adronix/server/src/server/Context"
 
 export class ExpressDataSetController {
     constructor(private processorProvider: () => DataSetProcessor) {
@@ -22,7 +21,7 @@ export class ExpressDataSetController {
         return paramMap
     }
 
-    fetchCallback(contextCreator: (request: Request, response: Response) => Promise<CallContext>) {
+    fetchCallback(contextCreator: (request: Request, response: Response) => Promise<HttpContext>) {
         return async (request: Request, response: Response) => {
             try {
                 response.json(await this.getProcessor().fetch(
@@ -40,7 +39,7 @@ export class ExpressDataSetController {
         }
     }
 
-    syncCallback(contextCreator: (request: Request, response: Response) => Promise<CallContext>) {
+    syncCallback(contextCreator: (request: Request, response: Response) => Promise<HttpContext>) {
         return async (request: Request, response: Response) => {
             try {
                 const { data, status } = await this.getProcessor().sync(

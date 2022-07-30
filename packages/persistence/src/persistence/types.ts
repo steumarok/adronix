@@ -1,8 +1,7 @@
 import { ItemError } from "packages/base"
-import { IPersistenceManager } from "./IPersistenceManager"
 import { Transaction } from "./Transaction"
 import { Validator } from "@adronix/base"
-import { PersistenceContext } from "./PersistenceContext"
+import { Context } from "packages/server"
 
 export type EntityId = string | number
 export type EntityProps = {
@@ -27,13 +26,9 @@ export type DataMap = Map<string, EntityData>
 export type IdGetter = (item: any) => EntityId
 export type DescriptorMap = Map<any, { propNames: string[], idGetter: IdGetter }>
 
-export type RuleThis = {
-    manager: IPersistenceManager;
-    context: PersistenceContext;
-}
 
-export type RuleExpr = (this: RuleThis, changes: EntityProps, entity: any, ruleName: string) => boolean
-export type AsyncRuleExpr = (this: RuleThis, changes: EntityProps, entity: any, ruleName: string) => Promise<boolean>
+export type RuleExpr = (this: Context, changes: EntityProps, entity: any, ruleName: string) => boolean
+export type AsyncRuleExpr = (this: Context, changes: EntityProps, entity: any, ruleName: string) => Promise<boolean>
 export type Rule = {
     name: string,
     expr: RuleExpr | AsyncRuleExpr,

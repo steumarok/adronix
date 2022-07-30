@@ -33,10 +33,10 @@ export class ExpressApplication extends WebApplication {
         this.express.get(
             path,
             secured ? this.securityHandler : this.voidHandler,
-            this.createDataSetController(dataSetProcessor).fetchCallback(this.createCallContext.bind(this)))
+            this.createDataSetController(dataSetProcessor).fetchCallback(this.createHttpContext.bind(this)))
         this.express.post(
             path,
-            this.createDataSetController(dataSetProcessor).syncCallback(this.createCallContext.bind(this)))
+            this.createDataSetController(dataSetProcessor).syncCallback(this.createHttpContext.bind(this)))
     }
 
     registerFormProcessor(
@@ -46,7 +46,7 @@ export class ExpressApplication extends WebApplication {
         this.express.post(
             path,
             secured ? this.securityHandler : this.voidHandler,
-            this.createFormController(formProcessor).submitCallback(this.createCallContext.bind(this)))
+            this.createFormController(formProcessor).submitCallback(this.createHttpContext.bind(this)))
     }
 
     registerNotificationChannel(

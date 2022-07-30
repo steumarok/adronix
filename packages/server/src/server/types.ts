@@ -1,7 +1,8 @@
 import { Errors, ItemError } from "@adronix/base/src"
 import { EntityClass } from "@adronix/persistence/src"
 import { AbstractService } from "./AbstractService"
-import { Application, CallContext } from "./Application"
+import { Application } from "./Application"
+import { HttpContext } from "./Context"
 import { IServiceProxy } from "./IServiceProxy"
 import { ItemCollector } from "./ItemCollector"
 import { Module } from "./Module"
@@ -37,21 +38,16 @@ export type Rule = {
 export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
-export type ThisModule<A extends Application> = {
-    module: Module<A>,
-    app: A;
-    context: CallContext;
-}
 
-export type DataProvider<A extends Application> = (
-    this: ThisModule<A>,
+export type DataProvider<C = {}> = (
+    this: HttpContext & C,
     params: Partial<Params>,
     items?: any[]
 ) => Promise<ReturnType[]>
 
-export type DataProviderDefintions<A extends Application = Application> =  {
+export type DataProviderDefinitions<C = {}> =  {
     [key: string]: {
-        handler: DataProvider<A>,
+        handler: DataProvider<C>,
         output: [ EntityClass<unknown>, ...string[] ][]
     }
 }
@@ -67,24 +63,20 @@ export type ModuleOptions = {
 }
 
 export type WebModuleOptions = ModuleOptions & {
-    web: {
+    http: {
         urlContext?: string,
     }
 }
 
-export type FormThis<A extends Application> = {
-    app: A;
-    context: CallContext;
-}
 
-export type FormRuleExpr<A extends Application> = (this: FormThis<A>, payload: any) => boolean
-export type AsyncFormRuleExpr<A extends Application> = (this: FormThis<A>, payload: any) => Promise<boolean>
+export type FormRuleExpr = (this: HttpContext, payload: any) => boolean
+export type AsyncFormRuleExpr = (this: HttpContext, payload: any) => Promise<boolean>
 
-export type FormHandler<A extends Application> = (this: FormThis<A>, payload: any) => Promise<any>
+export type FormHandler = (this: HttpContext, payload: any) => Promise<any>
 
-export type FormDefinitions<A extends Application = Application> =  {
+export type FormDefinitions =  {
     [key: string]: {
-        handler: FormHandler<A>,
-        rules: [ string, FormRuleExpr<A> | AsyncFormRuleExpr<A>, ItemError][]
+        handler: FormHandler,
+        rules: [ string, FormRuleExpr | AsyncFormRuleExpr, ItemError][]
     }
 }

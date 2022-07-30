@@ -5,14 +5,13 @@ import bodyParser from "body-parser";
 import multer from 'multer';
 import { ExpressApplication } from "@adronix/express";
 import { dataSources, sequelize } from "./persistence/connection";
-import { ITypeORMAware } from "@adronix/typeorm";
+import { TypeORMContext } from "@adronix/typeorm";
 import { Module2 } from "@adronix/test-module-02";
 import { Module1, Service1 } from "@adronix/test-module-01";
 import { ISequelizeAware } from '@adronix/sequelize'
 import { expressjwt, Request as JWTRequest } from "express-jwt";
-import { PersistenceContext } from "@adronix/persistence";
-import { AbstractService, Application, ServiceContext } from "@adronix/server";
 import { RabbitMQServiceProxy } from "@adronix/rabbitmq";
+import { DataSource } from "typeorm";
 
 const app = express()
 app.use(cors())
@@ -23,21 +22,32 @@ const upload = multer()
 app.use(upload.any())
 
 
-class TestApp extends ExpressApplication implements ITypeORMAware, ISequelizeAware {
+class TestApp extends ExpressApplication {
     constructor() {
         super(app);
         this.setDefaultNotificationChannel('/sse');
         this.setSecurityHandler(expressjwt({ secret: "shhhhhhared-secret", algorithms: ["HS256"] }))
         this.addModule(Module1, {
             secured: true,
-            web: {
+            http: {
                 urlContext: '/module1',
-            },
+            }/*,
             services: [
                 [ Service1, { proxy: new RabbitMQServiceProxy("amqp://guest:guest@localhost:5672", "queue") } ]
-            ]
+            ]*/
         });
-        this.addModule(Module2, { web: { urlContext: '/module2' }, secured: true });
+        this.addModule(Module2, { http: { urlContext: '/module2' }, secured: true });
+
+        this.extendContext<TypeORMContext>(context => ({
+            get dataSource(): DataSource {
+                return this.dataSources['default']
+            },
+            get dataSources(): { [name: string]: DataSource } {
+                return {
+                    'default': dataSources[context.tenantId]
+                }
+            }
+        } as TypeORMContext))
     }
 
     getTenantId(request: JWTRequest): string {
@@ -45,9 +55,6 @@ class TestApp extends ExpressApplication implements ITypeORMAware, ISequelizeAwa
         return 't1'
     }
 
-    getDataSource(context: PersistenceContext) {
-        return dataSources[context.tenantId]
-    }
 
     getSequelize() {
         return sequelize

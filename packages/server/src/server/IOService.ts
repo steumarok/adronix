@@ -1,6 +1,7 @@
-import { EntityClass, EntityEventKind, EntityId, EntityIO, EntityProps, PersistenceContext, TransactionEventKind } from "@adronix/persistence/src"
-import { AbstractService, ServiceContext } from "./AbstractService"
+import { EntityClass, EntityEventKind, EntityId, EntityIO, EntityProps, TransactionEventKind } from "@adronix/persistence/src"
+import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
+import { Context } from "./Context"
 import { InjectService } from "./InjectService"
 import { NotificationService } from "./NotificationService"
 
@@ -8,12 +9,12 @@ type EntityType<T> = string | EntityClass<T>
 
 export class IOService extends AbstractService {
 
-    static readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: PersistenceContext) => EntityIO<unknown>>()
+    static readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: Context) => EntityIO<unknown>>()
 
     @InjectService
     notificationService: NotificationService
 
-    constructor(app: Application, context: ServiceContext) {
+    constructor(app: Application, context: Context) {
         super(app, context)
     }
 
@@ -52,7 +53,7 @@ export class IOService extends AbstractService {
 
     static addEntityIOCreator<T>(
         entityClass: EntityClass<T>,
-        entityIOCreator: (context: PersistenceContext) => EntityIO<T>) {
+        entityIOCreator: (context: Context) => EntityIO<T>) {
 
         IOService.entityIOCreatorMap.set(entityClass, entityIOCreator)
     }
@@ -84,7 +85,4 @@ export class IOService extends AbstractService {
             }) as EntityIO<T>
     }
 
-    static get({ app, context }: { app: Application, context: ServiceContext }) {
-        return app.services<IOService>(IOService, context)
-    }
 }

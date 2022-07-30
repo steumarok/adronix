@@ -1,9 +1,9 @@
 import { ItemCollector } from "./ItemCollector"
 import { ItemData } from "./types"
 import { Objects } from '@adronix/base'
-import { Application, CallContext } from "./Application"
+import { Application } from "./Application"
 import { Module } from "./Module"
-import { IncomingMessage, ServerResponse } from "http"
+import { HttpContext } from "./Context"
 
 export abstract class DataSetProcessor {
 
@@ -12,18 +12,18 @@ export abstract class DataSetProcessor {
 
     abstract sync(
         data: ItemData[],
-        context: CallContext): Promise<{ data: ItemData[], status: number }>
+        context: HttpContext): Promise<{ data: ItemData[], status: number }>
 
     async fetch(
         params: Map<String, any>,
-        context: CallContext) {
+        context: HttpContext) {
         const collector = await this.getItems(params, context)
         return collector.get()
     }
 
     protected async getItems(
         params: Map<String, any>,
-        context: CallContext): Promise<ItemCollector> {
+        context: HttpContext): Promise<ItemCollector> {
         return this.createCollector()
     }
 

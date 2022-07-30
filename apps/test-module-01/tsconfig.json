@@ -11,7 +11,9 @@
    },
    "include": ["./**/*.ts"],
    "references": [
+      { "path": "../../packages/server/tsconfig.json" },
       { "path": "../../packages/express/tsconfig.json" },
+      { "path": "../../packages/persistence/tsconfig.json" },
       { "path": "../../packages/typeorm/tsconfig.json" }
    ]
 }

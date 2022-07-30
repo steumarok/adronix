@@ -1,11 +1,11 @@
 import { TypeORMTransaction } from "./TypeORMTransaction";
 import { TransactionManager } from '@adronix/persistence'
 import { DataSource } from "typeorm";
-import { PersistenceContext } from "@adronix/persistence";
+import { Context } from "@adronix/server";
 
 export class TypeORMTransactionManager extends TransactionManager {
     constructor(
-        protected readonly context: PersistenceContext,
+        protected readonly context: Context,
         protected readonly dataSource: DataSource) {
         super()
     }

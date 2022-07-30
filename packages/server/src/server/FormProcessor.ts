@@ -1,5 +1,6 @@
 import { Errors } from "@adronix/base"
-import { Application, CallContext } from "./Application"
+import { Application } from "./Application"
+import { HttpContext } from "./Context"
 import { Module } from "./Module"
 
 export abstract class FormProcessor {
@@ -8,7 +9,7 @@ export abstract class FormProcessor {
     }
 
     abstract submit(
-        context: CallContext,
+        context: HttpContext,
         payload: any): Promise<{ errors?: Errors, status: number}>
 
 }

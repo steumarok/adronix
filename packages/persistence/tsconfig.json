@@ -10,5 +10,8 @@
       }
    },
    "include": ["./**/*.ts"],
-   "references": [{ "path": "../base/tsconfig.json" }]
+   "references": [
+      { "path": "../base/tsconfig.json" },
+      { "path": "../server/tsconfig.json" }
+   ]
 }

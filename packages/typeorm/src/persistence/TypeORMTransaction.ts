@@ -1,13 +1,13 @@
 import { DataSource, QueryRunner } from "typeorm"
 import { Transaction } from '@adronix/persistence'
-import { PersistenceContext } from "@adronix/persistence"
+import { Context } from "@adronix/server"
 
 
 export class TypeORMTransaction extends Transaction {
     queryRunner: QueryRunner
 
     constructor(
-        context: PersistenceContext,
+        context: Context,
         protected dataSource: DataSource) {
         super(context)
     }

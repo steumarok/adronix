@@ -45,6 +45,7 @@ __metadata:
   resolution: "@adronix/persistence@workspace:packages/persistence"
   dependencies:
     "@adronix/base": "workspace:^"
+    "@adronix/server": "workspace:^"
     "@types/jest": ^27.4.0
     "@types/pubsub-js": ^1.8.3
     jest: ^27.5.1

@@ -22,7 +22,7 @@ export class TypeORMEntityIO<T> extends EntityIO<T> {
     }
 
     async get(id: EntityId): Promise<T> {
-        return this.dataSource.manager.createQueryBuilder(this.entityClass, "e")
+        return this.dataSource.createQueryBuilder(this.entityClass, "e")
             .where("e.id = :id", { id })
             .getOne()
     }

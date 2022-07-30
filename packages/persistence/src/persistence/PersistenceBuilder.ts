@@ -1,7 +1,7 @@
-import { IPersistenceManager } from "./IPersistenceManager"
 import { Persistence } from "./Persistence"
 import { ItemError } from "@adronix/base"
 import { AsyncRuleExpr, EntityClass, EntityEventHandler, EntityIODefinitions, EntityIORules, Rule, RuleExpr } from "./types"
+import { Context } from "packages/server";
 
 
 export interface IPersistenceExtender {
@@ -15,7 +15,7 @@ export class PersistenceBuilder implements IPersistenceExtender {
     private entityClassMap: Map<EntityClass<unknown>, { rules: Rule[] }> = new Map()
     private eventHandlers: { entityClass: EntityClass<unknown>, handler: EntityEventHandler<unknown> }[] = []
 
-    constructor(private persistenceCreator: (manager: IPersistenceManager) => Persistence) { }
+    constructor(private persistenceCreator: () => Persistence) { }
 
     defineEntityIO<T>(
         entityClass: EntityClass<T>): PersistenceBuilder {
@@ -58,8 +58,8 @@ export class PersistenceBuilder implements IPersistenceExtender {
         })
     }
 
-    create(manager: IPersistenceManager) {
-        const persistence = this.persistenceCreator(manager)
+    create() {
+        const persistence = this.persistenceCreator()
 
         this.entityClassMap.forEach(({ rules }, entityClass) => {
             persistence.createEntityIO(

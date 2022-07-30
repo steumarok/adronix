@@ -1,10 +1,10 @@
-import { PersistenceContext } from "./PersistenceContext"
+import { Context } from "@adronix/server"
 import { TransactionEventHandler, TransactionEventKind } from "./types"
 
 export class Transaction {
     private eventHandlers: TransactionEventHandler[] = []
 
-    constructor(public readonly context: PersistenceContext) { }
+    constructor(public readonly context: Context) { }
 
     async start() { }
 

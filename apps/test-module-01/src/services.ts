@@ -1,7 +1,5 @@
-import { IPersistenceExtender, PersistenceContext } from "@adronix/persistence/src";
-import { AbstractService, Application, InjectService } from "@adronix/server";
-import { ServiceContext } from "@adronix/server";
-import { InjectDataSource, ITypeORMAware } from "@adronix/typeorm/src";
+import { AbstractService, Application, Context, InjectService } from "@adronix/server";
+import { InjectDataSource } from "@adronix/typeorm";
 import { DataSource } from "typeorm";
 import { TcmProductOptionValue, TcmProductOption, TcmIngredient } from "./entities";
 
@@ -9,12 +7,12 @@ import { TcmProductOptionValue, TcmProductOption, TcmIngredient } from "./entiti
 
 
 
-export class Service1_2 extends AbstractService {
+export class Service1Aux extends AbstractService {
 
     @InjectDataSource
     dataSource: DataSource
 
-    constructor(app: Application, context: ServiceContext) {
+    constructor(app: Application, context: Context) {
         super(app, context)
     }
 
@@ -22,9 +20,6 @@ export class Service1_2 extends AbstractService {
         return this.context.tenantId
     }
 
-    static get({ app, context }: { app: Application, context: ServiceContext }) {
-        return app.services<Service1_2>(Service1_2, context)
-    }
 }
 
 
@@ -34,9 +29,9 @@ export class Service1 extends AbstractService {
     dataSource: DataSource
 
     @InjectService
-    service2: Service1_2
+    service2: Service1Aux
 
-    constructor(app: Application, context: ServiceContext) {
+    constructor(app: Application, context: Context) {
         super(app, context)
     }
 
@@ -53,9 +48,6 @@ export class Service1 extends AbstractService {
         return { rows, count }
     }
 
-    static get({ app, context }: { app: Application, context: ServiceContext }) {
-        return app.services<Service1>(Service1, context)
-    }
 }
 
 
