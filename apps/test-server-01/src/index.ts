@@ -12,6 +12,7 @@ import { ISequelizeAware } from '@adronix/sequelize'
 import { expressjwt, Request as JWTRequest } from "express-jwt";
 import { RabbitMQServiceProxy } from "@adronix/rabbitmq";
 import { DataSource } from "typeorm";
+import { AuthModule } from '@adronix/iam'
 
 const app = express()
 app.use(cors())
@@ -25,6 +26,9 @@ app.use(upload.any())
 class TestApp extends ExpressApplication {
     constructor() {
         super(app);
+
+        this.addModule(AuthModule);
+
         this.setDefaultNotificationChannel('/sse');
         this.setSecurityHandler(expressjwt({ secret: "shhhhhhared-secret", algorithms: ["HS256"] }))
         this.addModule(Module1, {
@@ -48,6 +52,7 @@ class TestApp extends ExpressApplication {
                 }
             }
         } as TypeORMContext))
+
     }
 
     getTenantId(request: JWTRequest): string {

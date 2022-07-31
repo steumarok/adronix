@@ -40,6 +40,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@adronix/iam@workspace:^, @adronix/iam@workspace:modules/iam":
+  version: 0.0.0-use.local
+  resolution: "@adronix/iam@workspace:modules/iam"
+  dependencies:
+    "@adronix/persistence": "workspace:^"
+    "@adronix/server": "workspace:^"
+    "@adronix/typeorm": "workspace:^"
+    "@types/jsonwebtoken": ^8.5.8
+    express-jwt: ^7.7.5
+    jsonwebtoken: ^8.5.1
+  peerDependencies:
+    reflect-metadata: ^0.1.10
+    typeorm: ^0.3.6
+  languageName: unknown
+  linkType: soft
+
 "@adronix/persistence@workspace:^, @adronix/persistence@workspace:packages/persistence":
   version: 0.0.0-use.local
   resolution: "@adronix/persistence@workspace:packages/persistence"
@@ -174,6 +190,7 @@ __metadata:
   resolution: "@adronix/test-server-01@workspace:apps/test-server-01"
   dependencies:
     "@adronix/express": "workspace:^"
+    "@adronix/iam": "workspace:^"
     "@adronix/persistence": "workspace:^"
     "@adronix/rabbitmq": "workspace:^"
     "@adronix/sequelize": "workspace:^"
@@ -198,6 +215,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@adronix/test-server-02@workspace:apps/test-server-02"
   dependencies:
+    "@adronix/iam": "workspace:^"
     "@adronix/persistence": "workspace:^"
     "@adronix/rabbitmq": "workspace:^"
     "@adronix/sequelize": "workspace:^"

@@ -1,7 +1,8 @@
+import { Errors } from "@adronix/base";
 import { IQuery } from "./IQuery";
 import { Item } from "./Item";
 import { Query } from "./Query";
-import { Errors, ItemData, ItemFilter, ItemId, ItemProp, ItemProps, ItemRef } from "./types";
+import { ItemData, ItemFilter, ItemId, ItemProp, ItemProps, ItemRef } from "./types";
 
 export class DataSet {
     private items: Item[] = [];

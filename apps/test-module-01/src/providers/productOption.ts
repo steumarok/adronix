@@ -1,7 +1,7 @@
 import { PaginatedList } from "@adronix/server";
 import { DataProviderDefinitions } from "@adronix/server";
 import { TypeORMContext } from "@adronix/typeorm";
-import { TcmProductOption, TcmIngredient, TcmShop } from "../entities";
+import { TcmIngredient, TcmProductOption, TcmShop } from "../persistence/entities";
 import { Service1 } from "../services";
 import { Request as JWTRequest } from "express-jwt";
 import { VirtualItem } from "@adronix/server";

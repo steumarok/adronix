@@ -8,11 +8,16 @@ export interface Context {
     service<S extends AbstractService>(S: new (app: Application, context: Context) => S): S;
 }
 
+export type ExtendedServerResponse = ServerResponse & {
+    status(code: number): ExtendedServerResponse
+    json(data: any): ExtendedServerResponse
+}
+
 export class HttpContext implements Context {
     constructor (
         public readonly application: WebApplication,
         public readonly request: IncomingMessage,
-        public readonly response: ServerResponse,
+        public readonly response: ExtendedServerResponse,
         public readonly tenantId: string) { }
 
     service<S extends AbstractService>(cls: new (app: Application, context: Context) => S): S {

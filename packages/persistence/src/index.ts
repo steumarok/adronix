@@ -7,3 +7,4 @@ export { TransactionManager } from './persistence/TransactionManager'
 export { Persistence } from './persistence/Persistence'
 export { PersistenceBuilder, IPersistenceExtender } from './persistence/PersistenceBuilder'
 export { RulePatterns } from './persistence/RulePatterns'
+

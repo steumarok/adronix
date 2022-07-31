@@ -5,6 +5,7 @@
    "types": "dist/index.d.ts",
    "dependencies": {
       "@adronix/express": "workspace:^",
+      "@adronix/iam": "workspace:^",
       "@adronix/persistence": "workspace:^",
       "@adronix/rabbitmq": "workspace:^",
       "@adronix/sequelize": "workspace:^",

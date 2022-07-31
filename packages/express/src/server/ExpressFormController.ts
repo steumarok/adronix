@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
-import { FormProcessor } from "@adronix/server"
-import { HttpContext } from "@adronix/server/src/server/Context"
+import { HttpContext, FormProcessor } from "@adronix/server"
+import { Validator } from "@adronix/base"
 
 export class ExpressFormController {
     constructor(private formProcessorProvider: () => FormProcessor) {
@@ -13,12 +13,15 @@ export class ExpressFormController {
     submitCallback(contextCreator: (request: Request, response: Response) => Promise<HttpContext>) {
         return async (request: Request, response: Response) => {
             try {
-                const { errors, status } = await this.getProcessor().submit(
-                    await contextCreator(request, response),
-                    request.body)
-                response
-                    .status(status)
-                    .json(errors)
+                const errors = await this.getProcessor().submit(
+                    request.body,
+                    await contextCreator(request, response))
+
+                if (typeof errors == "object") {
+                    response
+                        .status(400)
+                        .json(Validator.normalize(errors))
+                }
             }
             catch (e) {
                 console.log(e)

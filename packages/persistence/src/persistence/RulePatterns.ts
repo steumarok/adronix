@@ -1,21 +1,23 @@
-import { EntityProps } from "./types"
+import { EntityClass, EntityProps } from "./types"
 
-export class RulePatterns {
-    static base(cb: (value: any) => boolean, propName: string) {
-        return function(changes: EntityProps, entity: any, name: string) {
+export namespace RulePatterns {
+    export function base(
+        cb: (value: any, entity: any, propName: string, entityClass?: EntityClass<unknown>) => Promise<boolean> | boolean, propName: string, entityClass?: EntityClass<unknown>) {
+        return async function(changes: EntityProps, entity: any, name: string, entityClass: EntityClass<unknown>) {
             const _propName = propName || name
             if (entity && changes[_propName] === undefined) {
                 return true
             }
-            return cb(changes[_propName])
+            return await cb.call(this, changes[_propName], entity, _propName, entityClass)
         }
     }
 
-    static notBlank(propName?: string) {
-        return RulePatterns.base(value => !!value, propName)
+    export function notBlank(propName?: string) {
+        return base(value => !!value, propName)
     }
 
-    static minLength(length: number, propName?: string) {
-        return RulePatterns.base(value => value.length >= length, propName)
+    export function minLength(length: number, propName?: string) {
+        return base(value => value.length >= length, propName)
     }
+
 }

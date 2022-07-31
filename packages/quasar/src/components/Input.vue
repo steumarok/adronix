@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ItemError } from '@adronix/base';
+import { Error } from '@adronix/base';
 import { ItemProp } from '@adronix/client';
 import { computed } from 'vue'
 
 const props = defineProps<{
   modelValue: ItemProp,
-  errors: ItemError[]
+  errors: Error[]
 }>()
 const emit = defineEmits(['update:modelValue'])
 
@@ -18,7 +18,7 @@ const value = computed({
   }
 })
 
-const errorMessage = computed(() => props.errors ? props.errors.map(error => error).join(',') : '')
+const errorMessage = computed(() => props.errors ? props.errors.map(error => error.message).join(', ') : '')
 </script>
 
 <template>

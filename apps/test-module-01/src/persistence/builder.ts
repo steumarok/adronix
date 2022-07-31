@@ -1,6 +1,6 @@
 import { TcmProductOptionValue, TcmProductOption, TcmIngredient, TcmShop } from "./entities";
 import { AsyncRuleExpr, EntityIODefinitions, RulePatterns } from "@adronix/persistence"
-import { TypeORMContext, TypeORMPersistence } from "@adronix/typeorm";
+import { TypeORMContext, TypeORMPersistence, TypeORMRulePatterns } from "@adronix/typeorm";
 import { Not } from "typeorm";
 
 export { TcmIngredient, TcmProductOption, TcmProductOptionValue, TcmShop }
@@ -23,7 +23,8 @@ const ioDefinitions: EntityIODefinitions = [
             'name': [
                 [ RulePatterns.notBlank(),   'empty'],
                 [ RulePatterns.minLength(3), 'min length 3' ],
-                [ checkNameDup,              { code: 'CHK001', message: 'name not valid' } ]
+                [ TypeORMRulePatterns.checkDup(),
+                    { code: 'CHK001', message: 'name not valid' } ]
             ]
         }
     },

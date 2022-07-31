@@ -1,11 +1,10 @@
-import { Errors, ItemError } from "@adronix/base/src"
-import { EntityClass } from "@adronix/persistence/src"
+import { Errors, Error } from "@adronix/base"
+import { EntityClass } from "@adronix/persistence"
 import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
 import { HttpContext } from "./Context"
 import { IServiceProxy } from "./IServiceProxy"
 import { ItemCollector } from "./ItemCollector"
-import { Module } from "./Module"
 
 export type ItemId = string | number
 export type ItemProps = {
@@ -29,10 +28,7 @@ export type ItemRef = {
 export type DataMap = Map<string, ItemData>
 export type IdGetter = (item: any) => ItemId
 export type DescriptorMap = Map<any, { propNames: string[], idGetter: IdGetter }>
-export type Rule = {
-    expr: () => boolean,
-    error: ItemError
-}
+
 
 
 export type Params = { [name: string]: any }
@@ -69,14 +65,18 @@ export type WebModuleOptions = ModuleOptions & {
 }
 
 
-export type FormRuleExpr = (this: HttpContext, payload: any) => boolean
-export type AsyncFormRuleExpr = (this: HttpContext, payload: any) => Promise<boolean>
+export type BaseFormRuleExpr<R> = (this: HttpContext, payload: any, name: string) => R
+export type FormRuleExpr = BaseFormRuleExpr<boolean>
+export type AsyncFormRuleExpr =  BaseFormRuleExpr<Promise<boolean>>
 
-export type FormHandler = (this: HttpContext, payload: any) => Promise<any>
+export type FormHandler = (this: HttpContext, payload: any) => Promise<Errors | void>
+
+export type FormRule = [ AsyncFormRuleExpr | FormRuleExpr, Error ]
+export type FormRules = { [name: string]: FormRule | FormRule[]}
 
 export type FormDefinitions =  {
     [key: string]: {
         handler: FormHandler,
-        rules: [ string, FormRuleExpr | AsyncFormRuleExpr, ItemError][]
+        rules?: FormRules
     }
 }

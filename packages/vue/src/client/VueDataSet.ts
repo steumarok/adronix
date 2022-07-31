@@ -1,7 +1,7 @@
 import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery, ItemData, useEventSource, NotificationListener, useFetch, IDataBroker } from "@adronix/client";
 import { watch, reactive, ref, unref, Ref, isRef, watchEffect, onUnmounted } from 'vue';
 import diff from 'object-diff'
-import { Errors } from "@adronix/client";
+import { Errors } from "@adronix/base";
 
 interface ExtendedVueDataSet {
   commit(): Promise<boolean>

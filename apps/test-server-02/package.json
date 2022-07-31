@@ -4,6 +4,7 @@
    "main": "dist/index.js",
    "types": "dist/index.d.ts",
    "dependencies": {
+      "@adronix/iam": "workspace:^",
       "@adronix/persistence": "workspace:^",
       "@adronix/rabbitmq": "workspace:^",
       "@adronix/sequelize": "workspace:^",

@@ -2,12 +2,12 @@ import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
 import { NotificationChannel } from "./NotificationChannel"
-import { Objects } from "@adronix/base/src"
+import { Objects } from "@adronix/base"
 import { ModuleOptions, ServiceOptions, WebModuleOptions } from "./types"
 import { FormProcessor } from "./FormProcessor"
 import { AbstractService } from "./AbstractService"
 import { IncomingMessage, ServerResponse } from "http"
-import { Context, HttpContext } from "./Context"
+import { Context, ExtendedServerResponse, HttpContext } from "./Context"
 
 
 
@@ -93,23 +93,32 @@ export abstract class WebApplication extends Application {
             this.registerProcessor(
                 this.composePath(path, options),
                 () => module.createDataSetProcessor(path),
-                options.secured)
+                options?.secured)
         })
 
         module.formHandlers.forEach((_value, path) => {
             this.registerFormProcessor(
                 this.composePath(path, options),
                 () => module.createFormProcessor(path),
-                options.secured)
+                options?.secured)
         })
 
         return module
     }
 
+    protected extendResponse(_respoonse: ServerResponse): ServerResponse & ExtendedServerResponse  {
+        throw "not implemented"
+    }
+
     async createHttpContext(
         request: IncomingMessage,
         response: ServerResponse) {
-        const ctx = new HttpContext(this, request, response, this.getTenantId(request))
+        const ctx = new HttpContext(
+            this,
+            request,
+            this.extendResponse(response),
+            this.getTenantId(request)
+        )
         const extCtx = this.contextExtenders.reduce((c, e) => ({ ...c, ...e(c) }), ctx)
 
         return {

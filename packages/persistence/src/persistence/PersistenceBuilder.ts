@@ -1,7 +1,6 @@
 import { Persistence } from "./Persistence"
-import { ItemError } from "@adronix/base"
+import { Error } from "@adronix/base"
 import { AsyncRuleExpr, EntityClass, EntityEventHandler, EntityIODefinitions, EntityIORules, Rule, RuleExpr } from "./types"
-import { Context } from "packages/server";
 
 
 export interface IPersistenceExtender {
@@ -45,14 +44,14 @@ export class PersistenceBuilder implements IPersistenceExtender {
     rule(
         name: string,
         expr: RuleExpr | AsyncRuleExpr,
-        error: ItemError) {
+        error: Error) {
 
         const rule = { name, expr, error }
         this.entityClassMap.get(this.lastEntityClass).rules.push(rule)
         return this
     }
 
-    rules(rules: { name: string, expr: RuleExpr | AsyncRuleExpr, error: ItemError }[]) {
+    rules(rules: { name: string, expr: RuleExpr | AsyncRuleExpr, error: Error }[]) {
         rules.forEach(({name, expr, error}) => {
             this.rule(name, expr, error)
         })

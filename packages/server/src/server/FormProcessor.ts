@@ -10,6 +10,6 @@ export abstract class FormProcessor {
 
     abstract submit(
         context: HttpContext,
-        payload: any): Promise<{ errors?: Errors, status: number}>
+        payload: any): Promise<Errors | void>
 
 }

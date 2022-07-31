@@ -38,15 +38,16 @@ const forms: FormDefinitions = {
     '/login': {
         handler: async function ({ username }) {
             // SysAuthService.authenticate(username)
-        },
+        }
+        /*,
         rules: [
-            [ 'username', payload => !!payload.username, { message: 'Username not valid' } ]
-        ]
+            //[ 'username', payload => !!payload.username, { message: 'Username not valid' } ]
+        ]*/
     }
 }
 
 export const Module2 = defineModule()
-    .addForms(forms)
+    .addFormHandlers(forms)
     .buildPersistence(TypeORMPersistence.build().addDefinitions(ioDefinitions));
 
 const providers: DataProviderDefinitions<TypeORMContext> = {

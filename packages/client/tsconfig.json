@@ -4,7 +4,11 @@
       "lib": ["dom"],
       "composite": true,
       "outDir": "dist",
-      "rootDir": "src"
+      "rootDir": "./",
+      "paths": {
+         "src/*": ["src/*"]
+      }
    },
-   "include": ["./**/*.ts"]
+   "include": ["./**/*.ts"],
+   "references": [{ "path": "../base/tsconfig.json" }]
 }

@@ -1,7 +1,6 @@
-import { ItemError } from "packages/base"
 import { Transaction } from "./Transaction"
-import { Validator } from "@adronix/base"
-import { Context } from "packages/server"
+import { Validator, Error } from "@adronix/base"
+import { Context } from "@adronix/server"
 
 export type EntityId = string | number
 export type EntityProps = {
@@ -26,13 +25,14 @@ export type DataMap = Map<string, EntityData>
 export type IdGetter = (item: any) => EntityId
 export type DescriptorMap = Map<any, { propNames: string[], idGetter: IdGetter }>
 
+export type BaseRuleExpr<R> = (this: Context, changes: EntityProps, entity: any, ruleName: string, entityClass: EntityClass<unknown>) => R
+export type RuleExpr = BaseRuleExpr<boolean>
+export type AsyncRuleExpr = BaseRuleExpr<Promise<boolean>>
 
-export type RuleExpr = (this: Context, changes: EntityProps, entity: any, ruleName: string) => boolean
-export type AsyncRuleExpr = (this: Context, changes: EntityProps, entity: any, ruleName: string) => Promise<boolean>
 export type Rule = {
     name: string,
     expr: RuleExpr | AsyncRuleExpr,
-    error: ItemError
+    error: Error
 }
 
 export type EntityClass<T> = new (...args: any[]) => T
@@ -56,7 +56,7 @@ export type TransactionEventHandler = (eventKind: TransactionEventKind) => void
 
 export type ValidationHandler<T> = (validator: Validator, changes: EntityProps, entity?: T) => Validator
 
-export type EntityIORule = [ AsyncRuleExpr | RuleExpr, ItemError]
+export type EntityIORule = [ AsyncRuleExpr | RuleExpr, Error]
 export type EntityIORules = { [name: string]: EntityIORule[] | EntityIORule }
 export type EntityIODefinitions = {
     entityClass: EntityClass<unknown>,

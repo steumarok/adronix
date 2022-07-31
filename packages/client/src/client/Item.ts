@@ -1,4 +1,5 @@
-import { Errors, ItemProp } from "./types"
+import { Errors } from "@adronix/base"
+import { ItemProp } from "./types"
 
 export class Item {
     constructor(type: string, id: string) {

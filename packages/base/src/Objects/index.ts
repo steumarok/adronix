@@ -25,7 +25,7 @@ export function create<T>(Ctor: { new (...args: any[]): T }, ...args: any[]): T 
       /**
        * For ES2015(ES6): constructor.apply is not allowed
        */
-      if (/Class constructor/.test(err.toString())) {
+      if (/Class constructor/.test((err as any).toString())) {
         instance = class extends classRef {
           constructor(
             params0: any,

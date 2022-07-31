@@ -1,5 +1,6 @@
-import { Objects } from "@adronix/base"
+import { Errors, Objects, Validator } from "@adronix/base"
 import { EntityClass, EntityProps, IPersistenceExtender, Persistence, PersistenceBuilder, PersistenceExtension } from "@adronix/persistence"
+import { rawListeners } from "process"
 import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
 import { HttpContext } from "./Context"
@@ -7,7 +8,7 @@ import { EntityDataSetProcessor } from "./EntityDataSetProcessor"
 import { FormProcessor } from "./FormProcessor"
 import { IOService } from "./IOService"
 import { ItemCollector } from "./ItemCollector"
-import { DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, ModuleOptions, Params, ReturnType } from "./types"
+import { DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, FormRule, FormRules, ModuleOptions, Params, ReturnType } from "./types"
 
 
 
@@ -16,7 +17,7 @@ type Descriptor = (collector: ItemCollector) => ItemCollector
 
 export abstract class Module<A extends Application = Application> {
     readonly providers: Map<string, { dataProvider: DataProvider, descriptor: Descriptor}[]> = new Map()
-    readonly formHandlers: Map<string, FormHandler[]> = new Map()
+    readonly formHandlers: Map<string, { handler: FormHandler, rules: FormRules }> = new Map()
     readonly serviceClasses: Array<typeof AbstractService<A>> = []
 
     constructor(
@@ -57,9 +58,10 @@ export abstract class Module<A extends Application = Application> {
 
     registerFormHandler(
         path: string,
-        handler: FormHandler) {
+        handler: FormHandler,
+        rules: FormRules) {
 
-        this.formHandlers.set(path, [handler])
+        this.formHandlers.set(path, { handler, rules })
     }
 
     registerProvider(
@@ -73,6 +75,8 @@ export abstract class Module<A extends Application = Application> {
         }])
     }
 
+
+
     createFormProcessor(
         path: string): FormProcessor {
 
@@ -84,12 +88,37 @@ export abstract class Module<A extends Application = Application> {
 
             async submit(
                 payload: any,
-                context: HttpContext) {
+                context: HttpContext): Promise<Errors | void> {
 
-                await Promise.all(
-                    module.formHandlers.get(path).map(handler => handler.call(context, payload))
-                )
-                return { status: 200 }
+                const { handler, rules } = module.formHandlers.get(path)
+
+                function isArrayOfArray<T>(arr: T | T[]): arr is Array<T> {
+                    return Array.isArray(arr[0])
+                }
+
+                const validator = Object.keys(rules)
+                    .reduce((v, name) => {
+                        const el = rules[name]
+                        const list = isArrayOfArray(el) ? el : [el]
+                        return list.reduce((v0, r) => v0.addRule(
+                            async () => {
+                                const result = await r[0].call(context, payload, name)
+                                if (!result) {
+                                    return {
+                                        name,
+                                        error: r[1]
+                                    }
+                                }
+                            }
+                        ), v)
+                    }, new Validator())
+
+                const errors = await validator.validate()
+                if (Object.keys(errors).length > 0) {
+                    return errors
+                }
+
+                return await handler.call(context, payload)
             }
         }
     }
@@ -154,7 +183,7 @@ export function defineModule<A extends Application = Application>() {
 
     const serviceClasses: Array<typeof AbstractService<A>> = []
 
-    const formHandlers: Map<string, FormHandler> = new Map()
+    const formHandlers: Map<string, { handler: FormHandler, rules: FormRules }> = new Map()
 
     const dataProviders: Map<string, DataProvider> = new Map()
     const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
@@ -178,8 +207,8 @@ export function defineModule<A extends Application = Application>() {
                 )
             })
 
-            formHandlers.forEach((handler, path) => {
-                this.registerFormHandler(path, handler)
+            formHandlers.forEach(({ handler, rules }, path) => {
+                this.registerFormHandler(path, handler, rules)
             })
 
             serviceClasses.forEach(service => this.registerService(service))
@@ -199,14 +228,19 @@ export function defineModule<A extends Application = Application>() {
             return this
         }
 
-        static addForms(formDefinitions: FormDefinitions) {
-            for (const path in formDefinitions) {
-                const self = this.addFormHandler(path, formDefinitions[path].handler)
-            }
+        static addFormHandlers(...formDefinitionsList: FormDefinitions[]) {
+            formDefinitionsList.forEach(formDefinitions => {
+                for (const path in formDefinitions) {
+                    this.addFormHandler(
+                        path,
+                        formDefinitions[path].handler,
+                        formDefinitions[path].rules)
+                }
+            })
             return this
         }
-        static addFormHandler(path: string, handler: FormHandler) {
-            formHandlers.set(path, handler)
+        static addFormHandler(path: string, handler: FormHandler, rules: FormRules) {
+            formHandlers.set(path, { handler, rules })
             return this
         }
 
