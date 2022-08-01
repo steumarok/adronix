@@ -15,7 +15,17 @@ export function create<T>(Ctor: { new (...args: any[]): T }, ...args: any[]): T 
     const classRef: { new (...args: any[]): any; } = classMap.get(Ctor);
 
     if (!classRef) {
-      return new Ctor(args[0], args[1])
+      return new Ctor(
+        args[0],
+        args[1],
+        args[2],
+        args[3],
+        args[4],
+        args[5],
+        args[6],
+        args[7],
+        args[8],
+        args[9])
     }
     let instance = Object.create(classRef.prototype);
 

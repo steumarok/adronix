@@ -11,12 +11,8 @@ export class IOService extends AbstractService {
 
     static readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: Context) => EntityIO<unknown>>()
 
-    @InjectService
-    notificationService: NotificationService
-
-    constructor(app: Application, context: Context) {
-        super(app, context)
-    }
+//    @InjectService
+//    notificationService: NotificationService
 
     getTransactionManager<T>(type: EntityType<T>) {
         return this.getEntityIO<T>(type).transactionManager
@@ -75,9 +71,10 @@ export class IOService extends AbstractService {
                 if (entityEventKind == EntityEventKind.Deleted ||
                     entityEventKind == EntityEventKind.Updated ||
                     entityEventKind == EntityEventKind.Inserted) {
-                    transaction.addEventHandler((transactionEventKind) => {
+                    transaction.addEventHandler(async (transactionEventKind) => {
                         if (transactionEventKind == TransactionEventKind.Commit) {
-                            this.notificationService.broadcast('io', entity.constructor.name, entity)
+                            this.module.notificationChannels.get('data').broadcast(entity, entity.constructor.name)
+                            //this.notificationService.broadcast('io', entity.constructor.name, entity)
                             //this.app.defaultNotificationChannel.broadcast(entity, entity.constructor.name)
                         }
                     })

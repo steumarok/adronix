@@ -1,17 +1,21 @@
+let dataAuthToken: string | null = null
+let responseHandler: (response: Response) => void
+
+export function setDataAuthToken(authToken: string) {
+  dataAuthToken = authToken
+}
+
 export type IDataBroker = {
   get(url: string): Promise<Response>
   post(url: string, data: any): Promise<Response>
 }
 
-let _accessToken: string | null = null
-let _refreshToken: string | null = null
-
 export function useFetch(): IDataBroker {
 
   function getHeaders() {
     const headers = {} as any
-    if (_accessToken) {
-      headers['Authorization'] = `Bearer ${_accessToken}`
+    if (dataAuthToken) {
+      headers['Authorization'] = `Bearer ${dataAuthToken}`
     }
     return headers
   }
@@ -22,9 +26,13 @@ export function useFetch(): IDataBroker {
         method: 'GET',
         headers: getHeaders()
       }
-      return fetch(url, params)
+      const resp = await fetch(url, params)
+      if (responseHandler) {
+        responseHandler(resp)
+      }
+      return resp
     },
-    post: (url, data) => {
+    post: async (url, data) => {
       const headers = getHeaders()
       const params: any = {
         method: 'POST',
@@ -36,12 +44,15 @@ export function useFetch(): IDataBroker {
         headers['Content-Type'] = 'application/json;charset=utf-8'
       }
       params['headers'] = headers
-      return fetch(url, params)
+      const resp = await fetch(url, params)
+      if (responseHandler) {
+        responseHandler(resp)
+      }
+      return resp
     }
   }
 }
 
-export function setAuthTokens(accessToken: string, refreshToken: string | null = null) {
-  _accessToken = accessToken
-  _refreshToken = refreshToken
+export function setResponseHandler(handler: (response: Response) => void) {
+  responseHandler = handler
 }

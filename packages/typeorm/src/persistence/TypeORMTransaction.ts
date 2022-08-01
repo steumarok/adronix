@@ -13,14 +13,14 @@ export class TypeORMTransaction extends Transaction {
     }
 
     async start() {
-        super.start()
+        await super.start()
         this.queryRunner = this.dataSource.createQueryRunner()
         await this.queryRunner.connect()
         await this.queryRunner.startTransaction()
     }
 
     async commit() {
-        super.commit()
+        await super.commit()
         try {
             await this.queryRunner.commitTransaction()
         }
@@ -33,7 +33,7 @@ export class TypeORMTransaction extends Transaction {
     }
 
     async rollback() {
-        super.rollback()
+        await super.rollback()
         try
         {
             await this.queryRunner.rollbackTransaction()

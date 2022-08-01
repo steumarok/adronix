@@ -9,13 +9,17 @@ export class Transaction {
     async start() { }
 
     async commit() {
-        this.eventHandlers.forEach(handler => handler(TransactionEventKind.Commit))
+        for (const handler of this.eventHandlers) {
+            await handler(TransactionEventKind.Commit)
+        }
 
         this.eventHandlers = []
     }
 
     async rollback() {
-        this.eventHandlers.forEach(handler => handler(TransactionEventKind.Rollback))
+        for (const handler of this.eventHandlers) {
+            await handler(TransactionEventKind.Rollback)
+        }
 
         this.eventHandlers = []
     }

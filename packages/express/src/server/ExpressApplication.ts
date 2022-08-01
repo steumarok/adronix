@@ -1,4 +1,4 @@
-import { WebApplication, DataSetProcessor, FormProcessor } from "@adronix/server"
+import { WebApplication, DataSetProcessor, FormProcessor, Application, Module } from "@adronix/server"
 import { NotificationChannel } from "@adronix/server"
 import { ExpressDataSetController } from "./ExpressDataSetController"
 import { ExpressFormController } from "./ExpressFormController"
@@ -33,36 +33,39 @@ export class ExpressApplication extends WebApplication {
     }
 
     registerProcessor(
+        module: Module,
         path: string,
         dataSetProcessor: () => DataSetProcessor,
         secured: boolean) {
         this.express.get(
             path,
             secured ? this.securityHandler : this.voidHandler,
-            this.createDataSetController(dataSetProcessor).fetchCallback(this.createHttpContext.bind(this)))
+            this.createDataSetController(dataSetProcessor).fetchCallback(this.getHttpContextCreator(module)))
         this.express.post(
             path,
-            this.createDataSetController(dataSetProcessor).syncCallback(this.createHttpContext.bind(this)))
+            this.createDataSetController(dataSetProcessor).syncCallback(this.getHttpContextCreator(module)))
     }
 
     registerFormProcessor(
+        module: Module,
         path: string,
         formProcessor: () => FormProcessor,
         secured: boolean) {
         this.express.post(
             path,
             secured ? this.securityHandler : this.voidHandler,
-            this.createFormController(formProcessor).submitCallback(this.createHttpContext.bind(this)))
+            this.createFormController(formProcessor).submitCallback(this.getHttpContextCreator(module)))
     }
 
     registerNotificationChannel(
+        module: Module,
         path: string,
         channel: NotificationChannel,
         secured: boolean): void {
         this.express.get(
             path,
             secured ? this.securityHandler : this.voidHandler,
-            this.createNotificationController(channel).sseCallback())
+            this.createNotificationController(channel).sseCallback(this.getHttpContextCreator(module)))
     }
 
     setSecurityHandler(handler: (req: Request, res: Response, next: NextFunction) => void) {

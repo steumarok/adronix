@@ -3,11 +3,13 @@ import { EntityClass, EntityProps, IPersistenceExtender, Persistence, Persistenc
 import { rawListeners } from "process"
 import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
+import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { HttpContext } from "./Context"
 import { EntityDataSetProcessor } from "./EntityDataSetProcessor"
 import { FormProcessor } from "./FormProcessor"
 import { IOService } from "./IOService"
 import { ItemCollector } from "./ItemCollector"
+import { NotificationChannel } from "./NotificationChannel"
 import { DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, FormRule, FormRules, ModuleOptions, Params, ReturnType } from "./types"
 
 
@@ -18,6 +20,7 @@ type Descriptor = (collector: ItemCollector) => ItemCollector
 export abstract class Module<A extends Application = Application> {
     readonly providers: Map<string, { dataProvider: DataProvider, descriptor: Descriptor}[]> = new Map()
     readonly formHandlers: Map<string, { handler: FormHandler, rules: FormRules }> = new Map()
+    readonly notificationChannels: Map<string, NotificationChannel> = new Map()
     readonly serviceClasses: Array<typeof AbstractService<A>> = []
 
     constructor(
@@ -75,7 +78,9 @@ export abstract class Module<A extends Application = Application> {
         }])
     }
 
-
+    registerNotificationChannel(name: string, channel: NotificationChannel) {
+        this.notificationChannels.set(name, channel)
+    }
 
     createFormProcessor(
         path: string): FormProcessor {
@@ -181,6 +186,7 @@ export function defineModule<A extends Application = Application>() {
     var persistenceBuilderCallback: (extender: IPersistenceExtender) => IPersistenceExtender
     var currentProviderPath: string
 
+    const notificationChannels: Map<string, NotificationChannel> = new Map()
     const serviceClasses: Array<typeof AbstractService<A>> = []
 
     const formHandlers: Map<string, { handler: FormHandler, rules: FormRules }> = new Map()
@@ -212,10 +218,16 @@ export function defineModule<A extends Application = Application>() {
             })
 
             serviceClasses.forEach(service => this.registerService(service))
+
+            notificationChannels.forEach((channel, name) => {
+                this.registerNotificationChannel(name, channel)
+            })
         }
+
         getDescriptors(path: string) {
             return descriptorsMap.get(path) || []
         }
+
         describe(path: string) {
             const descriptors = this.getDescriptors(path)
             return (collector: ItemCollector) => {
@@ -241,6 +253,11 @@ export function defineModule<A extends Application = Application>() {
         }
         static addFormHandler(path: string, handler: FormHandler, rules: FormRules) {
             formHandlers.set(path, { handler, rules })
+            return this
+        }
+
+        static addNotificationChannel(name: string) {
+            notificationChannels.set(name, new BetterSseNotificationChannel())
             return this
         }
 

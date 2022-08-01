@@ -7,5 +7,9 @@ export class JwtService extends AbstractService {
         return jwt.sign(payload, "test")
     }
 
+    verify(token: string) {
+        return jwt.verify(token, "test")
+    }
+
 }
 

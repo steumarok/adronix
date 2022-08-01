@@ -33,23 +33,13 @@
       lookup-display-property="name"
       clearable
       />
-<!--
-    <q-input v-if="productOption"
-      v-model="productOption.name"
-      label="Nome"
-      :error-message="productOption.errors.name && productOption.errors.name[0].message"
-      :error="!!productOption.errors.name"/>
--->
-<q-btn @click="showContent">content</q-btn>
+
   </adx-dialog>
 </template>
 
 
 <script setup lang="ts">
 import { useAdronix } from '@adronix/vue'
-import { Item } from '@adronix/client';
-import { onMounted, Ref, ref, watch } from 'vue';
-import { ItemProp } from 'app/../../packages/client/src/client/types';
 
 const props = defineProps({
   id: Number
@@ -67,10 +57,4 @@ const dsShops = $adx.dataSet('/api/module1/lookupShops')
 const { dialog } = $adx.dialog(
   () => { return ds.commit() }
 )
-
-
-
-function showContent() {
-  console.log(ds.getDelta())
-}
 </script>

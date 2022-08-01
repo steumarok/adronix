@@ -1,8 +1,7 @@
-import { Errors } from "@adronix/base";
 import { IQuery } from "./IQuery";
 import { Item } from "./Item";
 import { Query } from "./Query";
-import { ItemData, ItemFilter, ItemId, ItemProp, ItemProps, ItemRef } from "./types";
+import { ItemData, ItemFilter, ItemId, ItemProp, ItemProps, ItemRef, ServerErrors } from "./types";
 
 export class DataSet {
     private items: Item[] = [];
@@ -93,7 +92,7 @@ export class DataSet {
       return data.filter(itemData => itemData.$errors).length == 0
     }
 
-    protected syncErrors(item: Item, errors: Errors) {
+    protected syncErrors(item: Item, errors: ServerErrors) {
       for (let propName in errors) {
         item.errors[propName] = errors[propName]
       }

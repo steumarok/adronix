@@ -1,5 +1,4 @@
-import { AbstractService, InjectService } from "@adronix/server";
-import { JwtService } from "./JwtService";
+import { AbstractService } from "@adronix/server";
 
 export class AuthService extends AbstractService {
 

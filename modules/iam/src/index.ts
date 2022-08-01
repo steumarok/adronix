@@ -3,7 +3,7 @@ import persistenceBuilder from "./persistence/builder"
 import authForms from "./handlers/auth"
 import { AuthService } from "./services/AuthService"
 
-export const AuthModule = defineModule()
+export const IamAuthModule = defineModule()
     .buildPersistence(persistenceBuilder)
     .addFormHandlers(authForms)
     .addServices(AuthService)

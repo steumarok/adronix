@@ -4,7 +4,8 @@
    "main": "src/index.ts",
    "types": "src/index.ts",
    "dependencies": {
-      "@adronix/base": "workspace:^"
+      "@adronix/base": "workspace:^",
+      "domurl": "^2.3.4"
    },
    "devDependencies": {
       "@types/jest": "^27.4.0",

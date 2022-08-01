@@ -125,9 +125,6 @@ Module1.extend()
 
 Objects.override(IOService, base => {
     return class extends base {
-        constructor(app: Application, context: Context) {
-            super(app, context)
-        }
 
         update<T>(type: string | EntityClass<T>, entity: T, changes: EntityProps) {
             const op = super.update(type, entity, changes)

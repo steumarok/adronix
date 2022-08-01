@@ -1,54 +1,49 @@
 <template>
-  <q-page class="q-pa-md">
-    <q-form @submit="submit" class="window-height">
+  <adx-page>
 
-      <adx-cont horizonal>
-        <adx-col>
+    <adx-form
+      ref="form"
+      url="/api/auth/login"
+      class="window-height"
+      @onSuccess="onSuccess">
 
-        </adx-col>
-      </adx-cont>
+      <adx-d horizontal fit justify="center" content="center">
+        <adx-d width="300px" y-spacing="sm">
+          <adx-input
+            type="email"
+            label="Email"
+            name="username"
+            outlined
+            :errors="form?.errors.username"/>
 
-      <div class="fit row wrap justify-center content-center">
-        <div class="q-ma-xs q-gutter-sm" style="width: 300px">
-          <div class="full-width">
-            <q-input v-model="username" label="Email" name="username" outlined />
-            </div>
-          <div class="full-width">
-            <q-input v-model="username" type="password" label="Password" name="password" outlined />
-            </div>
+          <adx-input
+            type="password"
+            label="Password"
+            name="password"
+            outlined
+            :errors="form?.errors.auth"
+          />
 
-          <div class="full-width">
-            <q-btn type="submit" unelevated color="primary">Sync</q-btn>
-            </div>
-        </div>
+          <q-btn type="submit" unelevated color="primary" size="lg" class="full-width">Login</q-btn>
+        </adx-d>
+      </adx-d>
 
-      </div>
-    </q-form>
+    </adx-form>
 
-  </q-page>
+  </adx-page>
 </template>
 
-<script lang="ts">
-import { defineComponent, onBeforeMount, ref, watch } from 'vue';
-import { VueDataSet } from '@adronix/vue';
-import { ItemData, useFetch } from '@adronix/client';
+<script setup lang="ts">
+import { setAuthToken } from '@adronix/client';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-export default defineComponent({
-  name: 'Form',
-  components: { },
-  setup() {
+const form = ref()
 
-    const username = ref(null)
-    return {
-      username,
-      submit: async (evt: { target: HTMLFormElement; }) => {
+const $r = useRouter()
 
-        const formData = new FormData(evt.target)
-        const fetch = useFetch()
-
-       await  fetch.post('/api/auth/login', formData)
-      }
-    };
-  },
-});
+const onSuccess = async (r: Response) => {
+  setAuthToken((await r.json()).token)
+  await $r.push('/table')
+}
 </script>

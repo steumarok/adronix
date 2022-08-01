@@ -1,6 +1,6 @@
 import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
 import { DataSetProcessor } from "./DataSetProcessor"
-import { Module } from "./Module"
+import { defineModule, Module } from "./Module"
 import { NotificationChannel } from "./NotificationChannel"
 import { Objects } from "@adronix/base"
 import { ModuleOptions, ServiceOptions, WebModuleOptions } from "./types"
@@ -8,20 +8,33 @@ import { FormProcessor } from "./FormProcessor"
 import { AbstractService } from "./AbstractService"
 import { IncomingMessage, ServerResponse } from "http"
 import { Context, ExtendedServerResponse, HttpContext } from "./Context"
+import { IOService } from "./IOService"
 
-
+// /api/io/sse/data
+const ioModule = defineModule()
+    .addNotificationChannel('data')
+    .addServices(IOService)
 
 export abstract class Application {
 
     protected readonly modules: Module<Application>[] = []
-    protected readonly serviceClassMap: Map<new (app: Application, context: Context) => AbstractService, ServiceOptions> = new Map();
+    protected readonly serviceClassMap:
+        Map<new (app: Application, module: Module, context: Context) => AbstractService, { module: Module, options: ServiceOptions }> = new Map();
     protected readonly contextExtenders: ((context: Context) => any)[] = []
 
-    service<S extends AbstractService<Application>>(
-        cls: (new (app: Application, context: Context) => S) | string,
-        context: Context): S {
+    constructor() {
+        setTimeout(() => {
+            this.initialize()
+        }, 100)
+    }
 
-        let serviceClass: new (app: Application, context: Context) => AbstractService
+    protected initialize() {
+    }
+
+    service<S extends AbstractService<Application>>(
+        cls: (new (app: Application, module: Module, context: Context) => S) | string,
+        context: Context): S {
+        let serviceClass: new (app: Application, module: Module, context: Context) => AbstractService
         if (typeof cls === "string") {
             serviceClass = Array.from(this.serviceClassMap.keys()).find(serviceClass => cls == serviceClass.name)
         }
@@ -29,16 +42,19 @@ export abstract class Application {
             serviceClass = cls
         }
 
-        const service = Objects.create(serviceClass, this, context) as S
-
         if (this.serviceClassMap.has(serviceClass)) {
-            const options = this.serviceClassMap.get(serviceClass)
+            const { module, options } = this.serviceClassMap.get(serviceClass)
+
+            const service = Objects.create(serviceClass, this, module, context) as S
+
             if (options?.proxy) {
                 return options.proxy.wrap(service)
             }
+            return service
         }
-
-        return service
+        else {
+            throw new Error(`${serviceClass.name} is not registered in any modules`)
+        }
     }
 
     protected extendContext<E>(extender: (context: Context) => E) {
@@ -55,7 +71,12 @@ export abstract class Application {
         const module = Objects.create(moduleClass, this, options)
 
         module.serviceClasses.forEach(serviceClass => {
-            this.serviceClassMap.set(serviceClass, options?.services?.find(([cls]) => cls == serviceClass)[1])
+            this.serviceClassMap.set(
+                serviceClass,
+                {
+                    module,
+                    options: options?.services?.find(([cls]) => cls == serviceClass)[1]
+                })
         })
 
         this.modules.push(module)
@@ -64,20 +85,16 @@ export abstract class Application {
 }
 
 export abstract class WebApplication extends Application {
-    readonly defaultNotificationChannel: NotificationChannel = new BetterSseNotificationChannel()
 
-    constructor() {
-        super()
-    }
+    protected initialize() {
+        super.initialize()
 
-    setDefaultNotificationChannel(path: string) {
-        this.registerNotificationChannel(path, this.defaultNotificationChannel, false)
-    }
-
-    addNotificationChannel(path: string, secured: boolean): NotificationChannel {
-        const channel = new BetterSseNotificationChannel()
-        this.registerNotificationChannel(path, channel, secured)
-        return channel
+        this.addModule(ioModule, {
+            http: {
+                urlContext: '/io'
+            },
+            secured: true
+        })
     }
 
     composePath(path: string, options?: WebModuleOptions) {
@@ -91,6 +108,7 @@ export abstract class WebApplication extends Application {
 
         module.providers.forEach((_value, path) => {
             this.registerProcessor(
+                module,
                 this.composePath(path, options),
                 () => module.createDataSetProcessor(path),
                 options?.secured)
@@ -98,9 +116,19 @@ export abstract class WebApplication extends Application {
 
         module.formHandlers.forEach((_value, path) => {
             this.registerFormProcessor(
+                module,
                 this.composePath(path, options),
                 () => module.createFormProcessor(path),
                 options?.secured)
+        })
+
+        module.notificationChannels.forEach((channel, name) => {
+            this.registerNotificationChannel(
+                module,
+                this.composePath(`/sse/${name}`, options),
+                channel,
+                options?.secured
+            )
         })
 
         return module
@@ -110,36 +138,34 @@ export abstract class WebApplication extends Application {
         throw "not implemented"
     }
 
-    async createHttpContext(
-        request: IncomingMessage,
-        response: ServerResponse) {
-        const ctx = new HttpContext(
-            this,
-            request,
-            this.extendResponse(response),
-            this.getTenantId(request)
-        )
-        const extCtx = this.contextExtenders.reduce((c, e) => ({ ...c, ...e(c) }), ctx)
-
-        return {
-            ...extCtx,
-            service<S extends AbstractService>(cls: new (app: Application, context: Context) => S): S {
-                return this.application.service(cls, this)
-            }
-        }
+    getHttpContextCreator(
+        module: Module) {
+        return function(request: IncomingMessage, response: ServerResponse) {
+            const ctx = new HttpContext(
+                this,
+                module,
+                request,
+                this.extendResponse(response),
+                this.getTenantId(request)
+            )
+            return this.contextExtenders.reduce((c, e) => ({ ...c, ...e(c) }), ctx)
+        }.bind(this)
     }
 
     abstract registerProcessor(
+        module: Module,
         path: string,
         dataSetProcessor: () => DataSetProcessor,
         secured: boolean): void
 
     abstract registerFormProcessor(
+        module: Module,
         path: string,
         formProcessor: () => FormProcessor,
         secured: boolean): void
 
     abstract registerNotificationChannel(
+        module: Module,
         path: string,
         channel: NotificationChannel,
         secured: boolean): void

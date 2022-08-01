@@ -114,9 +114,9 @@ export abstract class EntityIO<T> {
         entity: T,
         transaction: Transaction) {
 
-        return Promise.all(
-            this.eventHandlers.map(handler => handler(eventKind, entity, transaction))
-        )
+        for (const handler of this.eventHandlers) {
+            await handler(eventKind, entity, transaction)
+        }
     }
 
     addEventHandler(

@@ -21,6 +21,7 @@ __metadata:
   dependencies:
     "@adronix/base": "workspace:^"
     "@types/jest": ^27.4.0
+    domurl: ^2.3.4
     jest: ^27.5.1
     ts-jest: ^27.1.3
   languageName: unknown
@@ -50,6 +51,68 @@ __metadata:
     "@types/jsonwebtoken": ^8.5.8
     express-jwt: ^7.7.5
     jsonwebtoken: ^8.5.1
+  peerDependencies:
+    reflect-metadata: ^0.1.10
+    typeorm: ^0.3.6
+  languageName: unknown
+  linkType: soft
+
+"@adronix/mms-app@workspace:apps/mms-app":
+  version: 0.0.0-use.local
+  resolution: "@adronix/mms-app@workspace:apps/mms-app"
+  dependencies:
+    "@adronix/quasar": "workspace:^"
+    "@adronix/vue": "workspace:^"
+    "@babel/eslint-parser": ^7.13.14
+    "@quasar/app": ^3.0.0
+    "@quasar/extras": ^1.0.0
+    "@types/node": ^12.20.21
+    "@typescript-eslint/eslint-plugin": ^5.10.0
+    "@typescript-eslint/parser": ^5.10.0
+    axios: ^0.21.1
+    class-transformer: ^0.5.1
+    core-js: ^3.6.5
+    eslint: ^7.14.0
+    eslint-config-prettier: ^8.1.0
+    eslint-plugin-vue: ^7.0.0
+    prettier: ^2.5.1
+    quasar: ^2.0.0
+    reflect-metadata: ^0.1.13
+    vue: ^3.0.0
+    vue-router: ^4.0.0
+  languageName: unknown
+  linkType: soft
+
+"@adronix/mms-server@workspace:apps/mms-server":
+  version: 0.0.0-use.local
+  resolution: "@adronix/mms-server@workspace:apps/mms-server"
+  dependencies:
+    "@adronix/express": "workspace:^"
+    "@adronix/iam": "workspace:^"
+    "@adronix/mms": "workspace:^"
+    "@adronix/persistence": "workspace:^"
+    "@adronix/server": "workspace:^"
+    "@adronix/typeorm": "workspace:^"
+    "@types/multer": ^1.4.7
+    body-parser: ^1.19.1
+    cors: ^2.8.5
+    esbuild: ^0.13.12
+    express: ^4.17.2
+    express-jwt: ^7.7.5
+    nodemon: ^2.0.14
+    reflect-metadata: ^0.1.10
+    sqlite3: 5.0.0
+    typeorm: ^0.3.6
+  languageName: unknown
+  linkType: soft
+
+"@adronix/mms@workspace:^, @adronix/mms@workspace:modules/mms":
+  version: 0.0.0-use.local
+  resolution: "@adronix/mms@workspace:modules/mms"
+  dependencies:
+    "@adronix/persistence": "workspace:^"
+    "@adronix/server": "workspace:^"
+    "@adronix/typeorm": "workspace:^"
   peerDependencies:
     reflect-metadata: ^0.1.10
     typeorm: ^0.3.6

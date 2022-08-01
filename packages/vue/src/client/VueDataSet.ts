@@ -1,7 +1,6 @@
-import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery, ItemData, useEventSource, NotificationListener, useFetch, IDataBroker } from "@adronix/client";
+import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery, ItemData, useEventSource, NotificationListener, useFetch, IDataBroker, ServerErrors } from "@adronix/client";
 import { watch, reactive, ref, unref, Ref, isRef, watchEffect, onUnmounted } from 'vue';
 import diff from 'object-diff'
-import { Errors } from "@adronix/base";
 
 interface ExtendedVueDataSet {
   commit(): Promise<boolean>
@@ -14,9 +13,9 @@ interface ExtendedVueDataSet {
 export function dataSet(
   url: string | Ref<string>,
   dataBroker: IDataBroker = useFetch(),
-  notificationBroker = useEventSource()): VueDataSet & ExtendedVueDataSet {
+  notificationBroker = useEventSource('/api/io/sse/data')): VueDataSet & ExtendedVueDataSet {
 
-  const Class = class extends VueDataSet implements ExtendedVueDataSet {
+  const dataSet = new class extends VueDataSet implements ExtendedVueDataSet {
     constructor() {
       super()
       //reg.register(this, "test")
@@ -25,10 +24,12 @@ export function dataSet(
     async commit() {
       return await this.sync(async (delta) => {
         let resp = await dataBroker.post(unref(url), delta)
-        if (resp.status == 500) {
+        if (resp.status == 200) {
+          return await resp.json() as ItemData[]
+        }
+        else {
           throw await resp.text()
         }
-        return await resp.json() as ItemData[]
       })
     }
 
@@ -36,7 +37,6 @@ export function dataSet(
       await doFetch()
     }
   }
-  const dataSet = new Class()
 
   const notificationManagers = new Map<string, NotificationListener>();
   const stopListeners = () => notificationManagers.forEach(m => m.stop())
@@ -63,12 +63,16 @@ export function dataSet(
   }
 
   async function doFetch(): Promise<void> {
-    return dataBroker.get(unref(url))
-      .then((res) => res.json())
-      .then(json => json as ItemData[])
-      .then(data => dataSet.merge(data))
-      .then(() => listenNotifications())
-      .catch((err) => alert(err))
+    const resp = await dataBroker.get(unref(url))
+    if (resp.status == 200) {
+      const data = await resp.json()
+      const items = data as ItemData[]
+      dataSet.merge(items)
+      listenNotifications()
+    }
+    else {
+      throw await resp.text()
+    }
   }
 
   if (isRef(url)) {
@@ -93,7 +97,7 @@ export class VueDataSet extends DataSet {
       return `${item.id}@${item.type}`
     }
 
-    protected syncErrors(item: Item, errors: Errors) {
+    protected syncErrors(item: Item, errors: ServerErrors) {
       super.syncErrors(item, errors)
       this.update(item, { errors })
     }

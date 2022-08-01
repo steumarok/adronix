@@ -1,5 +1,5 @@
-import { Request, Response } from "express"
-import { BetterSseNotificationSession, NotificationChannel } from '@adronix/server'
+import e, { Request, Response } from "express"
+import { BetterSseNotificationSession, HttpContext, NotificationChannel } from '@adronix/server'
 
 export class ExpressNotificationController {
     constructor(private channel: NotificationChannel) {
@@ -9,8 +9,11 @@ export class ExpressNotificationController {
         return new BetterSseNotificationSession()
     }
 
-    sseCallback() {
+    sseCallback(contextCreator: (request: Request, response: Response) => Promise<HttpContext>) {
         return async (request: Request, response: Response) => {
+
+            const context = await contextCreator(request, response)
+
             const session = this.createSession()
             await session.init(request, response)
 

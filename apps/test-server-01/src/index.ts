@@ -1,18 +1,19 @@
 import "reflect-metadata"
-import express from "express";
+import express, { Request } from "express";
 import cors from 'cors'
 import bodyParser from "body-parser";
 import multer from 'multer';
 import { ExpressApplication } from "@adronix/express";
 import { dataSources, sequelize } from "./persistence/connection";
-import { TypeORMContext } from "@adronix/typeorm";
+import { extendTypeORMContext, TypeORMContext } from "@adronix/typeorm";
 import { Module2 } from "@adronix/test-module-02";
 import { Module1, Service1 } from "@adronix/test-module-01";
 import { ISequelizeAware } from '@adronix/sequelize'
 import { expressjwt, Request as JWTRequest } from "express-jwt";
 import { RabbitMQServiceProxy } from "@adronix/rabbitmq";
 import { DataSource } from "typeorm";
-import { AuthModule } from '@adronix/iam'
+import { IamAuthModule } from '@adronix/iam'
+import { IncomingMessage } from "http";
 
 const app = express()
 app.use(cors())
@@ -26,11 +27,27 @@ app.use(upload.any())
 class TestApp extends ExpressApplication {
     constructor() {
         super(app);
+        this.setSecurityHandler(expressjwt({
+            secret: "test",
+            algorithms: ["HS256"],
+            getToken: function (req: Request): string {
+                if (
+                  req.headers.authorization &&
+                  req.headers.authorization.split(" ")[0] === "Bearer"
+                ) {
+                  return req.headers.authorization.split(" ")[1];
+                } else if (req.query && req.query.token) {
+                  return req.query.token as string
+                }
+                return null;
+              }
+        }))
+    }
 
-        this.addModule(AuthModule);
+    protected initialize() {
+        super.initialize()
+        this.addModule(IamAuthModule);
 
-        this.setDefaultNotificationChannel('/sse');
-        this.setSecurityHandler(expressjwt({ secret: "shhhhhhared-secret", algorithms: ["HS256"] }))
         this.addModule(Module1, {
             secured: true,
             http: {
@@ -42,17 +59,7 @@ class TestApp extends ExpressApplication {
         });
         this.addModule(Module2, { http: { urlContext: '/module2' }, secured: true });
 
-        this.extendContext<TypeORMContext>(context => ({
-            get dataSource(): DataSource {
-                return this.dataSources['default']
-            },
-            get dataSources(): { [name: string]: DataSource } {
-                return {
-                    'default': dataSources[context.tenantId]
-                }
-            }
-        } as TypeORMContext))
-
+        this.extendContext(extendTypeORMContext(context => dataSources[context.tenantId]))
     }
 
     getTenantId(request: JWTRequest): string {

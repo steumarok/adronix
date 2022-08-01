@@ -52,7 +52,7 @@ export enum TransactionEventKind {
 }
 
 export type EntityEventHandler<T = any> = (eventKind: EntityEventKind, entity: T, transaction: Transaction) => Promise<void>
-export type TransactionEventHandler = (eventKind: TransactionEventKind) => void
+export type TransactionEventHandler = (eventKind: TransactionEventKind) => Promise<void>
 
 export type ValidationHandler<T> = (validator: Validator, changes: EntityProps, entity?: T) => Validator
 

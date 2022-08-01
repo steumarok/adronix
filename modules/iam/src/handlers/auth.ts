@@ -2,7 +2,8 @@ import { FormDefinitions } from "@adronix/server";
 import { AuthService } from "../services/AuthService";
 import { JwtService } from "../services/JwtService";
 
-const definitions: FormDefinitions = {
+export default {
+
     '/auth/login': {
         handler: async function ({ username, password }) {
 
@@ -27,6 +28,5 @@ const definitions: FormDefinitions = {
             ]
         }
     }
-}
 
-export default definitions
+} as FormDefinitions
