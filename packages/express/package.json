@@ -6,6 +6,7 @@
    "dependencies": {
       "@adronix/base": "workspace:^",
       "@adronix/server": "workspace:^",
+      "body-parser": "^1.19.1",
       "express": "^4.17.2",
       "multer": "^1.4.5-lts.1"
    },

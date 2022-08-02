@@ -24,7 +24,7 @@ export function dataSet(
     async commit() {
       return await this.sync(async (delta) => {
         let resp = await dataBroker.post(unref(url), delta)
-        if (resp.status == 200) {
+        if (resp.status == 200 || resp.status == 400) {
           return await resp.json() as ItemData[]
         }
         else {
@@ -217,10 +217,12 @@ export class VueDataSet extends DataSet {
 
     protected updateRefs() {
       super.updateRefs()
-      this.getItems()
-        .map(i => i.type)
-        .filter((v, i, a) => a.indexOf(v) === i)
-        .forEach(type => this.refreshValues(type))
+      const itemTypes = this.findItem("Metadata", item => item.id == "$types")?.value;
+
+      if (itemTypes) {
+        (itemTypes as string).split(",").forEach(type => this.refreshValues(type))
+        this.refreshValues("Metadata")
+      }
     }
 
   }

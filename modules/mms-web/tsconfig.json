@@ -1,0 +1,19 @@
+{
+   "extends": "../../tsconfig.base.json",
+   "compilerOptions": {
+      "lib": [
+         "es2021",
+         "dom"
+      ],
+      "outDir": "src",
+      "rootDir": "src",
+      "composite": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
+   },
+   "include": ["./**/*.ts"],
+   "references": [
+      { "path": "../../packages/client/tsconfig.json" },
+      { "path": "../../packages/vue/tsconfig.json" }
+   ]
+}

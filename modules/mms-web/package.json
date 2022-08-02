@@ -1,0 +1,22 @@
+{
+   "name": "@adronix/mms-web",
+   "description": "Maintenance Management System Web Module",
+   "version": "1.0.1",
+   "main": "src/index.ts",
+   "types": "src/index.ts",
+   "dependencies": {
+      "@adronix/client": "workspace:^",
+      "@adronix/vue": "workspace:^",
+      "pinia": "^2.0.17"
+   },
+   "peerDependencies": {
+      "reflect-metadata": "^0.1.10",
+      "typeorm": "^0.3.6"
+   },
+   "scripts": {
+      "serve": "node ./dist/index.js",
+      "start": "ts-node src/index.ts",
+      "build": "tsc",
+      "watch": "tsc --watch"
+   }
+}

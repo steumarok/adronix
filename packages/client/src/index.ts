@@ -1,4 +1,4 @@
-export { DataSet } from './client/DataSet'
+export { DataSet, DataSetUtils } from './client/DataSet'
 export { IQuery } from './client/IQuery'
 export { IReactiveQuery } from './client/IReactiveQuery'
 export { Query } from './client/Query'

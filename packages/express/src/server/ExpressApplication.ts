@@ -6,7 +6,10 @@ import { ExpressNotificationController } from "./ExpressNotificationController"
 import e, { NextFunction, Request, Response } from "express";
 import { ExtendedServerResponse } from "@adronix/server/src/server/Context"
 import { ServerResponse } from "http"
+import bodyParser from "body-parser";
+import multer from 'multer';
 
+const upload = multer()
 
 export class ExpressApplication extends WebApplication {
     voidHandler: (req: Request, res: Response, next: NextFunction) => void = (_req, _resp, next) => { next() }
@@ -43,6 +46,10 @@ export class ExpressApplication extends WebApplication {
             this.createDataSetController(dataSetProcessor).fetchCallback(this.getHttpContextCreator(module)))
         this.express.post(
             path,
+            secured ? this.securityHandler : this.voidHandler,
+            bodyParser.json(),
+            bodyParser.urlencoded({ extended: true }),
+            upload.any(),
             this.createDataSetController(dataSetProcessor).syncCallback(this.getHttpContextCreator(module)))
     }
 
@@ -54,6 +61,8 @@ export class ExpressApplication extends WebApplication {
         this.express.post(
             path,
             secured ? this.securityHandler : this.voidHandler,
+            bodyParser.json(),
+            bodyParser.urlencoded({ extended: true }),
             this.createFormController(formProcessor).submitCallback(this.getHttpContextCreator(module)))
     }
 

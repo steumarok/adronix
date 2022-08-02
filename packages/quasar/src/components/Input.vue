@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { Error } from '@adronix/base';
-import { ItemProp, ServerError } from '@adronix/client';
+import { ServerError } from '@adronix/client';
 import { computed, ref } from 'vue'
 
 const props = defineProps<{
-  modelValue: ItemProp,
+  modelValue: any,
   errors: ServerError[]
 }>()
 const emit = defineEmits(['update:modelValue'])
 
-const value = props.modelValue
+const value = props.modelValue === undefined
   ? computed({
       get() {
         return props.modelValue as string
@@ -20,13 +19,10 @@ const value = props.modelValue
     })
   : ref()
 
-const errorMessage = computed(() => props.errors ? props.errors.map(error => error.message).join(', ') : '')
 </script>
 
 <template>
-  <q-input
+  <adx-input
     v-model="value"
-    :hide-bottom-space="true"
-    :error-message="errorMessage"
-    :error="!!errorMessage.length"/>
+    :errors="props.errors"/>
 </template>

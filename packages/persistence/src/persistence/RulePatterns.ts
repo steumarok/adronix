@@ -17,7 +17,7 @@ export namespace RulePatterns {
     }
 
     export function minLength(length: number, propName?: string) {
-        return base(value => value.length >= length, propName)
+        return base(value => value && value.length >= length, propName)
     }
 
 }

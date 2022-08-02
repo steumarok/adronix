@@ -1,5 +1,5 @@
 let dataAuthToken: string | null = null
-let responseHandler: (response: Response) => void
+let responseHandler: (response: Response) => Promise<void>
 
 export function setDataAuthToken(authToken: string) {
   dataAuthToken = authToken
@@ -28,7 +28,7 @@ export function useFetch(): IDataBroker {
       }
       const resp = await fetch(url, params)
       if (responseHandler) {
-        responseHandler(resp)
+        await responseHandler(resp)
       }
       return resp
     },
@@ -46,13 +46,13 @@ export function useFetch(): IDataBroker {
       params['headers'] = headers
       const resp = await fetch(url, params)
       if (responseHandler) {
-        responseHandler(resp)
+        await responseHandler(resp)
       }
       return resp
     }
   }
 }
 
-export function setResponseHandler(handler: (response: Response) => void) {
+export function setResponseHandler(handler: (response: Response) => Promise<void>) {
   responseHandler = handler
 }

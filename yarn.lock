@@ -27,6 +27,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@adronix/cmn@workspace:^, @adronix/cmn@workspace:modules/cmn":
+  version: 0.0.0-use.local
+  resolution: "@adronix/cmn@workspace:modules/cmn"
+  dependencies:
+    "@adronix/persistence": "workspace:^"
+    "@adronix/server": "workspace:^"
+    "@adronix/typeorm": "workspace:^"
+  peerDependencies:
+    reflect-metadata: ^0.1.10
+    typeorm: ^0.3.6
+  languageName: unknown
+  linkType: soft
+
 "@adronix/express@workspace:^, @adronix/express@workspace:packages/express":
   version: 0.0.0-use.local
   resolution: "@adronix/express@workspace:packages/express"
@@ -34,6 +47,7 @@ __metadata:
     "@adronix/base": "workspace:^"
     "@adronix/server": "workspace:^"
     "@types/jest": ^27.4.0
+    body-parser: ^1.19.1
     express: ^4.17.2
     jest: ^27.5.1
     multer: ^1.4.5-lts.1
@@ -61,6 +75,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@adronix/mms-app@workspace:apps/mms-app"
   dependencies:
+    "@adronix/mms-web": "workspace:^"
     "@adronix/quasar": "workspace:^"
     "@adronix/vue": "workspace:^"
     "@babel/eslint-parser": ^7.13.14
@@ -87,6 +102,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@adronix/mms-server@workspace:apps/mms-server"
   dependencies:
+    "@adronix/cmn": "workspace:^"
     "@adronix/express": "workspace:^"
     "@adronix/iam": "workspace:^"
     "@adronix/mms": "workspace:^"
@@ -106,10 +122,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@adronix/mms-web@workspace:^, @adronix/mms-web@workspace:modules/mms-web":
+  version: 0.0.0-use.local
+  resolution: "@adronix/mms-web@workspace:modules/mms-web"
+  dependencies:
+    "@adronix/client": "workspace:^"
+    "@adronix/vue": "workspace:^"
+    pinia: ^2.0.17
+  peerDependencies:
+    reflect-metadata: ^0.1.10
+    typeorm: ^0.3.6
+  languageName: unknown
+  linkType: soft
+
 "@adronix/mms@workspace:^, @adronix/mms@workspace:modules/mms":
   version: 0.0.0-use.local
   resolution: "@adronix/mms@workspace:modules/mms"
   dependencies:
+    "@adronix/cmn": "workspace:^"
     "@adronix/persistence": "workspace:^"
     "@adronix/server": "workspace:^"
     "@adronix/typeorm": "workspace:^"
@@ -2969,6 +2999,13 @@ __metadata:
   version: 6.1.4
   resolution: "@vue/devtools-api@npm:6.1.4"
   checksum: 027bb138b03ec7147dd15e5d0ef28d5b72c822530396cc8a86bc6fdb049dc6850314b9e897e497064e3ed47fad229a18141f56b8b8ca3d41092a576dc5b6538d
+  languageName: node
+  linkType: hard
+
+"@vue/devtools-api@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "@vue/devtools-api@npm:6.2.1"
+  checksum: 34765af0be9b0cc7e3def73b2792b1514e3c348852c5a7503fe07d013f0e907af6c27c0a32c0637dd748caf37c075af8e53ca3220433e0bd34b6f3405f358272
   languageName: node
   linkType: hard
 
@@ -10231,6 +10268,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pinia@npm:^2.0.17":
+  version: 2.0.17
+  resolution: "pinia@npm:2.0.17"
+  dependencies:
+    "@vue/devtools-api": ^6.2.1
+    vue-demi: "*"
+  peerDependencies:
+    "@vue/composition-api": ^1.4.0
+    typescript: ">=4.4.4"
+    vue: ^2.6.14 || ^3.2.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+    typescript:
+      optional: true
+  checksum: d308c6358570242b6c8126d990d756a224d1a77dfa375db5069da7f1c350372bf4e07feb4efce0d924dfc1b39f39d533234cdecf3594c4a2876de30477f6f978
+  languageName: node
+  linkType: hard
+
 "pirates@npm:^4.0.4":
   version: 4.0.5
   resolution: "pirates@npm:4.0.5"
@@ -13233,6 +13289,22 @@ turbo@latest:
     core-util-is: 1.0.2
     extsprintf: ^1.2.0
   checksum: c431df0bedf2088b227a4e051e0ff4ca54df2c114096b0c01e1cbaadb021c30a04d7dd5b41ab277bcd51246ca135bf931d4c4c796ecae7a4fef6d744ecef36ea
+  languageName: node
+  linkType: hard
+
+"vue-demi@npm:*":
+  version: 0.13.6
+  resolution: "vue-demi@npm:0.13.6"
+  peerDependencies:
+    "@vue/composition-api": ^1.0.0-rc.1
+    vue: ^3.0.0-0 || ^2.6.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  bin:
+    vue-demi-fix: bin/vue-demi-fix.js
+    vue-demi-switch: bin/vue-demi-switch.js
+  checksum: 7712b1f8edad902a8ea99ac307f9dc276ca13cb4394fdc6753c27c32f16e5f4a6d3acaa752bf24d73be0ea972552ad7da4c61314b046fbc248bd9aa26afe2e59
   languageName: node
   linkType: hard
 

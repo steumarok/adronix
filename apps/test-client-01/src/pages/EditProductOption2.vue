@@ -1,14 +1,14 @@
 <template>
   <adx-dialog ref="dialog">
 
-    <adx-input
+    <adx-data-input
       v-if="productOption"
       v-model="productOption.name"
       label="Name"
       :errors="productOption.errors.name"
       />
 
-    <adx-input
+    <adx-data-input
       v-if="productOption"
       v-model="productOption.quantity"
       label="Quantity"

@@ -17,8 +17,8 @@ export function urlComposer(baseUrl: string | Ref<string>) {
                     url.query[name] = params[name]
                 }
             }
-            return url.toString()
 
+            return url.toString()
         }
 
         watch(params, (newParams) => {

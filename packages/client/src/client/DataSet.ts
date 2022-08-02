@@ -251,3 +251,26 @@ export class DataSet {
       return properties
     }
   }
+
+  export class DataSetUtils {
+    static async deleteItem(
+      dataSet: DataSet,
+      type: string,
+      id: string,
+      onSuccess: () => Promise<boolean>) {
+      const item = dataSet.query(type, id).single();
+      if (item) {
+        dataSet.delete(item);
+          if (onSuccess) {
+            try {
+                if (!await onSuccess()) {
+                  // rollback
+                }
+            }
+            catch (e) {
+                alert(e);
+            }
+          }
+      }
+    }
+  }

@@ -5,6 +5,8 @@ import { useQuasar } from 'quasar'
 export function useQTableHandler(totalCount: ComputedRef<any>, params: GetParams | null) {
     const pageRef = ref(1)
     const rowsPerPageRef = ref(params?.limit)
+    const sortByRef = ref()
+    const descendingRef = ref()
 
     const pagination = ({
       sortBy: 'desc',
@@ -13,13 +15,19 @@ export function useQTableHandler(totalCount: ComputedRef<any>, params: GetParams
 
     const onRequest = (props: any) => {
       const { page, rowsPerPage, sortBy, descending } = props.pagination
+      const filter = props.filter
 
       pageRef.value = page
       rowsPerPageRef.value = rowsPerPage
+      sortByRef.value = sortBy
+      descendingRef.value = descending
 
       if (params) {
         params.page = page
         params.limit = rowsPerPage
+        params.sortBy = sortBy
+        params.descending = descending
+        params.filter = filter
       }
     }
 
@@ -27,6 +35,8 @@ export function useQTableHandler(totalCount: ComputedRef<any>, params: GetParams
       pagination: computed(() => ({
         ...pagination,
         page: pageRef.value,
+        sortBy: sortByRef.value,
+        descending: descendingRef.value,
         rowsPerPage: rowsPerPageRef.value,
         rowsNumber: unref(totalCount)?.value
       })),

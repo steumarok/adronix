@@ -11,18 +11,19 @@ export { GetParams }
 export type Columns = {
     [name: string]: {
         label: string,
+        width?: string,
+        align?: string,
+        sortable?: boolean,
         field?: (row: any) => any
     }
 }
 
-
-
 function getDefaultDataTableParams() {
     return {
-      page: 1,
-      limit: 10
+        page: 1,
+        limit: 10
     }
-  }
+}
 
 
 export function dataTable(
