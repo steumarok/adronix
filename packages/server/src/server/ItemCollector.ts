@@ -100,7 +100,7 @@ export class ItemCollector {
 
         propNames.forEach(propName => {
             const value = this.readProperty(item, propName, dataMap)
-            if (value) {
+            if (value !== undefined) {
                 itemData[propName] = value
             }
         })

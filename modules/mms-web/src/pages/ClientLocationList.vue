@@ -54,7 +54,8 @@ const dataTable = $adx.dataTable(
     address:      { label: 'Indirizzo', width: "100%", field: (row: Item) => row.address },
     locality:     { label: 'Località', field: (row: Item) => (row.locality as Item)?.name },
     links:        { label: 'Collegamenti', width: "200px" }
-  })
+  },
+  { sortBy: 'address' })
 
 const ds = $adx.dataSet(urlComposer(dataTable.params));
 const client = ds.ref("MmsClient")

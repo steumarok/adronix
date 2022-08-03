@@ -1,5 +1,5 @@
 <template>
-    <adx-dialog ref="dialog">
+    <adx-dialog ref="dialog" title="Dati sede">
 
         <adx-d vertical y-spacing="sm">
 
@@ -15,7 +15,7 @@
                 v-if="clientLocation"
                 v-model="clientLocation.locality"
                 label="Località"
-                lookup-data-set-url="/api/cmn/lookupLocalities"
+                lookup-data-set="dsAreaModel"
                 lookup-type="CmnLocality"
                 lookup-display-property="name"
                 clearable

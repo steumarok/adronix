@@ -1,5 +1,5 @@
 <template>
-    <adx-dialog ref="dialog">
+    <adx-dialog ref="dialog" title="Dati cliente">
 
         <adx-data-input
             v-if="client"

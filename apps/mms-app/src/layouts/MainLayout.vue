@@ -17,7 +17,7 @@
 
     </q-header>
 
-    <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered class="bg-grey-8 text-white">
+    <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered class="bg-grey-10 text-white">
       <q-list style="min-width: 100px">
         <q-item clickable to="/clients" :active="isActiveContext('clients')" active-class="text-white text-bold">
           <q-item-section>Clienti</q-item-section>

@@ -1,4 +1,5 @@
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
+import { MmsAreaModelAttribution } from "./MmsAreaModelAttribution";
 import { MmsClient } from "./MmsClient";
 import { MmsClientLocation } from "./MmsClientLocation";
 
@@ -14,4 +15,6 @@ export class MmsArea {
     @ManyToOne(() => MmsClient)
     location: MmsClientLocation;
 
+    @OneToMany(() => MmsAreaModelAttribution, attribution => attribution.area)
+    modelAttributions: MmsAreaModelAttribution[];
 }

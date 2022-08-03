@@ -1,4 +1,6 @@
 import { MmsArea } from "./entities/MmsArea";
+import { MmsAreaModel } from "./entities/MmsAreaModel";
+import { MmsAreaModelAttribution } from "./entities/MmsAreaModelAttribution";
 import { MmsAsset } from "./entities/MmsAsset";
 import { MmsAssetAttribute } from "./entities/MmsAssetAttribute";
 import { MmsAssetModel } from "./entities/MmsAssetModel";
@@ -17,5 +19,7 @@ export const MmsEntities = [
     MmsTask,
     MmsTaskModel,
     MmsWorkOrder,
-    MmsArea
+    MmsArea,
+    MmsAreaModel,
+    MmsAreaModelAttribution
 ]

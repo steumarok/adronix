@@ -7,7 +7,7 @@
             <q-breadcrumbs-el label="Home" icon="home" to="/home" />
             <q-breadcrumbs-el label="Clienti" to="/clients" />
             <q-breadcrumbs-el :to="`/clientLocations/${clientLocation?.id}`">Sedi di {{client?.name}}</q-breadcrumbs-el>
-            <q-breadcrumbs-el>Locali in {{clientLocation?.address}} {{clientLocation?.locality?.name}}</q-breadcrumbs-el>
+            <q-breadcrumbs-el>Locali in {{clientLocation?.address}} {{(clientLocation?.locality as Item)?.name}}</q-breadcrumbs-el>
         </adx-breadcrumbs>
 
         <adx-d>
@@ -38,8 +38,7 @@
 <script setup lang="ts">
 import { useAdronix } from '@adronix/vue';
 import { Item, DataSetUtils } from '@adronix/client';
-import ClientLocationEdit from './ClientLocationEdit.vue'
-import { computed } from 'vue';
+import AreaEdit from './AreaEdit.vue'
 
 const props = defineProps({
   clientLocationId: Number
@@ -52,7 +51,9 @@ const dataTable = $adx.dataTable(
   'MmsArea',
   {
     actions:      { label: 'Azioni', width: "100px" },
-    name:         { label: 'Nome', width: "100%", sortable: true, field: (row: Item) => row.address },
+    name:         { label: 'Nome', width: "40%", sortable: true, field: (row: Item) => row.name },
+    models:       { label: 'Modelli', width: "60%",
+                    field: (row: Item) => (row.modelAttributions as Item[]).map(attribution => (attribution.model as Item).name).join(', ') },
   })
 
 const ds = $adx.dataSet(urlComposer(dataTable.params));
@@ -60,15 +61,15 @@ const client = ds.ref("MmsClient")
 const clientLocation = ds.ref("MmsClientLocation")
 
 function onInsert() {
-    $adx.openDialog(ClientLocationEdit, { clientId: props.clientId })
+    $adx.openDialog(AreaEdit, { clientId: props.clientLocationId })
 }
 
 function onDelete(key: string) {
-    DataSetUtils.deleteItem(ds, "MmsClientLocation", key, () => ds.commit())
+    DataSetUtils.deleteItem(ds, "MmsArea", key, () => ds.commit())
 }
 
 function onEdit(key: string) {
-    $adx.openDialog(ClientLocationEdit, { id: key })
+    $adx.openDialog(AreaEdit, { id: key })
 }
 
 const dataBindings = dataTable.bind(ds)

@@ -24,7 +24,7 @@
                 </template>
 
                 <template #links="{ row }">
-                    <q-btn color="secondary" flat :to="`/clientLocations/${row.id}`">Sedi</q-btn>
+                    <q-btn color="secondary" flat :to="`/clientLocations/${row.id}`">Sedi ({{row.locationCount}})</q-btn>
                 </template>
             </adx-data-table>
         </adx-d>
@@ -53,7 +53,7 @@ const dataTable = $adx.dataTable(
     name:         { label: 'Nome', width: "100%", sortable: true, field: (row: Item) => row.name },
     links:        { label: 'Collegamenti', width: "200px" }
   },
-  store.getTableParams('clienti'))
+  store.getTableParams('clienti', 'name'))
 
 const ds = $adx.dataSet(urlComposer(dataTable.params));
 

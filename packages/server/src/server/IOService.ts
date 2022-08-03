@@ -54,8 +54,14 @@ export class IOService extends AbstractService {
         IOService.entityIOCreatorMap.set(entityClass, entityIOCreator)
     }
 
-    getEntityClassByName(name: string) {
-        return Array.from(IOService.entityIOCreatorMap.keys()).find(c => c.name == name)
+    getEntityClassByName(name: string): EntityClass<unknown> {
+        const result = Array.from(IOService.entityIOCreatorMap.keys()).find(c => c.name == name)
+
+        if (!result) {
+            throw new Error(`Entity '${name}' not managed`)
+        }
+
+        return result
     }
 
     getEntityClass<T>(type: EntityType<T>): EntityClass<unknown> {
