@@ -15,7 +15,7 @@
                 v-if="clientLocation"
                 v-model="clientLocation.locality"
                 label="Località"
-                lookup-data-set="dsAreaModel"
+                lookup-data-set-url="/api/cmn/lookupLocalities"
                 lookup-type="CmnLocality"
                 lookup-display-property="name"
                 clearable

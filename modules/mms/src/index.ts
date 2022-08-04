@@ -1,6 +1,7 @@
 import { defineModule } from "@adronix/server"
 import persistenceBuilder from "./persistence/builder"
 import { clientsProviders } from "./providers/clients"
+import { assetsProviders } from "./providers/assets"
 import { areasProviders } from "./providers/areas"
 import { MmsService } from "./services/MmsService"
 
@@ -12,6 +13,7 @@ export const MmsPersistenceModule = defineModule()
 
 export const MmsWebModule = defineModule()
     .addDataProviders(clientsProviders)
+    .addDataProviders(assetsProviders)
     .addDataProviders(areasProviders)
 
 

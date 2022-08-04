@@ -274,7 +274,10 @@ export function defineModule<A extends Application = Application>() {
         static addDataProviders(...providersList: DataProviderDefinitions[]) {
             providersList.forEach(providers => {
                 for (const path in providers) {
-                    const self = this.addDataProvider(path, providers[path].handler)
+
+                    const handler = providers[path].handler
+                    const self = this.addDataProvider(path, handler)
+
                     providers[path].output.forEach(([entityClass, ...propNames]) => {
                         self.describe(entityClass, propNames)
                     })
@@ -282,12 +285,14 @@ export function defineModule<A extends Application = Application>() {
             })
             return this
         }
+
         static describe(entityClass: EntityClass<unknown>, propNames: string[]) {
             const descriptors = descriptorsMap.get(currentProviderPath) || []
             descriptors.push({ entityClass, propNames })
             descriptorsMap.set(currentProviderPath, descriptors)
             return this
         }
+
         static extend() {
             const dataProviders: Map<string, DataProvider> = new Map()
             const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()

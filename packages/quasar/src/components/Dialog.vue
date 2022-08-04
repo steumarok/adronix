@@ -1,8 +1,8 @@
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide">
-    <q-card class="q-dialog-plugin">
+  <q-dialog ref="dialogRef" @hide="onDialogHide" >
+    <q-card class="q-dialog-plugin" :style="style">
 
-      <q-card-section class="row items-center q-pb-non_e">
+      <q-card-section class="row items-center">
           <div class="text-h6">{{title}}</div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
@@ -10,8 +10,10 @@
 
       <q-separator />
 
-      <q-card-section>
-        <slot/>
+      <q-card-section style="min-height: 120px">
+        <loading :show="loading">
+          <slot v-if="!loading"/>
+        </loading>
       </q-card-section>
 
       <!-- buttons example -->
@@ -26,25 +28,30 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-import { ref } from 'vue'
+import { ref, toRefs } from 'vue'
+import Loading from './Loading.vue'
 
 defineEmits({
   ...useDialogPluginComponent.emitsObject
 })
 
 const props = defineProps({
-  title: String
+  title: String,
+  style: String,
+  loading: Boolean
 })
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 
-const okHandler = ref(() => Promise.resolve(true))
+const okHandler = ref<(() => Promise<boolean | { status: boolean, payload: any }>)>(() => Promise.resolve(true))
 const cancelHandler = ref(() => Promise.resolve(true))
 
 async function onOKClick () {
   const result = await okHandler.value()
-  if (result) {
-    onDialogOK()
+  const status = (typeof result == 'boolean') ? result : result.status
+  const payload = (typeof result == 'boolean') ? undefined : result.payload
+  if (status) {
+    onDialogOK(payload)
   }
 }
 
@@ -56,12 +63,11 @@ async function onCancelClick () {
 }
 
 defineExpose({
-  setCloseHandler: function (onOk: () => Promise<boolean>, onCancel: () => Promise<boolean>) {
+  setCloseHandler: function (onOk: () => Promise<boolean | { status: boolean, payload: any}>, onCancel: () => Promise<boolean>) {
     okHandler.value = onOk
     cancelHandler.value = onCancel
   }
 })
 
-const title = props.title
-
+const { title, style, loading } = toRefs(props)
 </script>

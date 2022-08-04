@@ -15,6 +15,7 @@
 
 <script setup lang="ts">
 import { useAdronix } from '@adronix/vue'
+import { unref } from 'vue';
 
 const props = defineProps({
   id: Number
@@ -27,6 +28,9 @@ const ds = $adx.dataSet(url)
 const client = ds.ref('MmsClient')
 
 const { dialog } = $adx.dialog(
-  () => { return ds.commit() }
+    async () => ({
+        status: await ds.commit(),
+        payload: unref(client)
+    })
 )
 </script>

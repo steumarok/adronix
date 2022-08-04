@@ -5,46 +5,10 @@ import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { CmnLocality } from "@adronix/cmn";
 import { MmsArea } from "../persistence/entities/MmsArea";
-import { Like, Repository } from "typeorm";
+import { Brackets, Like, Repository } from "typeorm";
 import { EntityClass } from "@adronix/persistence/src";
 import { ReturnType } from "@adronix/server";
-
-class Utils {
-    static toBool(str: string): boolean {
-        return str == 'true'
-    }
-
-    static toInt(str: string): number {
-        return Number.parseInt(str)
-    }
-
-    static async tableHandler<T>(
-        entityClass: EntityClass<T>,
-        repository: Repository<unknown>,
-        { page, limit, sortBy, descending, filter }: Partial<TableParams>,
-        searchFields: string[] = []): Promise<ReturnType> {
-        const where = searchFields.length > 0 && filter
-            ? { [searchFields[0]]: Like(`${filter}%`) }
-            : undefined
-        const [ rows, count ] = await repository.findAndCount({
-                where,
-                skip: (page != undefined) ? (Utils.toInt(page) - 1) * Utils.toInt(limit) : undefined,
-                take: (page != undefined) ? Utils.toInt(limit) : undefined,
-                order: { [sortBy]: Utils.toBool(descending) ? "desc": "asc" }
-            })
-
-        return (page != undefined) ? [PaginatedList(entityClass, rows, count)] : rows
-    }
-}
-
-type TableParams = {
-    page: string,
-    limit: string,
-    sortBy: string,
-    descending: string,
-    filter: string
-}
-
+import { Utils } from "./utils";
 
 
 export const clientsProviders: DataProviderDefinitions = {
@@ -59,10 +23,17 @@ export const clientsProviders: DataProviderDefinitions = {
             const [ rows, count ] = await this.service(MmsService).clientRepository
                 .createQueryBuilder('a')
                 .loadRelationCountAndMap('a.locationCount', 'a.locations')
+                /*.addSelect(qb => qb.subQuery()
+                    .select('count(1)', 'cnt')
+                    .from(MmsClientLocation, 'l')
+                    .where('l.client.id=a.id'), 'locationCount')*/
                 .where(where)
                 .skip((Utils.toInt(page) - 1) * Utils.toInt(limit))
                 .take(Utils.toInt(limit))
-                .getManyAndCount()
+                .orderBy(sortBy, Utils.toBool(descending) ? "DESC": "ASC")
+                .getManyAndCount();
+
+            //this.output.add(MmsClient, 'locationCount', (client) => client.id)
 
             return [PaginatedList(MmsClient, rows, count)]
         },
@@ -134,6 +105,43 @@ export const clientsProviders: DataProviderDefinitions = {
             [MmsClientLocation, 'address', 'client', 'locality'],
             [MmsClient, 'name'],
             [CmnLocality, 'name']
+        ]
+    },
+
+    '/lookupClients': {
+        handler: async function ({ search }) {
+
+            if (!search) {
+                return []
+            }
+
+            return await this.service(MmsService).clientRepository
+                .find({
+                    where: { name: Like(`${search}%`) } ,
+                    order: { name: "asc" }
+                })
+
+        },
+        output: [
+            [MmsClient, 'name']
+        ]
+    },
+
+    '/lookupClientLocations': {
+        handler: async function ({ clientId }) {
+
+            this.output.add(MmsClientLocation, 'displayName', location => `${location.address} - ${location.locality.name}`)
+
+            return await this.service(MmsService).clientLocationRepository
+                .find({
+                    relations: { locality: true },
+                    where: { client: { id: clientId } } ,
+                    order: { address: "asc" }
+                })
+
+        },
+        output: [
+            [MmsClientLocation, 'displayName']
         ]
     }
 

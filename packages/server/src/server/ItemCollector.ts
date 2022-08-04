@@ -15,6 +15,7 @@ export class Metadata {
 
 export class ItemCollector {
     public descriptors: DescriptorMap = new Map()
+    protected dynamicPropertyMap: Map<any, { [propertyName: string]: (entity: any) => any }> = new Map()
     protected items: any[] = new Array()
     private mappedIds: Map<ItemId, ItemId> = new Map()
     private itemsMap: Map<any, ItemData> = new Map()
@@ -29,6 +30,13 @@ export class ItemCollector {
         propNames: string[] = [],
         idGetter: IdGetter = (item) => item.id) {
         this.descriptors.set(entityClass, { propNames, idGetter })
+        return this
+    }
+
+    dynamics<T>(
+        entityClass: T,
+        properties: { [propertyName: string]: (entity: T) => any }) {
+        this.dynamicPropertyMap.set(entityClass, properties)
         return this
     }
 
@@ -113,6 +121,13 @@ export class ItemCollector {
 
         if (this.mappedIds.has(id)) {
             itemData.$mappedId = this.mappedIds.get(id)
+        }
+
+        if (this.dynamicPropertyMap.has(item.constructor)) {
+            const dynamicProperties = this.dynamicPropertyMap.get(item.constructor)
+            for (const propName in dynamicProperties) {
+                itemData[propName] = dynamicProperties[propName](item)
+            }
         }
 
         dataMap.set(key, itemData)

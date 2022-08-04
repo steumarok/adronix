@@ -5,6 +5,8 @@ import { MmsClientLocation } from "./entities/MmsClientLocation";
 import { MmsArea } from "./entities/MmsArea";
 import { MmsAreaModel } from "./entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "./entities/MmsAreaModelAttribution";
+import { MmsAsset } from "./entities/MmsAsset";
+import { MmsAssetModel } from "./entities/MmsAssetModel";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -26,7 +28,17 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsAreaModelAttribution
-    }
+    },
+    {
+        entityClass: MmsAsset,
+        rules: {
+            'client':   [ [ RulePatterns.notNull(), 'empty' ] ],
+            'location': [ [ RulePatterns.notNull(), 'empty' ] ]
+        }
+    },
+    {
+        entityClass: MmsAssetModel
+    },
 ]
 
 

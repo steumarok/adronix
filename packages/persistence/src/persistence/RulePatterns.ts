@@ -16,6 +16,10 @@ export namespace RulePatterns {
         return base(value => !!value, propName)
     }
 
+    export function notNull(propName?: string) {
+        return base(value => !!value, propName)
+    }
+
     export function minLength(length: number, propName?: string) {
         return base(value => value && value.length >= length, propName)
     }

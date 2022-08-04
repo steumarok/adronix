@@ -7,6 +7,7 @@ export { ReactiveValue } from './client/ReactiveValue'
 export { ItemData, ItemProps, ItemId, ItemFilter, ItemProp, QuerySortFn, ServerError, ServerErrors } from './client/types'
 export { INotificationBroker, NotificationListener, useEventSource } from './client/NotificationBroker'
 export { useFetch, IDataBroker, setResponseHandler  } from './client/DataBroker'
+export { buildUrl } from './client/utils'
 
 import { setDataAuthToken  } from './client/DataBroker'
 import { setEventAuthToken  } from './client/NotificationBroker'

@@ -50,7 +50,7 @@ export function openDialog(
   this: ReturnType<typeof useQuasar>,
   component: Component,
   props?: any) {
-  this.dialog({
+  return this.dialog({
     component,
     componentProps: props
   })

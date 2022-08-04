@@ -1,5 +1,5 @@
 import { DataSet, ItemProps, ReactiveValue, Item, QuerySortFn, ItemFilter, ItemId, IReactiveQuery, IQuery, ItemData, useEventSource, NotificationListener, useFetch, IDataBroker, ServerErrors } from "@adronix/client";
-import { watch, reactive, ref, unref, Ref, isRef, watchEffect, onUnmounted } from 'vue';
+import { watch, reactive, ref, unref, Ref, isRef, watchEffect, onUnmounted, ComputedRef } from 'vue';
 import diff from 'object-diff'
 
 interface ExtendedVueDataSet {
@@ -11,7 +11,7 @@ interface ExtendedVueDataSet {
 
 
 export function dataSet(
-  url: string | Ref<string>,
+  url: string | Ref<string | null>,
   dataBroker: IDataBroker = useFetch(),
   notificationBroker = useEventSource('/api/io/sse/data')): VueDataSet & ExtendedVueDataSet {
 
@@ -23,7 +23,13 @@ export function dataSet(
 
     async commit() {
       return await this.sync(async (delta) => {
-        let resp = await dataBroker.post(unref(url), delta)
+        const url_ = isRef(url) ? unref(url) : url
+
+        if (!url_) {
+          throw new Error("Url is undefined")
+        }
+
+        let resp = await dataBroker.post(url_, delta)
         if (resp.status == 200 || resp.status == 400) {
           return await resp.json() as ItemData[]
         }
@@ -63,7 +69,13 @@ export function dataSet(
   }
 
   async function doFetch(): Promise<void> {
-    const resp = await dataBroker.get(unref(url))
+    const url_ = isRef(url) ? unref(url) : url
+
+    if (!url_) {
+      return
+    }
+
+    const resp = await dataBroker.get(url_)
     if (resp.status == 200) {
       const data = await resp.json()
       const items = data as ItemData[]

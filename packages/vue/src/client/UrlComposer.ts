@@ -9,12 +9,12 @@ export function urlComposer(baseUrl: string | Ref<string>) {
     const urlRef = ref(baseUrl)
     return function (params: GetParams) {
 
-        function buildUrl() {
+        function buildUrl(p: GetParams) {
 
             const url = new Url(unref(baseUrl))
-            for (const name in params) {
-                if (params[name] != null && params[name] != undefined) {
-                    url.query[name] = params[name]
+            for (const name in p) {
+                if (p[name] != null && p[name] != undefined) {
+                    url.query[name] = p[name]
                 }
             }
 
@@ -22,16 +22,16 @@ export function urlComposer(baseUrl: string | Ref<string>) {
         }
 
         watch(params, (newParams) => {
-            urlRef.value = buildUrl()
+            urlRef.value = buildUrl(newParams)
         })
 
         if (isRef(baseUrl)) {
             watch(baseUrl, () => {
-                urlRef.value = buildUrl()
+                urlRef.value = buildUrl(params)
             })
         }
 
-        urlRef.value = buildUrl()
+        urlRef.value = buildUrl(unref(params))
 
         return urlRef
     }

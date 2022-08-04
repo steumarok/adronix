@@ -81,6 +81,22 @@ export const areasProviders: DataProviderDefinitions = {
         output: [
             [MmsAreaModel, 'name']
         ]
+    },
+
+    '/lookupAreas': {
+        handler: async function ({ clientLocationId }) {
+
+            return await this.service(MmsService).areaRepository
+                .find({
+                    where: { location: { id: clientLocationId } } ,
+                    order: { name: "asc" }
+                })
+
+        },
+        output: [
+            [MmsArea, 'name']
+        ]
     }
+
 }
 

@@ -4,6 +4,8 @@ import { DataSource } from "typeorm";
 import { MmsArea } from "../persistence/entities/MmsArea";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
+import { MmsAsset } from "../persistence/entities/MmsAsset";
+import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 
@@ -30,6 +32,14 @@ export class MmsService extends AbstractService {
 
     get areaModelAttributionRepository() {
         return this.dataSource.getRepository(MmsAreaModelAttribution)
+    }
+
+    get assetRepository() {
+        return this.dataSource.getRepository(MmsAsset)
+    }
+
+    get assetModelRepository() {
+        return this.dataSource.getRepository(MmsAssetModel)
     }
 }
 

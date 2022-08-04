@@ -148,7 +148,7 @@ export abstract class WebApplication extends Application {
                 this.extendResponse(response),
                 this.getTenantId(request)
             )
-            return this.contextExtenders.reduce((c, e) => ({ ...c, ...e(c) }), ctx)
+            return this.contextExtenders.reduce((c: HttpContext, e) => ({ ...c, ...e(c) }), ctx)
         }.bind(this)
     }
 

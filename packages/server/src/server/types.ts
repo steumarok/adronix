@@ -3,6 +3,7 @@ import { EntityClass } from "@adronix/persistence"
 import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
 import { HttpContext } from "./Context"
+import { OutputExtender } from "./DataSetProcessor"
 import { IServiceProxy } from "./IServiceProxy"
 import { ItemCollector } from "./ItemCollector"
 
@@ -35,8 +36,12 @@ export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
 
+export type DataProviderContext = {
+    output: OutputExtender
+}
+
 export type DataProvider<C = {}> = (
-    this: HttpContext & C,
+    this: HttpContext & DataProviderContext & C,
     params: Partial<Params>,
     items?: any[]
 ) => Promise<ReturnType[]>

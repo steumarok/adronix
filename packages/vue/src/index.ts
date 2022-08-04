@@ -80,7 +80,7 @@ export function useAdronix() {
         openDialog: implementation.openDialog.bind(implementation.useImpl()),
 
         dialog: (
-          onOk: () => Promise<boolean>,
+          onOk: () => Promise<boolean | { status: boolean, payload: any}>,
           onCancel: () => Promise<boolean> = () => Promise.resolve(true)
         ) => {
           const dialog = ref()

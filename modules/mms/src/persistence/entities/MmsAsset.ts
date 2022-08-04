@@ -1,4 +1,5 @@
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
+import { MmsArea } from "./MmsArea";
 import { MmsAssetAttribute } from "./MmsAssetAttribute";
 import { MmsAssetModel } from "./MmsAssetModel";
 import { MmsClient } from "./MmsClient";
@@ -19,8 +20,11 @@ export class MmsAsset {
     @ManyToOne(() => MmsClient)
     client: MmsClient;
 
-    @ManyToOne(() => MmsClient)
+    @ManyToOne(() => MmsClientLocation)
     location: MmsClientLocation;
+
+    @ManyToOne(() => MmsArea)
+    area: MmsArea;
 
     @ManyToMany(() => MmsAssetAttribute)
     @JoinTable({name: "mms_assets_mms_attributes"})

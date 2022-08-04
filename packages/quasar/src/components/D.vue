@@ -2,11 +2,14 @@
 import { computed } from 'vue'
 
 const props = defineProps({
+  class: String,
   spacing: String,
   ySpacing: String,
   justify: String,
   content: String,
   width: String,
+  margin: String,
+  padding: String,
   horizontal: Boolean,
   vertical: Boolean,
   fit: Boolean,
@@ -23,6 +26,12 @@ const classes = computed(() => {
   if (props.fit !== false) {
     classes.push('fit')
   }
+  if (props.padding) {
+    classes.push(`q-pa-${props.padding}`)
+  }
+  if (props.margin) {
+    classes.push(`q-ma-${props.margin}`)
+  }
   if (props.spacing) {
     classes.push(`q-gutter-${props.spacing}`)
   }
@@ -35,7 +44,7 @@ const classes = computed(() => {
   if (props.content) {
     classes.push(`content-${props.content}`)
   }
-  return classes.join(' ')
+  return classes.join(' ') + ' ' + (props.class || '')
 })
 
 const styles = computed(() => {

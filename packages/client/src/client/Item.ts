@@ -12,4 +12,8 @@ export class Item {
     inserted: boolean = false
     deleted: boolean = false
     errors: ServerErrors = {}
+
+    ref(propName: string) {
+      return this[propName] as Item
+    }
 }
