@@ -11,13 +11,24 @@ type TableParams = {
 }
 
 export class Utils {
-    static toBool(str: string): boolean {
-        return str == 'true'
+    static toBool(str: string | boolean): boolean {
+        return !!str && str.toString() == 'true'
     }
 
     static toInt(str: string): number {
         return Number.parseInt(str)
     }
+
+    static sortDir(descending: boolean | string) {
+        return Utils.toBool(descending) ? "desc" : "asc"
+    }
+
+    static orderClause(path: string, descending: boolean | string) {
+        return path.split(".").reduceRight((obj, field, idx, arr) => {
+            return { [field]: (idx == arr.length - 1) ? Utils.sortDir(descending) : obj }
+        }, {})
+    }
+
 
     static async tableHandler<T>(
         entityClass: EntityClass<T>,

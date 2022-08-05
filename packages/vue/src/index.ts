@@ -39,7 +39,7 @@ export function dataTable(
                 params,
                 columns,
                 rows: dataSet.list(typeName),
-                totalCount: computed(() => dataSet.ref('Metadata', `${typeName}.totalCount`).value),
+                totalCount: dataSet.ref('Metadata', `${typeName}.totalCount`),
             }
         }
     }

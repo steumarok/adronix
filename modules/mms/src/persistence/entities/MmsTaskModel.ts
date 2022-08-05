@@ -1,4 +1,5 @@
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
+import { MmsResourceModel } from "./MmsResourceModel";
 
 @Entity("mms_task_models")
 export class MmsTaskModel {
@@ -8,4 +9,8 @@ export class MmsTaskModel {
 
     @Column()
     name: string;
+
+    @ManyToMany(() => MmsResourceModel)
+    @JoinTable()
+    resourceModels: MmsResourceModel[];
 }

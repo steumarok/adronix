@@ -1,8 +1,7 @@
 <template>
-    <adx-dialog ref="dialog" title="Dati cliente">
+    <adx-dialog ref="dialog" title="Dati cliente" :loading="!client">
 
         <adx-data-input
-            v-if="client"
             v-model="client.name"
             label="Name"
             outlined

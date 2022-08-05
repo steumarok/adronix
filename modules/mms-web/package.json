@@ -6,6 +6,7 @@
    "types": "src/index.ts",
    "dependencies": {
       "@adronix/client": "workspace:^",
+      "@adronix/cmn-web": "workspace:^",
       "@adronix/vue": "workspace:^",
       "pinia": "^2.0.17"
    },

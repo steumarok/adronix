@@ -10,7 +10,7 @@
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true
    },
-   "include": ["./**/*.ts"],
+   "include": ["./**/*.ts", "../../packages/vue/src/client/utils.ts"],
    "references": [
       { "path": "../../packages/server/tsconfig.json" },
       { "path": "../../packages/express/tsconfig.json" },

@@ -5,6 +5,7 @@
       :filter="filter"
       row-key="id"
       v-model:pagination="pagination"
+      :hide-bottom="pagination.rowsNumber === undefined"
       @request="onRequest"
     >
       <template v-slot:top-left>
@@ -44,10 +45,9 @@
     </q-table>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { Columns, } from '@adronix/vue';
-import { defineComponent, ref } from 'vue';
-import { useQTableHandler } from '../client/Quasar';
+import { defineComponent, ref, computed, toRefs, unref } from 'vue';
 
 
 function toQuasarColumns(columns: Columns): any {
@@ -62,28 +62,55 @@ function toQuasarColumns(columns: Columns): any {
           style: `${value.width ? 'width: ' + value.width : ''}`,
         }))
 }
-
-export default defineComponent({
-  name: 'AdxDataTable',
-  props: {
-    dataBindings: {
+const props = defineProps({
+  dataBindings: {
       required: true,
       type: null
-    },
-    filtering: Boolean
   },
-  setup(props) {
+  filtering: Boolean
+})
 
-    const filter = ref(props.dataBindings.params.filter)
-    const table = useQTableHandler(props.dataBindings.totalCount, props.dataBindings.params);
+const filter = ref(props.dataBindings.params.filter)
+
+const onRequest = (p: any) => {
+    const { page, rowsPerPage, sortBy, descending } = p.pagination
+    const filter = p.filter
+
+    props.dataBindings.params.sortBy = sortBy
+    props.dataBindings.params.descending = descending
+    props.dataBindings.params.filter = filter
+    props.dataBindings.params.page = page
+    props.dataBindings.params.limit = rowsPerPage
+}
+
+
+const pagination = computed({
+  get() {
+    const paginated = props.dataBindings.totalCount.value?.value
+
+    const pagintion_ = paginated
+      ? {
+          page: props.dataBindings.params.page,
+          rowsNumber: props.dataBindings.totalCount.value?.value,
+          rowsPerPage: props.dataBindings.params.limit
+        }
+      : { }
 
     return {
-      filtering: props.filtering,
-      filter,
-      rows: props.dataBindings.rows,
-      columns: toQuasarColumns(props.dataBindings.columns),
-      ...table
-    };
+      sortBy: props.dataBindings.params.sortBy,
+      descending: props.dataBindings.params.descending,
+      ...pagintion_
+    }
   },
-});
+  set(value) {
+    props.dataBindings.params.sortBy = value.sortBy
+    props.dataBindings.params.descending = value.descending
+  }
+})
+
+const { filtering } = toRefs(props)
+
+const columns = toQuasarColumns(props.dataBindings.columns)
+const rows = props.dataBindings.rows
+
 </script>

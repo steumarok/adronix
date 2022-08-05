@@ -27,6 +27,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@adronix/cmn-web@workspace:^, @adronix/cmn-web@workspace:modules/cmn-web":
+  version: 0.0.0-use.local
+  resolution: "@adronix/cmn-web@workspace:modules/cmn-web"
+  dependencies:
+    "@adronix/client": "workspace:^"
+    "@adronix/vue": "workspace:^"
+    pinia: ^2.0.17
+  peerDependencies:
+    reflect-metadata: ^0.1.10
+    typeorm: ^0.3.6
+  languageName: unknown
+  linkType: soft
+
 "@adronix/cmn@workspace:^, @adronix/cmn@workspace:modules/cmn":
   version: 0.0.0-use.local
   resolution: "@adronix/cmn@workspace:modules/cmn"
@@ -127,6 +140,7 @@ __metadata:
   resolution: "@adronix/mms-web@workspace:modules/mms-web"
   dependencies:
     "@adronix/client": "workspace:^"
+    "@adronix/cmn-web": "workspace:^"
     "@adronix/vue": "workspace:^"
     pinia: ^2.0.17
   peerDependencies:

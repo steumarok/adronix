@@ -6,6 +6,11 @@ import { MmsAssetAttribute } from "./entities/MmsAssetAttribute";
 import { MmsAssetModel } from "./entities/MmsAssetModel";
 import { MmsClient } from "./entities/MmsClient";
 import { MmsClientLocation } from "./entities/MmsClientLocation";
+import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
+import { MmsPart } from "./entities/MmsPart";
+import { MmsPartRequirement } from "./entities/MmsPartRequirement";
+import { MmsResourceModel } from "./entities/MmsResourceModel";
+import { MmsResourceType } from "./entities/MmsResourceType";
 import { MmsTask } from "./entities/MmsTask";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
@@ -21,5 +26,10 @@ export const MmsEntities = [
     MmsWorkOrder,
     MmsArea,
     MmsAreaModel,
-    MmsAreaModelAttribution
+    MmsAreaModelAttribution,
+    MmsResourceModel,
+    MmsResourceType,
+    MmsPart,
+    MmsPartRequirement,
+    MmsLastTaskInfo
 ]

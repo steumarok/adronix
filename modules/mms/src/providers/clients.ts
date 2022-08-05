@@ -8,7 +8,7 @@ import { MmsArea } from "../persistence/entities/MmsArea";
 import { Brackets, Like, Repository } from "typeorm";
 import { EntityClass } from "@adronix/persistence/src";
 import { ReturnType } from "@adronix/server";
-import { Utils } from "./utils";
+import { Utils } from "@adronix/server";
 
 
 export const clientsProviders: DataProviderDefinitions = {

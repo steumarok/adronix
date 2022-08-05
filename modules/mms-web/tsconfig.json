@@ -13,7 +13,8 @@
    },
    "include": ["./**/*.ts"],
    "references": [
-      { "path": "../../packages/client/tsconfig.json" },
-      { "path": "../../packages/vue/tsconfig.json" }
+    { "path": "../../packages/mms-web/tsconfig.json" },
+    { "path": "../../packages/client/tsconfig.json" },
+    { "path": "../../packages/vue/tsconfig.json" }
    ]
 }

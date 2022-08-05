@@ -1,0 +1,341 @@
+import { HttpContext, PaginatedList } from "@adronix/server";
+import { DataProviderDefinitions } from "@adronix/server";
+import { MmsService } from "../services/MmsService";
+import { MmsClient } from "../persistence/entities/MmsClient";
+import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
+import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
+import { MmsArea } from "../persistence/entities/MmsArea";
+import { Brackets, Like, Repository } from "typeorm";
+import { EntityClass } from "@adronix/persistence/src";
+import { ReturnType } from "@adronix/server";
+import { Utils } from "@adronix/server";
+import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
+import { Metadata } from "@adronix/server/src/server/ItemCollector";
+import { MmsResourceType } from "../persistence/entities/MmsResourceType";
+import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
+import { MmsPart } from "../persistence/entities/MmsPart";
+import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
+import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
+
+
+export const modelsProviders: DataProviderDefinitions = {
+
+    '/listAssetModels': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).assetModelRepository
+                .find({
+                    where,
+                    order: { [sortBy]: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsAssetModel, 'name']
+        ]
+    },
+
+    '/editAssetModel': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).assetModelRepository
+                        .findOne({
+                            relations: { },
+                            where: { id }})
+                    : new MmsAssetModel()
+
+            return [po]
+        },
+        output: [
+            [MmsAssetModel, 'name']
+        ]
+    },
+
+    '/lookupAssetModels': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).assetModelRepository
+                .find({order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsAssetModel, 'name']
+        ]
+    },
+
+
+    '/listResourceTypes': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).resourceTypeRepository
+                .find({
+                    where,
+                    order: { [sortBy]: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsResourceType, 'name']
+        ]
+    },
+
+    '/editResourceType': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).resourceTypeRepository
+                        .findOne({
+                            relations: { },
+                            where: { id }})
+                    : new MmsResourceType()
+
+            return [po]
+        },
+        output: [
+            [MmsResourceType, 'name']
+        ]
+    },
+
+    '/lookupResourceTypes': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).resourceTypeRepository
+                .find({order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsResourceType, 'name']
+        ]
+    },
+
+
+    '/listResourceModels': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).resourceModelRepository
+                .find({
+                    where,
+                    relations: { resourceType: true },
+                    order: { [sortBy]: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsResourceModel, 'name', 'resourceType'],
+            [MmsResourceType, 'name'],
+        ]
+    },
+
+    '/editResourceModel': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).resourceModelRepository
+                        .findOne({
+                            relations: { resourceType: true },
+                            where: { id }})
+                    : new MmsResourceModel()
+
+            return [po]
+        },
+        output: [
+            [MmsResourceModel, 'name', 'resourceType'],
+            [MmsResourceType, 'name'],
+        ]
+    },
+
+    '/lookupResourceModels': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).resourceModelRepository
+                .find({order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsResourceModel, 'name']
+        ]
+    },
+
+
+    '/listParts': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).partRepository
+                .find({
+                    where,
+                    relations: { measurementUnit: true },
+                    order: { [sortBy]: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsPart, 'name', 'measurementUnit', 'unitPrice'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
+    '/editPart': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).partRepository
+                        .findOne({
+                            relations: { measurementUnit: true },
+                            where: { id }})
+                    : new MmsPart()
+
+            return [po]
+        },
+        output: [
+            [MmsPart, 'name', 'measurementUnit', 'unitPrice'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
+	'/lookupParts': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).partRepository
+                .find({
+                    relations: { measurementUnit: true },
+                    order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsPart, 'name', 'measurementUnit'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
+
+    '/listTaskModels': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).taskModelRepository
+                .find({
+                    where,
+                    relations: { resourceModels: true },
+                    order: Utils.orderClause(sortBy || 'name', descending)
+                })
+
+        },
+        output: [
+            [MmsTaskModel, 'name', 'resourceModels'],
+            [MmsResourceModel, 'name'],
+        ]
+    },
+
+    '/editTaskModel': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).taskModelRepository
+                        .findOne({
+                            relations: { resourceModels: true },
+                            where: { id }})
+                    : new MmsTaskModel()
+
+            return [po]
+        },
+        output: [
+            [MmsTaskModel, 'name', 'resourceModels'],
+            [MmsResourceModel, 'name'],
+        ]
+    },
+
+	'/lookupTaskModels': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).taskModelRepository
+                .find({order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsTaskModel, 'name']
+        ]
+    },
+
+
+
+    '/listAssetAttributes': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).assetAttributeRepository
+                .find({
+                    where,
+                    order: { [sortBy]: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsAssetAttribute, 'name']
+        ]
+    },
+
+    '/editAssetAttribute': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).assetAttributeRepository
+                        .findOne({
+                            relations: { },
+                            where: { id }})
+                    : new MmsAssetAttribute()
+
+            return [po]
+        },
+        output: [
+            [MmsAssetAttribute, 'name']
+        ]
+    },
+
+    '/lookupAssetAttributes': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).assetAttributeRepository
+                .find({order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsAssetAttribute, 'name']
+        ]
+    },
+
+
+    '/modelCounts': {
+        handler: async function ({ }) {
+
+            const assetModelCount = await this.service(MmsService).assetModelRepository.count()
+
+            return [new Metadata('assetModelCount', assetModelCount)]
+        }
+    }
+
+
+}
+

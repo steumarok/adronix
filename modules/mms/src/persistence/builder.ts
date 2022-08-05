@@ -7,6 +7,13 @@ import { MmsAreaModel } from "./entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "./entities/MmsAreaModelAttribution";
 import { MmsAsset } from "./entities/MmsAsset";
 import { MmsAssetModel } from "./entities/MmsAssetModel";
+import { MmsResourceModel } from "./entities/MmsResourceModel";
+import { MmsResourceType } from "./entities/MmsResourceType";
+import { MmsPart } from "./entities/MmsPart";
+import { MmsTaskModel } from "./entities/MmsTaskModel";
+import { MmsPartRequirement } from "./entities/MmsPartRequirement";
+import { MmsAssetAttribute } from "./entities/MmsAssetAttribute";
+import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -38,6 +45,27 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsAssetModel
+    },
+    {
+        entityClass: MmsAssetAttribute
+    },
+    {
+        entityClass: MmsResourceModel
+    },
+    {
+        entityClass: MmsResourceType
+    },
+    {
+        entityClass: MmsPart
+    },
+    {
+        entityClass: MmsTaskModel
+    },
+    {
+        entityClass: MmsPartRequirement
+    },
+    {
+        entityClass: MmsLastTaskInfo
     },
 ]
 

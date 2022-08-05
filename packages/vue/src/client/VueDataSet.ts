@@ -233,8 +233,8 @@ export class VueDataSet extends DataSet {
 
       if (itemTypes) {
         (itemTypes as string).split(",").forEach(type => this.refreshValues(type))
-        this.refreshValues("Metadata")
       }
+      this.refreshValues("Metadata")
     }
 
   }

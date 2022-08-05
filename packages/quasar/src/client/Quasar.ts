@@ -32,14 +32,28 @@ export function useQTableHandler(totalCount: ComputedRef<any>, params: GetParams
     }
 
     return {
-      pagination: computed(() => ({
-        ...pagination,
-        page: pageRef.value,
-        sortBy: sortByRef.value,
-        descending: descendingRef.value,
-        rowsPerPage: rowsPerPageRef.value,
-        rowsNumber: unref(totalCount)?.value
-      })),
+      pagination: computed({
+        get() {
+          const pag = unref(totalCount) != undefined
+            ? { rowsPerPage: rowsPerPageRef.value, rowsNumber: unref(totalCount)?.value }
+            : {}
+
+          return {
+            ...pagination,
+            page: pageRef.value,
+            sortBy: sortByRef.value,
+            descending: descendingRef.value,
+            ...pag
+          }
+        },
+        set(value: { sortBy: string, descending: boolean }) {
+
+          if (params) {
+            params.sortBy = value.sortBy
+            params.descending = value.descending
+          }
+        }
+      }),
       onRequest
     }
   }

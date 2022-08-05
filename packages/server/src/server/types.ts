@@ -49,7 +49,7 @@ export type DataProvider<C = {}> = (
 export type DataProviderDefinitions<C = {}> =  {
     [key: string]: {
         handler: DataProvider<C>,
-        output: [ EntityClass<unknown>, ...string[] ][]
+        output?: [ EntityClass<unknown>, ...string[] ][]
     }
 }
 

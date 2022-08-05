@@ -278,9 +278,11 @@ export function defineModule<A extends Application = Application>() {
                     const handler = providers[path].handler
                     const self = this.addDataProvider(path, handler)
 
-                    providers[path].output.forEach(([entityClass, ...propNames]) => {
-                        self.describe(entityClass, propNames)
-                    })
+                    if (providers[path].output) {
+                        providers[path].output.forEach(([entityClass, ...propNames]) => {
+                            self.describe(entityClass, propNames)
+                        })
+                    }
                 }
             })
             return this
