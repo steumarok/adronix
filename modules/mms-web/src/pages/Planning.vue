@@ -22,7 +22,7 @@
                     </q-item-section>
                 </q-item>
 
-                <q-item clickable to="/scheduling">
+                <q-item clickable to="/schedulings">
                     <q-item-section>
                         <span class="adx-reference">Schedulazioni</span>
                     </q-item-section>

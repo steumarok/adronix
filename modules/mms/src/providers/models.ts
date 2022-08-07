@@ -16,6 +16,7 @@ import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
 import { MmsPart } from "../persistence/entities/MmsPart";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
+import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 
 
 export const modelsProviders: DataProviderDefinitions = {
@@ -65,6 +66,55 @@ export const modelsProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsAssetModel, 'name']
+        ]
+    },
+
+
+    '/listAreaModels': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).areaModelRepository
+                .find({
+                    where,
+                    order: { [sortBy]: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsAreaModel, 'name']
+        ]
+    },
+
+    '/editAreaModel': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).areaModelRepository
+                        .findOne({
+                            relations: { },
+                            where: { id }})
+                    : new MmsAreaModel()
+
+            return [po]
+        },
+        output: [
+            [MmsAreaModel, 'name']
+        ]
+    },
+
+    '/lookupAreaModels': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).areaModelRepository
+                .find({order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsAreaModel, 'name']
         ]
     },
 
@@ -288,12 +338,13 @@ export const modelsProviders: DataProviderDefinitions = {
             return await this.service(MmsService).assetAttributeRepository
                 .find({
                     where,
+                    relations: { incompatibleAttributes: true },
                     order: { [sortBy]: Utils.sortDir(descending) }
                 })
 
         },
         output: [
-            [MmsAssetAttribute, 'name']
+            [MmsAssetAttribute, 'name', 'incompatibleAttributes']
         ]
     },
 
@@ -303,14 +354,14 @@ export const modelsProviders: DataProviderDefinitions = {
                 id
                     ? await this.service(MmsService).assetAttributeRepository
                         .findOne({
-                            relations: { },
+                            relations: { incompatibleAttributes: true },
                             where: { id }})
                     : new MmsAssetAttribute()
 
             return [po]
         },
         output: [
-            [MmsAssetAttribute, 'name']
+            [MmsAssetAttribute, 'name', 'incompatibleAttributes']
         ]
     },
 
@@ -318,11 +369,14 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function ({ }) {
 
             return await this.service(MmsService).assetAttributeRepository
-                .find({order: { name: "asc" }})
+                .find({
+                    relations: { incompatibleAttributes: true },
+                    order: { name: "asc" }
+                })
 
         },
         output: [
-            [MmsAssetAttribute, 'name']
+            [MmsAssetAttribute, 'name', 'incompatibleAttributes']
         ]
     },
 

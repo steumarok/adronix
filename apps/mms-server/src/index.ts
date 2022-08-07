@@ -6,10 +6,25 @@ import { CmnEntities } from "@adronix/cmn";
 
 const e = express()
 
-
+/*
 const dataSource = new DataSource({
     "type": "sqlite",
     "database": "/tmp/mms.db",
+    "synchronize": true,
+    logging: true,
+    entities: [
+        ...MmsEntities,
+        ...CmnEntities
+    ]
+})
+*/
+
+const dataSource = new DataSource({
+    "type": "mysql",
+    "host": "localhost",
+    "username": "mms_dev",
+    "password": "mms_dev",
+    "database": "mms_dev",
     "synchronize": true,
     logging: true,
     entities: [

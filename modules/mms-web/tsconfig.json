@@ -5,6 +5,7 @@
          "es2021",
          "dom"
       ],
+      "target": "es5",
       "outDir": "src",
       "rootDir": "src",
       "composite": true,

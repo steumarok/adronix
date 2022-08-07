@@ -9,6 +9,13 @@
                 :errors="assetAttribute.errors.name"
                 />
 
+            <mms-asset-attribute-select
+                v-model="assetAttribute.incompatibleAttributes"
+                :excluded="[assetAttribute]"
+                multiple
+                clearable
+                />
+
         </adx-d>
 
     </adx-dialog>
@@ -19,6 +26,7 @@
 import { buildUrl } from '@adronix/client';
 import { useAdronix } from '@adronix/vue'
 import { unref } from 'vue';
+import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
 
 const props = defineProps({
   id: Number
@@ -27,7 +35,7 @@ const props = defineProps({
 const $adx = useAdronix()
 const ds = $adx.dataSet(buildUrl('/api/mms/editAssetAttribute', { id: props.id }))
 
-const assetAttribute = ds.ref('MmsAssetAttribute')
+const assetAttribute = ds.ref('MmsAssetAttribute', props.id)
 
 const { dialog } = $adx.dialog(
     async () => ({

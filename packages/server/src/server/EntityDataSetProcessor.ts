@@ -6,36 +6,8 @@ import { Module } from "./Module"
 import { Application } from "./Application"
 import { IOService } from "./IOService"
 import { HttpContext } from "./Context"
+import { Utils } from "./utils"
 
-function groupBy<K, V>(array: V[], grouper: (item: V) => K) {
-    return array.reduce((store, item) => {
-        var key = grouper(item)
-        if (!store.has(key)) {
-            store.set(key, [item])
-        } else {
-            store.get(key).push(item)
-        }
-        return store
-    }, new Map<K, V[]>())
-}
-
-function transformMap<K, V, R>(
-    source: Map<K, V>,
-    transformer: (value: V, key: K) => R
-) {
-    return new Map(
-        Array.from(source, v => [v[0], transformer(v[1], v[0])])
-    )
-}
-
-function groupByAndMap<T, K, R>(
-    array: T[],
-    grouper: (x: T) => K,
-    mapper: (x: T[]) => R
-) {
-    let groups = groupBy(array, grouper)
-    return transformMap(groups, value => mapper(value))
-}
 
 
 export abstract class EntityDataSetProcessor extends DataSetProcessor {
@@ -253,7 +225,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
     protected createTransactions(
         transactionManagerMap: Map<EntityClass<unknown>, TransactionManager>): Map<EntityClass<unknown>, Transaction> {
         const a = Array.from(transactionManagerMap.entries())
-        const r = groupByAndMap(a, x => x[1], x => x.reduce((v, c) => v.concat([c[0]]), [] as EntityClass<unknown>[]))
+        const r = Utils.groupByAndMap(a, x => x[1], x => x.reduce((v, c) => v.concat([c[0]]), [] as EntityClass<unknown>[]))
         const map: Map<EntityClass<unknown>, Transaction> = new Map()
         r.forEach((entityClasses, tm) => {
             const transaction = tm.createTransaction()

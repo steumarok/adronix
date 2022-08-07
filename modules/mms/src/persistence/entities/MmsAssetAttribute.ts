@@ -8,4 +8,8 @@ export class MmsAssetAttribute {
 
     @Column()
     name: string;
+
+    @ManyToMany(() => MmsAssetAttribute)
+    @JoinTable({name: "mms_asset_attributes_incompatible"})
+    incompatibleAttributes: MmsAssetAttribute[];
 }

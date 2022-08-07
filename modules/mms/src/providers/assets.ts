@@ -1,6 +1,6 @@
 import { HttpContext, PaginatedList } from "@adronix/server";
 import { DataProviderDefinitions } from "@adronix/server";
-import { MmsService } from "../services/MmsService";
+import { MmsService, TaskModelDate } from "../services/MmsService";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { CmnLocality } from "@adronix/cmn";
@@ -19,11 +19,12 @@ export const assetsProviders: DataProviderDefinitions = {
     '/listAssets': {
         handler: async function ({ page, limit, sortBy, descending, filter }) {
 
+            const service = this.service(MmsService)
             const where = filter
                 ? { serialNumber: Like(`${filter}%`) }
                 : {}
 
-            const [ rows, count ] = await this.service(MmsService).assetRepository
+            const [ rows, count ] = await service.assetRepository
                 .createQueryBuilder('a')
                 //.loadRelationCountAndMap('a.locationCount', 'a.locations')
                 .leftJoinAndSelect('a.model', 'model')
@@ -35,6 +36,17 @@ export const assetsProviders: DataProviderDefinitions = {
                 .take(Utils.toInt(limit))
                 .orderBy('a.' + sortBy, Utils.toBool(descending) ? "DESC": "ASC")
                 .getManyAndCount();
+
+            const dateMap = new Map<MmsAsset, TaskModelDate>()
+            for (const asset of rows) {
+                const taskDate = await service.findNearestTaskModel(asset)
+                if (taskDate) {
+                    dateMap.set(asset, taskDate)
+                }
+            }
+
+            this.output.add(MmsAsset, "nextTaskModel", (asset) =>  dateMap.get(asset)?.taskModel)
+            this.output.add(MmsAsset, "nextTaskDate", (asset) =>  dateMap.get(asset)?.date?.toISODate())
 
             return [PaginatedList(MmsAsset, rows, count)]
         },
@@ -58,7 +70,9 @@ export const assetsProviders: DataProviderDefinitions = {
                     ? await this.service(MmsService).assetRepository
                         .findOne({
                             relations: {
-                                attributes: true,
+                                attributes: {
+                                    incompatibleAttributes: true
+                                },
                                 model: true,
                                 client: true,
                                 area: true,
@@ -82,7 +96,7 @@ export const assetsProviders: DataProviderDefinitions = {
             [MmsAsset, 'serialNumber', 'client', 'location', 'model', 'area', 'attributes'],
             [MmsClientLocation, 'address', 'locality'],
             [MmsClient, 'name'],
-            [MmsAssetAttribute, 'name'],
+            [MmsAssetAttribute, 'name', 'incompatibleAttributes'],
             [MmsArea, 'name'],
             [MmsAssetModel, 'name'],
             [MmsLastTaskInfo, 'executionDate', 'taskModel', 'asset'],

@@ -69,6 +69,7 @@
                     <adx-d vertical padding="xs">
                         <mms-asset-attribute-select
                             v-model="asset.attributes"
+                            :excluded="getIncompatibleAttributes(asset.attributes)"
                             multiple
                             clearable
                             />
@@ -81,11 +82,10 @@
                 <adx-data-table
                     :data-bindings="ltiDataTable.bind(ds)"
                     flat
-
                     dense
                     >
                     <template #top-left>
-                        <q-btn @click="onInsertLastTaskInfo" color="primary" flat>Inserisci riga</q-btn>
+                        <q-btn @click="onInsertLastTaskInfo" color="primary" outline>Inserisci riga</q-btn>
                     </template>
                     <template #actions="{ row }">
                         <q-btn icon="delete" flat size="sm" @click="onDeleteLastTaskInfo(row)"/>
@@ -94,6 +94,7 @@
                     <template #model="{ row }">
                         <mms-task-model-select
                             v-model="row.taskModel"
+                            :excluded="getExcludedLtiTaskModels(row)"
                             label=""
                             dense
                             />
@@ -102,6 +103,8 @@
                         <adx-data-input
                             v-model="row.executionDate"
                             dense
+                            type="date"
+                            clearable="false"
                             />
                     </template>
                 </adx-data-table>
@@ -131,6 +134,12 @@ const $adx = useAdronix()
 const ds = $adx.dataSet(buildUrl('/api/mms/editAsset', { id: props.id}))
 
 const asset = ds.ref('MmsAsset')
+
+function getExcludedLtiTaskModels(lti: Item) {
+    return ds.list("MmsLastTaskInfo", item => item.id != lti.id)
+        .filter(item => item.taskModel)
+        .map(item => item.taskModel)
+}
 
 const ltiDataTable = $adx.dataTable(
   'MmsLastTaskInfo',
@@ -162,6 +171,15 @@ function onInsertLastTaskInfo() {
 
 function onClientInserted(client: Item) {
     asset.value.client = client
+}
+
+function getIncompatibleAttributes(attributes) {
+    attributes = attributes || []
+    return attributes
+        .filter(a => a.incompatibleAttributes)
+        .flatMap(a => a.incompatibleAttributes)
+        .concat(attributes)
+
 }
 
 const { dialog } = $adx.dialog(

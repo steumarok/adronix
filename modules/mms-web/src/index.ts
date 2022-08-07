@@ -3,6 +3,7 @@ import ClientEdit from './pages/ClientEdit.vue'
 import ClientLocationList from './pages/ClientLocationList.vue'
 import ClientLocationEdit from './pages/ClientLocationEdit.vue'
 import AreaList from './pages/AreaList.vue'
+import AreaModelList from './pages/AreaModelList.vue'
 import AssetList from './pages/AssetList.vue'
 import Models from './pages/Models.vue'
 import AssetModelList from './pages/AssetModelList.vue'
@@ -13,8 +14,10 @@ import TaskModelList from './pages/TaskModelList.vue'
 import Planning from './pages/Planning.vue'
 import PartRequirementList from './pages/PartRequirementList.vue'
 import AssetAttributeList from './pages/AssetAttributeList.vue'
+import SchedulingList from './pages/SchedulingList.vue'
 
 export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     AreaList, AssetList, Models, AssetModelList, ResourceModelList,
     ResourceTypeList, PartList, TaskModelList, Planning,
-    PartRequirementList, AssetAttributeList }
+    PartRequirementList, AssetAttributeList, SchedulingList,
+    AreaModelList }

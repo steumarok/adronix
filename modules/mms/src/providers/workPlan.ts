@@ -18,6 +18,8 @@ import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsPartRequirement } from "../persistence/entities/MmsPartRequirement";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { config } from "process";
+import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
+import { MmsScheduling } from "../persistence/entities/MmsScheduling";
 
 
 export const workPlanProviders: DataProviderDefinitions = {
@@ -70,12 +72,65 @@ export const workPlanProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsPartRequirement, 'taskModel', 'assetModel', 'assetAttributes', 'part', 'quantity'],
-            [MmsPart, 'name'],
+            [MmsAssetModel, 'name'],
             [MmsTaskModel, 'name'],
             [MmsPart, 'name', 'measurementUnit'],
             [MmsAssetAttribute, 'name'],
             [CmnMeasurementUnit, 'name'],
         ]
-    }
+    },
+
+    '/listSchedulings': {
+        handler: async function ({ sortBy, descending }) {
+
+            return await this.service(MmsService).schedulingRepository
+                .find({
+                    relations: {
+                        areaModels: true,
+                        assetAttributes: true,
+                        assetModels: true,
+                        taskModel: true,
+                        startFromLasts: true
+                    },
+                    order: Utils.orderClause(sortBy, descending)
+                })
+
+        },
+        output: [
+            [MmsScheduling, 'taskModel', 'areaModels', 'assetAttributes', 'assetModels', 'startFromLasts',
+                'dayMonthFrom', 'dayMonthTo', 'every', 'unit'],
+            [MmsTaskModel, 'name'],
+            [MmsAreaModel, 'name'],
+            [MmsAssetAttribute, 'name'],
+        ]
+    },
+
+    '/editScheduling': {
+        handler: async function({ id }) {
+            const po =
+                id  ? await this.service(MmsService).schedulingRepository
+                        .findOne({
+                            relations: {
+                                areaModels: true,
+                                assetAttributes: true,
+                                assetModels: true,
+                                taskModel: true,
+                                startFromLasts: true
+                            },
+                            where: { id }})
+                    : new MmsScheduling()
+
+            return [po]
+        },
+        output: [
+            [MmsScheduling, 'taskModel', 'areaModels', 'assetAttributes',
+                'assetModels', 'startFromLasts', 'dayMonthFrom', 'dayMonthTo',
+                'every', 'unit'],
+            [MmsTaskModel, 'name'],
+            [MmsAreaModel, 'name'],
+            [MmsAssetModel, 'name'],
+            [MmsAssetAttribute, 'name'],
+        ]
+    },
 }
 

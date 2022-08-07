@@ -11,6 +11,7 @@ import { MmsPart } from "./entities/MmsPart";
 import { MmsPartRequirement } from "./entities/MmsPartRequirement";
 import { MmsResourceModel } from "./entities/MmsResourceModel";
 import { MmsResourceType } from "./entities/MmsResourceType";
+import { MmsScheduling } from "./entities/MmsScheduling";
 import { MmsTask } from "./entities/MmsTask";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
@@ -31,5 +32,6 @@ export const MmsEntities = [
     MmsResourceType,
     MmsPart,
     MmsPartRequirement,
-    MmsLastTaskInfo
+    MmsLastTaskInfo,
+    MmsScheduling
 ]

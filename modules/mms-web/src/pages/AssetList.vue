@@ -35,6 +35,12 @@
                     {{row.location.locality.name}}
                 </template>
 
+                 <template #nextTask="{ row }">
+                    {{row.nextTaskModel?.name}}
+                    <br />
+                    <span class="text-caption">{{row.nextTaskDate}}</span>
+                </template>
+
                 <template #links="{ row }">
                     <q-btn color="secondary" flat :to="`/clientLocations/${row.id}`">Sedi ({{row.locationCount}})</q-btn>
                 </template>
@@ -63,10 +69,11 @@ const dataTable = $adx.dataTable(
   {
     actions:      { label: 'Azioni', width: "100px" },
     serialNumber: { label: 'Matricola', width: "100px", sortable: true, field: (row: Item) => row.serialNumber },
-    model:        { label: 'Modello', width: "80%", sortable: true, field: (row: Item) => (row.model as Item).name },
+    model:        { label: 'Modello', width: "20%", sortable: true, field: (row: Item) => (row.model as Item).name },
     client:       { label: 'Cliente', width: "20%", sortable: true },
     address:      { label: 'Indirizzo', width: "20%", sortable: true },
     locality:     { label: 'Località', width: "20%", sortable: true },
+    nextTask:     { label: 'Prossima attività', width: "20%", sortable: true },
     //links:        { label: 'Collegamenti', width: "200px" }
   },
   store.getTableParams('assets', 'serialNumber'))

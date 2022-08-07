@@ -14,6 +14,7 @@ import { MmsTaskModel } from "./entities/MmsTaskModel";
 import { MmsPartRequirement } from "./entities/MmsPartRequirement";
 import { MmsAssetAttribute } from "./entities/MmsAssetAttribute";
 import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
+import { MmsScheduling } from "./entities/MmsScheduling";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -66,6 +67,9 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsLastTaskInfo
+    },
+    {
+        entityClass: MmsScheduling
     },
 ]
 

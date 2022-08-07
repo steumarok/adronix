@@ -19,6 +19,36 @@ export class Utils {
         return Number.parseInt(str)
     }
 
+    static groupBy<K, V>(array: V[], grouper: (item: V) => K) {
+        return array.reduce((store, item) => {
+            var key = grouper(item)
+            if (!store.has(key)) {
+                store.set(key, [item])
+            } else {
+                store.get(key).push(item)
+            }
+            return store
+        }, new Map<K, V[]>())
+    }
+
+    static transformMap<K, V, R>(
+        source: Map<K, V>,
+        transformer: (value: V, key: K) => R
+    ) {
+        return new Map(
+            Array.from(source, v => [v[0], transformer(v[1], v[0])])
+        )
+    }
+
+    static groupByAndMap<T, K, R>(
+        array: T[],
+        grouper: (x: T) => K,
+        mapper: (x: T[], key: K) => R
+    ) {
+        let groups = Utils.groupBy(array, grouper)
+        return Utils.transformMap(groups, (value, key) => mapper(value, key))
+    }
+
     static sortDir(descending: boolean | string) {
         return Utils.toBool(descending) ? "desc" : "asc"
     }

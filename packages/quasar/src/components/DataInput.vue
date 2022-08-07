@@ -26,5 +26,7 @@ const errorMessage = computed(() => props.errors ? props.errors.map(error => err
     v-model="value"
     :hide-bottom-space="true"
     :error-message="errorMessage"
-    :error="!!errorMessage.length"/>
+    :error="!!errorMessage.length">
+    <slot v-for="(_, name) in $slots" :name="name" :slot="name" />
+  </q-input>
 </template>

@@ -8,7 +8,8 @@
       "@adronix/cmn": "workspace:^",
       "@adronix/persistence": "workspace:^",
       "@adronix/server": "workspace:^",
-      "@adronix/typeorm": "workspace:^"
+      "@adronix/typeorm": "workspace:^",
+      "luxon": "^3.0.1"
    },
    "peerDependencies": {
       "reflect-metadata": "^0.1.10",
@@ -19,5 +20,8 @@
       "start": "ts-node src/index.ts",
       "build": "tsc",
       "watch": "tsc --watch"
+   },
+   "devDependencies": {
+      "@types/luxon": "^3.0.0"
    }
 }
