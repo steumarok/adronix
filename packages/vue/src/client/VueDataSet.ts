@@ -115,8 +115,9 @@ export class VueDataSet extends DataSet {
     }
 
     insert(type: string, properties: Omit<ItemProps, "id">) {
-      super.insert(type, properties)
+      const item = super.insert(type, properties)
       this.refreshValues(type)
+      return item
     }
 
     update(item: Item, properties: Omit<ItemProps, "id">) {
@@ -126,8 +127,9 @@ export class VueDataSet extends DataSet {
           value[propName] = properties[propName]
         }
       }
-      super.update(item, properties)
+      item = super.update(item, properties)
       this.refreshValues(item.type)
+      return item
     }
 
     delete(item: Item) {

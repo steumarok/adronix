@@ -8,8 +8,7 @@ import AdxForm from './components/Form.vue'
 import AdxPage from './components/Page.vue'
 import AdxAutocomplete from './components/Autocomplete.vue'
 import AdxLoading from './components/Loading.vue'
-import AdxBreadcrumbs from './components/AdxBreadcrumbs.vue'
-import AdxBreadcrumbsEl from './components/AdxBreadcrumbsEl.vue'
+import AdxPivotTable from './components/AdxPivotTable.vue'
 import { openDialog } from './client/Quasar'
 
 import { registerImplementation } from '@adronix/vue'
@@ -27,8 +26,7 @@ export function bootAdronixQuasar(app: App<any>) {
     app.component('AdxForm', AdxForm)
     app.component('AdxPage', AdxPage)
     app.component('AdxLoading', AdxLoading)
-    app.component('AdxBreadcrumbs', AdxBreadcrumbs)
-    app.component('AdxBreadcrumbsEl', AdxBreadcrumbsEl)
+    app.component('AdxPivotTable', AdxPivotTable)
 
     registerImplementation({
         openDialog,

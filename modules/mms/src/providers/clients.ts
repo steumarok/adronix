@@ -9,6 +9,7 @@ import { Brackets, Like, Repository } from "typeorm";
 import { EntityClass } from "@adronix/persistence/src";
 import { ReturnType } from "@adronix/server";
 import { Utils } from "@adronix/server";
+import { MmsAsset } from "../persistence/entities/MmsAsset";
 
 
 export const clientsProviders: DataProviderDefinitions = {
@@ -104,6 +105,7 @@ export const clientsProviders: DataProviderDefinitions = {
         output: [
             [MmsClientLocation, 'address', 'client', 'locality'],
             [MmsClient, 'name'],
+            [MmsAsset, 'name', 'location', 'client', 'assetType'],
             [CmnLocality, 'name']
         ]
     },

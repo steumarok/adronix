@@ -9,6 +9,7 @@
    "dependencies": {
       "@adronix/base": "workspace:^",
       "@adronix/client": "workspace:^",
+      "deep-object-diff": "^1.1.7",
       "domurl": "^2.3.4",
       "object-diff": "^0.0.4"
    },

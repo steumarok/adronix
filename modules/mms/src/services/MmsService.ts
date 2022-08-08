@@ -7,7 +7,9 @@ import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
+import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
+import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
@@ -152,14 +154,23 @@ export class MmsService extends AbstractService {
     }
 
     matchAreaModels(scheduling: MmsScheduling, asset: MmsAsset) {
+        //
+        // If scheduling not have any area models specified, it's valid.
+        //
         if (!scheduling.areaModels || scheduling.areaModels.length == 0) {
             return true
         }
 
+        //
+        // If the asset not have a area specified, this scheduling is not valid.
+        //
         if (!asset.area) {
             return false
         }
 
+        //
+        // Extract model ids from attributions.
+        //
         const modelIds = asset.area.modelAttributions.map(ma => ma.model.id)
 
         return scheduling.areaModels.some(model => modelIds.includes(model.id))
@@ -211,6 +222,14 @@ export class MmsService extends AbstractService {
 
     get assetModelRepository() {
         return this.dataSource.getRepository(MmsAssetModel)
+    }
+
+    get assetComponentModelRepository() {
+        return this.dataSource.getRepository(MmsAssetComponentModel)
+    }
+
+    get assetModelPivotRepository() {
+        return this.dataSource.getRepository(MmsAssetModelPivot)
     }
 
     get resourceTypeRepository() {

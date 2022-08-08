@@ -143,6 +143,7 @@ __metadata:
     "@adronix/client": "workspace:^"
     "@adronix/cmn-web": "workspace:^"
     "@adronix/vue": "workspace:^"
+    deep-object-diff: ^1.1.7
     pinia: ^2.0.17
   peerDependencies:
     reflect-metadata: ^0.1.10
@@ -365,6 +366,7 @@ __metadata:
     "@types/domurl": ^0.0.7
     "@types/jest": ^27.4.0
     "@types/object-diff": ^0.0.2
+    deep-object-diff: ^1.1.7
     domurl: ^2.3.4
     jest: ^27.5.1
     object-diff: ^0.0.4
@@ -5288,6 +5290,13 @@ __metadata:
   version: 0.1.4
   resolution: "deep-is@npm:0.1.4"
   checksum: edb65dd0d7d1b9c40b2f50219aef30e116cedd6fc79290e740972c132c09106d2e80aa0bc8826673dd5a00222d4179c84b36a790eef63a4c4bca75a37ef90804
+  languageName: node
+  linkType: hard
+
+"deep-object-diff@npm:^1.1.7":
+  version: 1.1.7
+  resolution: "deep-object-diff@npm:1.1.7"
+  checksum: 543fb1ae87b138ad260691e6949e72bf7dc144825084b7ad1886bb725d2ace1c19ed1ef1280f1116243e86bf2c6b942f45c670958b1468f644613f28c5dc97ea
   languageName: node
   linkType: hard
 

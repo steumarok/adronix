@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { buildUrl, Item } from '@adronix/client';
 import { useAdronix } from '@adronix/vue'
-import { computed, watch, ref, unref } from 'vue';
+import { computed, watch, ref, unref, reactive } from 'vue';
 import MmsAssetModelSelect from '../components/MmsAssetModelSelect.vue'
 import MmsClientAutocomplete from '../components/MmsClientAutocomplete.vue'
 import MmsClientLocationSelect from '../components/MmsClientLocationSelect.vue'
@@ -144,9 +144,9 @@ function getExcludedLtiTaskModels(lti: Item) {
 const ltiDataTable = $adx.dataTable(
   'MmsLastTaskInfo',
   {
-    actions:      { label: 'Azioni', width: "40px" },
-    model:        { label: 'Modello di attività', width: "100%" },
-    executionDate:        { label: 'Data di esecuzione'},
+    actions:        { label: 'Azioni', width: "40px" },
+    model:          { label: 'Modello di attività', width: "100%" },
+    executionDate:  { label: 'Data di esecuzione'},
   })
 
 watch(() => asset.value?.client, (newValue, oldValue) => {
@@ -178,7 +178,6 @@ function getIncompatibleAttributes(attributes) {
     return attributes
         .filter(a => a.incompatibleAttributes)
         .flatMap(a => a.incompatibleAttributes)
-        .concat(attributes)
 
 }
 

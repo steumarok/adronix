@@ -17,6 +17,8 @@ import { MmsPart } from "../persistence/entities/MmsPart";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
+import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
+import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 
 
 export const modelsProviders: DataProviderDefinitions = {
@@ -42,18 +44,34 @@ export const modelsProviders: DataProviderDefinitions = {
 
     '/editAssetModel': {
         handler: async function({ id }) {
-            const po =
-                id
-                    ? await this.service(MmsService).assetModelRepository
+            const service = this.service(MmsService)
+            const assetModel =
+                id  ? await service.assetModelRepository
                         .findOne({
                             relations: { },
                             where: { id }})
                     : new MmsAssetModel()
 
-            return [po]
+            const pivots =
+                id  ? await service.assetModelPivotRepository
+                        .find({
+                            where: { assetModel },
+                            relations: {
+                                areaModel: true,
+                                assetModel: true,
+                                componentModel: {
+                                    measurementUnit: true} }
+                        })
+                    : []
+
+            return [assetModel, ...pivots]
         },
         output: [
-            [MmsAssetModel, 'name']
+            [MmsAssetModel, 'name'],
+            [MmsAssetModelPivot, 'assetModel', 'areaModel', 'componentModel', 'quantity', 'rowGroup'],
+            [MmsAreaModel, 'name'],
+            [MmsAssetComponentModel, 'name', 'measurementUnit'],
+            [CmnMeasurementUnit, 'name'],
         ]
     },
 
@@ -66,6 +84,23 @@ export const modelsProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsAssetModel, 'name']
+        ]
+    },
+
+
+    '/lookupAssetComponentModels': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsService).assetComponentModelRepository
+                .find({
+                    relations: { measurementUnit: true },
+                    order: { name: "asc" }
+                })
+
+        },
+        output: [
+            [MmsAssetComponentModel, 'name', 'measurementUnit'],
+            [CmnMeasurementUnit, 'name'],
         ]
     },
 

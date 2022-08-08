@@ -6,7 +6,6 @@
             <adx-data-input
                 v-model="clientLocation.address"
                 label="Indirizzo"
-                outlined
                 :errors="clientLocation.errors.name"
                 />
 
@@ -17,9 +16,22 @@
                 lookup-type="CmnLocality"
                 lookup-display-property="name"
                 clearable
-                outlined
                 />
 
+        </adx-d>
+
+        <adx-d horizontal fit justify="evenly">
+            <adx-d vertical padding="xs">
+                <q-checkbox
+                    v-model="createSelfAsset"
+                    label="Crea asset"
+                    />
+            </adx-d>
+            <adx-d vertical padding="xs">
+                <mms-asset-model-select
+                    v-model="assetModel"
+                    />
+            </adx-d>
         </adx-d>
 
     </adx-dialog>
@@ -29,6 +41,8 @@
 <script setup lang="ts">
 import { buildUrl } from '@adronix/client';
 import { useAdronix } from '@adronix/vue'
+import { ref, watch } from 'vue'
+import MmsAssetModelSelect from '../components/MmsAssetModelSelect.vue'
 
 const props = defineProps({
   id: Number,
@@ -40,7 +54,26 @@ const ds = $adx.dataSet(buildUrl('/api/mms/editClientLocation', { id: props.id, 
 
 const clientLocation = ds.ref('MmsClientLocation')
 
-const { dialog } = $adx.dialog(
-  () => ds.commit()
-)
+const createSelfAsset = ref(false)
+const assetModel = ref()
+
+watch([createSelfAsset, assetModel], ([ create, model ]) => {
+    const location = clientLocation.value
+    if (create && model) {
+        ds.insert('MmsAsset', {
+            model,
+            location,
+            client: location.client,
+            assetType: 'location'
+        })
+    }
+    else {
+        const asset = ds.findItem('MmsAsset', () => true)
+        if (asset) {
+            ds.delete(asset)
+        }
+    }
+})
+
+const { dialog } = $adx.dialog(() => ds.commit())
 </script>

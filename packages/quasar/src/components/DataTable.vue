@@ -26,7 +26,7 @@
             :key="col.name"
             :props="props"
           >
-            {{ col.label }}
+            <slot :name="`${col.name}Header`">{{ col.label }}</slot>
           </q-th>
         </q-tr>
       </template>
@@ -86,7 +86,7 @@ const onRequest = (p: any) => {
 
 const pagination = computed({
   get() {
-    const paginated = props.dataBindings.totalCount.value?.value
+    const paginated = props.dataBindings.totalCount?.value?.value
 
     const pagintion_ = paginated
       ? {
@@ -110,7 +110,7 @@ const pagination = computed({
 
 const { filtering } = toRefs(props)
 
-const columns = toQuasarColumns(props.dataBindings.columns)
+const columns = computed(() => toQuasarColumns(props.dataBindings.columns))
 const rows = props.dataBindings.rows
 
 </script>

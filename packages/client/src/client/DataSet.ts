@@ -189,6 +189,7 @@ export class DataSet {
       }
       item.inserted = true
       this.items.push(item)
+      return item
     }
 
     protected generateRandomId() {
@@ -202,6 +203,7 @@ export class DataSet {
           item.changes.add(propName)
         }
       }
+      return item
     }
 
     delete(item: Item) {

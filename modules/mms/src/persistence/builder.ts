@@ -15,6 +15,8 @@ import { MmsPartRequirement } from "./entities/MmsPartRequirement";
 import { MmsAssetAttribute } from "./entities/MmsAssetAttribute";
 import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
 import { MmsScheduling } from "./entities/MmsScheduling";
+import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
+import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -70,6 +72,12 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsScheduling
+    },
+    {
+        entityClass: MmsAssetModelPivot
+    },
+    {
+        entityClass: MmsAssetComponentModel
     },
 ]
 
