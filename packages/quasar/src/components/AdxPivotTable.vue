@@ -4,8 +4,6 @@
       :columns="columns"
       row-key="id"
       :hide-bottom="true"
-      flat
-      bordered
     >
       <template v-slot:header="props">
         <q-tr :props="props">

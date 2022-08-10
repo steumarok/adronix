@@ -5,41 +5,52 @@
             <adx-data-input
                 v-model="assetModel.name"
                 label="Name"
-                outlined
                 :errors="assetModel.errors.name"
                 />
 
-            <adx-pivot-table
-                :data-set="ds"
-                item-type="MmsAssetModelPivot"
-                row-property="areaModel"
-                column-property="componentModel"
-                :insertionProperties="{ assetModel }"
-                flat
-                dense
-                >
-                <template #column="{ column }">
-                    <mms-asset-component-model-select
-                        v-model="column.item"
-                        label=""
-                        dense
-                        />
-                </template>
+            <mms-asset-type-select
+                label="Tipologia"
+                v-model="assetModel.assetType"
+                />
 
-                <template #row="{ row }">
-                    <mms-area-model-select
-                        v-model="row.item"
-                        label=""
-                        dense
-                        />
-                </template>
+            <adx-d v-if="showComponentModelPivot">
+                <span class="text-subtitle1">Griglia modelli</span>
 
-                <template #pivot="{ pivot, componentModel }">
-                    <q-input dense v-model.number="pivot.quantity"
-                        type="number" input-class="text-right"
-                        :suffix="componentModel.measurementUnit.name"/>
-                </template>
-            </adx-pivot-table>
+                <adx-pivot-table
+                    :data-set="ds"
+                    item-type="MmsAssetModelPivot"
+                    row-property="areaModel"
+                    column-property="componentModel"
+                    :insertionProperties="{ assetModel }"
+                    flat
+                    dense
+                    >
+                    <template #column="{ column }">
+                        <mms-asset-component-model-select
+                            v-model="column.item"
+                            label=""
+                            dense
+                            />
+                    </template>
+
+                    <template #row="{ row }">
+                        <mms-area-model-select
+                            v-model="row.item"
+                            label=""
+                            dense
+                            />
+                    </template>
+
+                    <template #pivot="{ pivot, componentModel }">
+                        <q-input
+                            dense
+                            v-model.number="pivot.quantity"
+                            type="number"
+                            input-class="text-right"
+                            :suffix="componentModel.measurementUnit.name"/>
+                    </template>
+                </adx-pivot-table>
+            </adx-d>
         </adx-d>
 
     </adx-dialog>
@@ -52,6 +63,7 @@ import { useAdronix } from '@adronix/vue'
 import { unref, computed, reactive } from 'vue';
 import MmsAreaModelSelect from '../components/MmsAreaModelSelect.vue'
 import MmsAssetComponentModelSelect from '../components/MmsAssetComponentModelSelect.vue'
+import MmsAssetTypeSelect from '../components/MmsAssetTypeSelect.vue'
 
 const props = defineProps({
   id: Number
@@ -68,4 +80,6 @@ const { dialog } = $adx.dialog(
         payload: unref(assetModel)
     })
 )
+
+const showComponentModelPivot = computed(() => assetModel.value?.assetType == 'composite')
 </script>

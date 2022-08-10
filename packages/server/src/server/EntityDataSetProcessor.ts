@@ -1,5 +1,5 @@
 import Graph from "graph-data-structure"
-import { EntityClass, EntityId, Transaction, TransactionManager } from '@adronix/persistence'
+import { EntityClass, EntityId, EntityProps, Transaction, TransactionManager } from '@adronix/persistence'
 import { ItemData, ItemId } from "./types"
 import { DataSetProcessor } from "./DataSetProcessor"
 import { Module } from "./Module"
@@ -70,26 +70,46 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
         }
     }
 
-   /* protected _getEntityIO(type: string | EntityClass<unknown>, context: CallContext) {
-       return this.module.app.getEntityIO(type, context)
-    }*/
-
-    protected async processItem(itemData: ItemData, idMap: Map<string, any>, ioService: IOService) {
-        //const entityIO = this.getEntityIO(itemData.$type, context)
-
+    protected async processItem(context: HttpContext, itemData: ItemData, idMap: Map<string, any>, ioService: IOService) {
         const changes = this.prepareDataForIO(itemData, idMap, ioService)
 
         if (itemData.$inserted) {
-            return await ioService.insert(itemData.$type, changes)
+            return await this.insert(context, itemData.$type, changes, ioService)  // await ioService.insert(itemData.$type, changes)
         }
         else if (itemData.$deleted) {
             const entity = await ioService.get(itemData.$type, itemData.$id)
-            return ioService.delete(itemData.$type, entity)
+            return await this.delete(context, itemData.$type, changes, entity, ioService) //ioService.delete(itemData.$type, entity)
         }
         else {
             const entity = await ioService.get(itemData.$type, itemData.$id)
-            return await ioService.update(itemData.$type, entity, changes)
+            return await this.update(context, itemData.$type, changes, entity, ioService)  // await ioService.update(itemData.$type, entity, changes)
         }
+    }
+
+    async insert(
+        _context: HttpContext,
+        itemType: string,
+        changes: EntityProps,
+        ioService: IOService) {
+        return await ioService.insert(itemType, changes)
+    }
+
+    async update(
+        _context: HttpContext,
+        itemType: string,
+        changes: EntityProps,
+        entity: any,
+        ioService: IOService) {
+        return await ioService.update(itemType, entity, changes)
+    }
+
+    async delete(
+        _context: HttpContext,
+        itemType: string,
+        changes: EntityProps,
+        entity: any,
+        ioService: IOService) {
+        return await ioService.delete(itemType, entity)
     }
 
     async sync(
@@ -137,7 +157,7 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
                 return {
                     itemData,
                     entityClass,
-                    actionOrErrors: await this.processItem(itemData, idMap, ioService)
+                    actionOrErrors: await this.processItem(context, itemData, idMap, ioService)
                 }
             })
         )

@@ -1,5 +1,5 @@
-import { Errors, Objects, Validator } from "@adronix/base"
-import { EntityClass, EntityProps, IPersistenceExtender, Persistence, PersistenceBuilder, PersistenceExtension } from "@adronix/persistence"
+import { Error, Errors, Objects, Validator } from "@adronix/base"
+import { EntityClass, EntityProps, IPersistenceExtender, Persistence, PersistenceBuilder, PersistenceExtension, Transaction } from "@adronix/persistence"
 import { rawListeners } from "process"
 import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
@@ -10,7 +10,7 @@ import { FormProcessor } from "./FormProcessor"
 import { IOService } from "./IOService"
 import { ItemCollector } from "./ItemCollector"
 import { NotificationChannel } from "./NotificationChannel"
-import { DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, FormRule, FormRules, ModuleOptions, Params, ReturnType } from "./types"
+import { Action, ActionOrErrors, DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, FormRule, FormRules, ModuleOptions, Params, ReturnType, SyncConfig, SyncHandler } from "./types"
 
 
 
@@ -18,7 +18,7 @@ type Descriptor = (collector: ItemCollector) => ItemCollector
 
 
 export abstract class Module<A extends Application = Application> {
-    readonly providers: Map<string, { dataProvider: DataProvider, descriptor: Descriptor}[]> = new Map()
+    readonly providers: Map<string, { dataProvider: DataProvider, sync: SyncConfig, descriptor: Descriptor}[]> = new Map()
     readonly formHandlers: Map<string, { handler: FormHandler, rules: FormRules }> = new Map()
     readonly notificationChannels: Map<string, NotificationChannel> = new Map()
     readonly serviceClasses: Array<typeof AbstractService<A>> = []
@@ -41,6 +41,7 @@ export abstract class Module<A extends Application = Application> {
     overrideProvider(
         path: string,
         dataProvider: DataProvider,
+        sync: SyncConfig,
         descriptor: Descriptor) {
 
         if (!this.providers.has(path)) {
@@ -51,6 +52,7 @@ export abstract class Module<A extends Application = Application> {
             .get(path)
             .push({
                 dataProvider,
+                sync,
                 descriptor
             })
     }
@@ -70,10 +72,12 @@ export abstract class Module<A extends Application = Application> {
     registerProvider(
         path: string,
         dataProvider: DataProvider,
+        sync: SyncConfig,
         descriptor: Descriptor) {
 
         this.providers.set(path, [{
             dataProvider,
+            sync,
             descriptor
         }])
     }
@@ -162,6 +166,207 @@ export abstract class Module<A extends Application = Application> {
                     Promise.resolve(collector))
             }
 
+            async invokeBeforeHandler(
+                context: HttpContext,
+                entityClass: EntityClass<unknown>,
+                name: string,
+                ...params: any[]
+            ) {
+                const handlers = module.providers.get(path)
+                    .filter(p => p.sync && p.sync[name]?.length > 0)
+                    .map(({ sync }) => sync[name])
+                    .map(handlers => handlers.find(h => h[0] == entityClass))
+                    .filter(h => !!h)
+                    .map(h => h[1]);
+
+                const errors: Errors[] = []
+                const beforeActions: Action<void>[] = []
+                for (const handler of handlers) {
+                    const handlerResult: ActionOrErrors<void> = await handler.apply(context, params)
+                    if (typeof handlerResult == "function") {
+                        beforeActions.push(handlerResult)
+                    }
+                    else {
+                        errors.push(handlerResult)
+                    }
+                }
+
+                return { errors, beforeActions }
+            }
+
+            async invokeAfterHandler(
+                context: HttpContext,
+                entityClass: EntityClass<unknown>,
+                name: string,
+                ...params: any[]
+            ) {
+                const handlers = module.providers.get(path)
+                    .filter(p => p.sync && p.sync[name]?.length > 0)
+                    .map(({ sync }) => sync[name])
+                    .map(handlers => handlers.find(h => h[0] == entityClass))
+                    .filter(h => !!h)
+                    .map(h => h[1] as SyncHandler);
+
+                const afterActions: Action<void>[] = []
+                for (const handler of handlers) {
+                    const handlerResult: Action<void> = await handler.apply(context, params)
+                    afterActions.push(handlerResult)
+                }
+
+                return { afterActions }
+            }
+
+            async insert(
+                context: HttpContext,
+                itemType: string,
+                changes: EntityProps,
+                ioService: IOService
+            ) {
+                const result = await super.insert(
+                    context,
+                    itemType,
+                    changes,
+                    ioService)
+
+                return await this.wrapOperation(
+                    context,
+                    ioService,
+                    itemType,
+                    changes,
+                    null,
+                    result,
+                    'onBeforeInsert',
+                    'onAfterInsert',
+                    entity => entity)
+            }
+
+            async update(
+                context: HttpContext,
+                itemType: string,
+                changes: EntityProps,
+                entity: any,
+                ioService: IOService
+            ) {
+                const result = await super.update(
+                    context,
+                    itemType,
+                    changes,
+                    entity,
+                    ioService)
+
+                return await this.wrapOperation(
+                    context,
+                    ioService,
+                    itemType,
+                    changes,
+                    entity,
+                    result,
+                    'onBeforeUpdate',
+                    'onAfterUpdate',
+                    entity => entity)
+            }
+
+            async delete(
+                context: HttpContext,
+                itemType: string,
+                changes: EntityProps,
+                entity: any,
+                ioService: IOService
+            ) {
+                const result = await super.delete(
+                    context,
+                    itemType,
+                    changes,
+                    entity,
+                    ioService)
+
+                return await this.wrapOperation(
+                    context,
+                    ioService,
+                    itemType,
+                    changes,
+                    entity,
+                    result,
+                    'onBeforeDelete',
+                    'onAfterDelete',
+                    () => void 0)
+            }
+
+            async wrapOperation(
+                context: HttpContext,
+                ioService: IOService,
+                itemType: string,
+                changes: EntityProps,
+                entity: any,
+                result: Errors | ((t: Transaction) => Promise<unknown>),
+                beforeHandlerName: string,
+                afterHandlerName: string,
+                returnFn: (entity: any) => any
+            ) {
+                const entityClass = this.getEntityClassByName(itemType, ioService)
+
+                const { errors, beforeActions } = await this.invokeBeforeHandler(
+                    context,
+                    entityClass,
+                    beforeHandlerName,
+                    changes,
+                    entity,
+                )
+
+                if (typeof result == "function") {
+                    if (errors.length > 0) {
+                        return this.mergeErrorsList(errors)
+                    }
+                    else {
+                        return async (t: Transaction) => {
+
+                            for (const action of beforeActions) {
+                                await action.call(context, t)
+                            }
+
+                            const entity = await result(t)
+
+                            const { afterActions } = await this.invokeAfterHandler(
+                                context,
+                                entityClass,
+                                afterHandlerName,
+                                changes,
+                                entity
+                            )
+
+                            for (const action of afterActions) {
+                                await action.call(context, t)
+                            }
+
+                            return returnFn(entity)
+                        }
+                    }
+                }
+                else {
+                    return this.mergeErrorsList([result, ...errors])
+                }
+            }
+
+            mergeErrorsList(errorsList: Errors[]): Errors {
+                const result: Errors = {}
+                for (const errors of errorsList) {
+                    for (const error in errors) {
+                        if (!result[error]) {
+                            result[error] = errors[error]
+                        }
+                        else {
+                            result[error] = this.mergeError(result[error], errors[error])
+                        }
+                    }
+                }
+                return result
+            }
+
+            mergeError(e1: Error | Error[], e2: Error | Error[]): Error[] {
+                const result: Error[] = Array.isArray(e1) ? e1 : [e1]
+                return Array.isArray(e2) ? [...result, ...e2] : [...result, e2]
+            }
+
             add(collector: ItemCollector, item: ReturnType) {
                 if (typeof item == 'function') {
                     return collector.add(item)
@@ -191,7 +396,7 @@ export function defineModule<A extends Application = Application>() {
 
     const formHandlers: Map<string, { handler: FormHandler, rules: FormRules }> = new Map()
 
-    const dataProviders: Map<string, DataProvider> = new Map()
+    const dataProviders: Map<string, { provider: DataProvider, sync: SyncConfig }> = new Map()
     const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
 
     return class extends Module<A> {
@@ -205,10 +410,11 @@ export function defineModule<A extends Application = Application>() {
                 this.usePersistence(persistenceBuilder.create())
             }
 
-            dataProviders.forEach((provider, path) => {
+            dataProviders.forEach((p, path) => {
                 this.registerProvider(
                     path,
-                    provider,
+                    p.provider,
+                    p.sync,
                     this.describe(path)
                 )
             })
@@ -266,8 +472,8 @@ export function defineModule<A extends Application = Application>() {
             return this
         }
 
-        static addDataProvider(path: string, provider: DataProvider) {
-            dataProviders.set(path, provider)
+        static addDataProvider(path: string, provider: DataProvider, sync: SyncConfig) {
+            dataProviders.set(path, { provider, sync })
             currentProviderPath = path
             return this
         }
@@ -275,8 +481,8 @@ export function defineModule<A extends Application = Application>() {
             providersList.forEach(providers => {
                 for (const path in providers) {
 
-                    const handler = providers[path].handler
-                    const self = this.addDataProvider(path, handler)
+                    const { handler, sync } = providers[path]
+                    const self = this.addDataProvider(path, handler, sync)
 
                     if (providers[path].output) {
                         providers[path].output.forEach(([entityClass, ...propNames]) => {
@@ -296,7 +502,7 @@ export function defineModule<A extends Application = Application>() {
         }
 
         static extend() {
-            const dataProviders: Map<string, DataProvider> = new Map()
+            const dataProviders: Map<string, { provider: DataProvider, sync: SyncConfig }> = new Map()
             const descriptorsMap: Map<string, EntityDescriptor[]> = new Map()
 
             function describe(path: string) {
@@ -310,10 +516,11 @@ export function defineModule<A extends Application = Application>() {
                 return class extends base {
                     constructor(app: A, options?: ModuleOptions) {
                         super(app, options)
-                        dataProviders.forEach((provider, path) => {
+                        dataProviders.forEach((p, path) => {
                             this.overrideProvider(
                                 path,
-                                provider,
+                                p.provider,
+                                p.sync,
                                 describe(path))
                         })
                     }
@@ -324,7 +531,8 @@ export function defineModule<A extends Application = Application>() {
                 extendDataProviders(...providersList: DataProviderDefinitions[]) {
                     providersList.forEach(providers => {
                         for (const path in providers) {
-                            const self = this.extendDataProvider(path, providers[path].handler)
+                            const { handler, sync } = providers[path]
+                            const self = this.extendDataProvider(path, handler, sync)
                             providers[path].output.forEach(([entityClass, ...propNames]) => {
                                 self.describe(entityClass, propNames)
                             })
@@ -332,8 +540,8 @@ export function defineModule<A extends Application = Application>() {
                         })
                     return overrider
                 },
-                extendDataProvider(path: string, provider: DataProvider) {
-                    dataProviders.set(path, provider)
+                extendDataProvider(path: string, provider: DataProvider, sync: SyncConfig) {
+                    dataProviders.set(path, { provider, sync })
                     currentProviderPath = path
                     return overrider
                 },

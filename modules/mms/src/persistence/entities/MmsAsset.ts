@@ -1,14 +1,9 @@
-import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne } from "typeorm";
 import { MmsArea } from "./MmsArea";
 import { MmsAssetAttribute } from "./MmsAssetAttribute";
 import { MmsAssetModel } from "./MmsAssetModel";
 import { MmsClient } from "./MmsClient";
 import { MmsClientLocation } from "./MmsClientLocation";
-
-export enum MmsAssetType {
-    SIMPLE = 'simple',
-    COMPOSITE = 'composite'
-}
 
 @Entity("mms_assets")
 export class MmsAsset {
@@ -18,13 +13,6 @@ export class MmsAsset {
 
     @Column()
     name: string;
-
-    @Column({
-        type: 'enum',
-        enum: MmsAssetType,
-        default: MmsAssetType.SIMPLE
-    })
-    assetType: MmsAssetType;
 
     @Column({name: "serial_number", nullable: true})
     serialNumber: string;

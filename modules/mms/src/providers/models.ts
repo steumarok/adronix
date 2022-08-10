@@ -67,7 +67,7 @@ export const modelsProviders: DataProviderDefinitions = {
             return [assetModel, ...pivots]
         },
         output: [
-            [MmsAssetModel, 'name'],
+            [MmsAssetModel, 'name', 'assetType'],
             [MmsAssetModelPivot, 'assetModel', 'areaModel', 'componentModel', 'quantity', 'rowGroup'],
             [MmsAreaModel, 'name'],
             [MmsAssetComponentModel, 'name', 'measurementUnit'],

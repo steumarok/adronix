@@ -41,13 +41,13 @@ export abstract class EntityIO<T> {
         }
     }
 
-    delete(
-        entity: T): (t: Transaction) => Promise<void> {
+    async delete(
+        entity: T): Promise<Errors | ((tx: Transaction) => Promise<void>)> {
 
         return async (t: Transaction) => {
             await this.notify(EntityEventKind.Deleting, entity, t)
 
-            const result =  await this.deleteEntity(entity, t)
+            /*const result =*/ await this.deleteEntity(entity, t)
 
             await this.notify(EntityEventKind.Deleted, entity, t)
         }

@@ -23,13 +23,13 @@
         <adx-d horizontal fit justify="evenly">
             <adx-d vertical padding="xs">
                 <q-checkbox
-                    v-model="createSelfAsset"
+                    v-model="clientLocation.createAsset"
                     label="Crea asset"
                     />
             </adx-d>
             <adx-d vertical padding="xs">
                 <mms-asset-model-select
-                    v-model="assetModel"
+                    v-model="clientLocation.assetModel"
                     />
             </adx-d>
         </adx-d>
@@ -54,6 +54,7 @@ const ds = $adx.dataSet(buildUrl('/api/mms/editClientLocation', { id: props.id, 
 
 const clientLocation = ds.ref('MmsClientLocation')
 
+/*
 const createSelfAsset = ref(false)
 const assetModel = ref()
 
@@ -73,7 +74,7 @@ watch([createSelfAsset, assetModel], ([ create, model ]) => {
             ds.delete(asset)
         }
     }
-})
+})*/
 
 const { dialog } = $adx.dialog(() => ds.commit())
 </script>

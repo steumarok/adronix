@@ -11,9 +11,6 @@ export class IOService extends AbstractService {
 
     static readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: Context) => EntityIO<unknown>>()
 
-//    @InjectService
-//    notificationService: NotificationService
-
     getTransactionManager<T>(type: EntityType<T>) {
         return this.getEntityIO<T>(type).transactionManager
     }

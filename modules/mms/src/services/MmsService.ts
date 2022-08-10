@@ -1,12 +1,14 @@
-import { AbstractService, Utils } from "@adronix/server";
-import { InjectDataSource } from "@adronix/typeorm/src";
+import { Transaction } from "@adronix/persistence";
+import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
+import { InjectDataSource, TypeORMTransaction } from "@adronix/typeorm";
 import { DateTime } from "luxon";
-import { DataSource, In, InitializedRelationError } from "typeorm";
+import { DataSource, EntityManager, In, InitializedRelationError } from "typeorm";
 import { MmsArea } from "../persistence/entities/MmsArea";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
+import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
@@ -42,10 +44,79 @@ export type TaskModelDate = {
     date: DateTime
 }
 
+function getEntityManager() {
+    return async (t: TypeORMTransaction) => t.entityManager
+}
+
+const findOne = EntityManager.prototype.findOne
+
 export class MmsService extends AbstractService {
 
     @InjectDataSource
     dataSource: DataSource
+
+    @InjectService
+    ioService: IOService
+
+
+    *createCompositeAsset(location: MmsClientLocation, model: MmsAssetModel) {
+
+        const em: EntityManager = yield getEntityManager()
+
+        const loc = yield findOne(MmsClientLocation, {
+            where: { id: location.id},
+            relations: { client: true }
+        })
+        console.log(loc)
+
+        const asset = yield this.ioService.insert(MmsAsset, {
+            location,
+            model,
+            name: 'Sede',
+            client: loc.client
+        })
+
+        console.log(asset)
+        /*
+
+        return async (t: Transaction) => {
+            const loc = await this.clientLocationRepository.findOne({
+                where: { id: location.id},
+                relations: { client: true }
+            })
+            const asset = await this.ioService.insert(MmsAsset, {
+                location,
+                model,
+                name: 'Sede',
+                client: loc.client
+            })(t)
+            const pivots = await this.assetModelPivotRepository
+                .find({
+                    where: { assetModel: model },
+                    relations: { areaModel: true, componentModel: true }
+                })
+
+            const groups = Utils.groupBy(pivots, item => item.rowGroup)
+
+            //for (const pivot of pivots) {
+            for (const rowGroup in groups) {
+                const area = this.ioService.insert(MmsArea, {
+                    name: groups[rowGroup]
+                })(t)
+                for (const pivot of groups[rowGroup]) {
+                    for (var i = 0; i < pivot.quantity; i++) {
+                        this.ioService.insert(MmsAssetComponent, {
+                            quantity: 1,
+                            name: i,
+                            asset,
+                            model: pivot.componentModel,
+                            area
+                        })
+                    }
+                }
+            }
+        }*/
+    }
 
     async findNearestTaskModel(asset: MmsAsset): Promise<TaskModelDate | null> {
 
@@ -263,5 +334,11 @@ export class MmsService extends AbstractService {
     get schedulingRepository() {
         return this.dataSource.getRepository(MmsScheduling)
     }
+
+    get assetComponentRepository() {
+        return this.dataSource.getRepository(MmsAssetComponent)
+    }
+
+
 }
 

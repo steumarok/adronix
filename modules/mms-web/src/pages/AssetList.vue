@@ -14,6 +14,7 @@
                 :filtering="true"
                 flat
                 bordered
+                dense
                 >
                 <template #top-left>
                     <q-btn @click="onInsert" color="primary" unelevated>Inserisci asset</q-btn>
@@ -42,7 +43,7 @@
                 </template>
 
                 <template #links="{ row }">
-                    <q-btn color="secondary" flat :to="`/clientLocations/${row.id}`">Sedi ({{row.locationCount}})</q-btn>
+                    <q-btn color="secondary" flat :to="`/assetComponents/${row.id}`" size="sm">Componenti</q-btn>
                 </template>
             </adx-data-table>
         </adx-d>
@@ -67,14 +68,14 @@ const urlComposer = $adx.urlComposer('/api/mms/listAssets')
 const dataTable = $adx.dataTable(
   'MmsAsset',
   {
-    actions:      { label: 'Azioni', width: "100px" },
+    actions:      { label: 'Azioni' },
     serialNumber: { label: 'Matricola', width: "100px", sortable: true, field: (row: Item) => row.serialNumber },
     model:        { label: 'Modello', width: "20%", sortable: true, field: (row: Item) => (row.model as Item).name },
     client:       { label: 'Cliente', width: "20%", sortable: true },
     address:      { label: 'Indirizzo', width: "20%", sortable: true },
     locality:     { label: 'Località', width: "20%", sortable: true },
     nextTask:     { label: 'Prossima attività', width: "20%", sortable: true },
-    //links:        { label: 'Collegamenti', width: "200px" }
+    links:        { label: 'Collegamenti' }
   },
   store.getTableParams('assets', 'serialNumber'))
 

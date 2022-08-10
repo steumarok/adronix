@@ -7,6 +7,7 @@ import { MmsAssetComponent } from "./entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "./entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
+import { MmsChecklistModel } from "./entities/MmsChecklistModel";
 import { MmsClient } from "./entities/MmsClient";
 import { MmsClientLocation } from "./entities/MmsClientLocation";
 import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
@@ -39,5 +40,6 @@ export const MmsEntities = [
     MmsScheduling,
     MmsAssetComponent,
     MmsAssetComponentModel,
-    MmsAssetModelPivot
+    MmsAssetModelPivot,
+    MmsChecklistModel
 ]

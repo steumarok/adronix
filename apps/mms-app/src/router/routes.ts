@@ -13,6 +13,7 @@ import { Planning } from '@adronix/mms-web'
 import { AssetAttributeList } from '@adronix/mms-web'
 import { SchedulingList } from '@adronix/mms-web'
 import { AreaModelList } from '@adronix/mms-web'
+import { AssetComponentList } from '@adronix/mms-web'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -26,6 +27,7 @@ const routes: RouteRecordRaw[] = [
       { path: '/areas/:clientLocationId', component: () => AreaList, props: true, meta: { context: 'clients' } },
 
       { path: '/assets', component: () => AssetList, meta: { context: 'assets' } },
+      { path: '/assetComponents/:assetId', component: () => AssetComponentList, props: true, meta: { context: 'assets' } },
 
       { path: '/models', component: () => Models, meta: { context: 'models' } },
       { path: '/taskModels', component: () => TaskModelList, meta: { context: 'models' } },

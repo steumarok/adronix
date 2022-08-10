@@ -1,3 +1,12 @@
+<script setup lang="ts">
+import { useAdronix } from '@adronix/vue';
+
+const $adx = useAdronix()
+const ds = $adx.dataSet('/api/mms/modelCounts')
+
+const assetModelCount = ds.ref("Metadata", "assetModelCount")
+</script>
+
 <template>
   <q-page class="q-pa-md">
 
@@ -71,11 +80,3 @@
   </q-page>
 </template>
 
-<script setup lang="ts">
-import { useAdronix } from '@adronix/vue';
-
-const $adx = useAdronix()
-const ds = $adx.dataSet('/api/mms/modelCounts')
-
-const assetModelCount = ds.ref("Metadata", "assetModelCount")
-</script>

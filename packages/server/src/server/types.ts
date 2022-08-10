@@ -1,5 +1,5 @@
 import { Errors, Error } from "@adronix/base"
-import { EntityClass } from "@adronix/persistence"
+import { EntityClass, Transaction } from "@adronix/persistence"
 import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
 import { HttpContext } from "./Context"
@@ -36,19 +36,44 @@ export type Params = { [name: string]: any }
 export type ReturnType = ((collector: ItemCollector) => ItemCollector) | any
 
 
-export type DataProviderContext = {
+export type DataProviderContext = HttpContext & {
     output: OutputExtender
 }
 
 export type DataProvider<C = {}> = (
-    this: HttpContext & DataProviderContext & C,
+    this: DataProviderContext & C,
     params: Partial<Params>,
     items?: any[]
 ) => Promise<ReturnType[]>
 
+export type Action<R, C = {}> = (
+    this: DataProviderContext & C,
+    tx: Transaction
+) => Promise<R>
+export type ActionOrErrors<R, C = {}> = Errors | Action<R, C>
+
+
+export type SyncHandler<C = {}> = (
+    this: DataProviderContext & C,
+    changes: ItemProps,
+    entity: any,
+) => Promise<Action<void, C>>
+
+
+
+export type SyncConfig<C = {}> = {
+    onBeforeInsert?: [ EntityClass<unknown>, SyncHandler<C> ][],
+    onAfterInsert?: [ EntityClass<unknown>, SyncHandler<C> ][],
+    onBeforeUpdate?: [ EntityClass<unknown>, SyncHandler<C> ][],
+    onAfterUpdate?: [ EntityClass<unknown>, SyncHandler<C> ][],
+    onBeforeDelete?: [ EntityClass<unknown>, SyncHandler<C> ][],
+    onAfterDelete?: [ EntityClass<unknown>, SyncHandler<C> ][],
+}
+
 export type DataProviderDefinitions<C = {}> =  {
     [key: string]: {
         handler: DataProvider<C>,
+        sync?: SyncConfig<C>,
         output?: [ EntityClass<unknown>, ...string[] ][]
     }
 }

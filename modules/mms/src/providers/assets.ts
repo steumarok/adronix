@@ -12,6 +12,8 @@ import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
+import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
+import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 
 
 export const assetsProviders: DataProviderDefinitions = {
@@ -102,7 +104,32 @@ export const assetsProviders: DataProviderDefinitions = {
             [MmsLastTaskInfo, 'executionDate', 'taskModel', 'asset'],
             [MmsTaskModel, 'name'],
         ]
-    }
+    },
+
+
+    '/listAssetComponents': {
+        handler: async function ({ assetId, sortBy, descending }) {
+
+            const asset = await this.service(MmsService).assetRepository
+                    .findOneBy({ id: Utils.toInt(assetId) })
+
+            const [ rows, count ] = await this.service(MmsService).assetComponentRepository
+                .findAndCount({
+                    relations: { model: true, asset: true, area: true },
+                    where: { asset },
+                    ...Utils.orderClause(sortBy, descending)
+                })
+
+            return [PaginatedList(MmsAssetComponent, rows, count)].concat([asset])
+
+        },
+        output: [
+            [MmsAssetComponent, 'model', 'name', 'quantity', 'area'],
+            [MmsAsset, 'name'],
+            [MmsAssetComponentModel, 'name'],
+            [MmsArea, 'name']
+        ]
+    },
 
 
 }
