@@ -49,25 +49,31 @@ export type DataProvider<C = {}> = (
 export type Action<R, C = {}> = (
     this: DataProviderContext & C,
     tx: Transaction
-) => Promise<R>
-export type ActionOrErrors<R, C = {}> = Errors | Action<R, C>
+) => R
+export type ActionOrErrors<R, C = {}>
+    = Errors | (() => Generator<Action<R, C>, void>)
 
 
-export type SyncHandler<C = {}> = (
+export type BeforeSyncHandler<C = {}> = (
     this: DataProviderContext & C,
     changes: ItemProps,
     entity: any,
-) => Promise<Action<void, C>>
+) => ActionOrErrors<void, C>  | Promise<ActionOrErrors<void, C>>
 
+export type AfterSyncHandler<C = {}> = (
+    this: DataProviderContext & C,
+    changes: ItemProps,
+    entity: any,
+) => Generator<Action<void, C>, void>
 
 
 export type SyncConfig<C = {}> = {
-    onBeforeInsert?: [ EntityClass<unknown>, SyncHandler<C> ][],
-    onAfterInsert?: [ EntityClass<unknown>, SyncHandler<C> ][],
-    onBeforeUpdate?: [ EntityClass<unknown>, SyncHandler<C> ][],
-    onAfterUpdate?: [ EntityClass<unknown>, SyncHandler<C> ][],
-    onBeforeDelete?: [ EntityClass<unknown>, SyncHandler<C> ][],
-    onAfterDelete?: [ EntityClass<unknown>, SyncHandler<C> ][],
+    onBeforeInsert?: [ EntityClass<unknown>, BeforeSyncHandler<C> ][],
+    onAfterInsert?: [ EntityClass<unknown>, AfterSyncHandler<C> ][],
+    onBeforeUpdate?: [ EntityClass<unknown>, BeforeSyncHandler<C> ][],
+    onAfterUpdate?: [ EntityClass<unknown>, AfterSyncHandler<C> ][],
+    onBeforeDelete?: [ EntityClass<unknown>, BeforeSyncHandler<C> ][],
+    onAfterDelete?: [ EntityClass<unknown>, AfterSyncHandler<C> ][],
 }
 
 export type DataProviderDefinitions<C = {}> =  {

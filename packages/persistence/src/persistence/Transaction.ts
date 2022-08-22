@@ -1,10 +1,13 @@
 import { Context } from "@adronix/server"
+import { Errors } from "packages/base/src"
 import { TransactionEventHandler, TransactionEventKind } from "./types"
 
 export class Transaction {
     private eventHandlers: TransactionEventHandler[] = []
 
     constructor(public readonly context: Context) { }
+
+    async saga(_gen: Generator<(t: Transaction) => Promise<unknown>>) { }
 
     async start() { }
 

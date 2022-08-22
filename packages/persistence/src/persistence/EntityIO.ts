@@ -86,19 +86,25 @@ export abstract class EntityIO<T> {
             return errors
         }
         else {
-            return async (t: Transaction) => {
-                const entity = this.newEntityInstance()
+            return this.rawInsert(changes)
+        }
+    }
 
-                await this.fillEntity(t, entity, changes)
+    rawInsert(
+        changes: EntityProps) {
 
-                await this.notify(EntityEventKind.Inserting, entity, t)
+        return async (t: Transaction) => {
+            const entity = this.newEntityInstance()
 
-                const result = await this.saveEntity(entity, t)
+            await this.fillEntity(t, entity, changes)
 
-                await this.notify(EntityEventKind.Inserted, result, t)
+            await this.notify(EntityEventKind.Inserting, entity, t)
 
-                return result
-            }
+            const result = await this.saveEntity(entity, t)
+
+            await this.notify(EntityEventKind.Inserted, result, t)
+
+            return result
         }
     }
 

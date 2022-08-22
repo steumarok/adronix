@@ -6,8 +6,8 @@
         <adx-breadcrumbs separator=" > ">
             <q-breadcrumbs-el label="Home" icon="home" to="/home" />
             <q-breadcrumbs-el label="Clienti" to="/clients" />
-            <q-breadcrumbs-el :to="`/clientLocations/${clientLocation?.id}`">Sedi di {{client?.name}}</q-breadcrumbs-el>
-            <q-breadcrumbs-el>Locali in {{clientLocation?.address}} {{(clientLocation?.locality as Item)?.name}}</q-breadcrumbs-el>
+            <q-breadcrumbs-el :to="`/clientLocations/${client?.id}`">Sedi di {{client?.name}}</q-breadcrumbs-el>
+            <q-breadcrumbs-el>Aree di {{clientLocation?.address}} {{(clientLocation?.locality as Item)?.name}}</q-breadcrumbs-el>
         </adx-breadcrumbs>
 
         <adx-d>
@@ -17,7 +17,7 @@
             bordered
             >
                 <template #top-left>
-                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci locale</q-btn>
+                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci area</q-btn>
                 </template>
                 <template #actions="{ row }">
                     <q-btn icon="edit" flat size="sm" @click="onEdit(row.id)"/>
@@ -37,7 +37,8 @@
 
 <script setup lang="ts">
 import { useAdronix } from '@adronix/vue';
-import { Item, DataSetUtils } from '@adronix/client';
+import { computed } from 'vue';
+import { Item, DataSetUtils, buildUrl } from '@adronix/client';
 import AreaEdit from './AreaEdit.vue'
 
 const props = defineProps({
@@ -46,7 +47,6 @@ const props = defineProps({
 
 const $adx = useAdronix()
 
-const urlComposer = $adx.urlComposer(`/api/mms/listAreas?clientId=${props.clientLocationId}`)
 const dataTable = $adx.dataTable(
   'MmsArea',
   {
@@ -56,7 +56,10 @@ const dataTable = $adx.dataTable(
                     field: (row: Item) => (row.modelAttributions as Item[]).map(attribution => (attribution.model as Item).name).join(', ') },
   })
 
-const ds = $adx.dataSet(urlComposer(dataTable.params));
+const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listAreas', {
+    locationId: props.clientLocationId,
+    ...dataTable.params})))
+
 const client = ds.ref("MmsClient")
 const clientLocation = ds.ref("MmsClientLocation")
 
@@ -68,8 +71,8 @@ function onDelete(key: string) {
     DataSetUtils.deleteItem(ds, "MmsArea", key, () => ds.commit())
 }
 
-function onEdit(key: string) {
-    $adx.openDialog(AreaEdit, { id: key })
+function onEdit(id: string) {
+    $adx.openDialog(AreaEdit, { id })
 }
 
 const dataBindings = dataTable.bind(ds)

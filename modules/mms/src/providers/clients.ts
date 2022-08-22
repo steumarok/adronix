@@ -12,7 +12,23 @@ import { Utils } from "@adronix/server";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { TypeORMTransaction } from "@adronix/typeorm/src";
 import { isAsyncFunction } from "util/types";
+import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 
+function transactional(iterator: () => Generator<any, void, unknown>) {
+    console.log(this)
+    return async function(t: TypeORMTransaction) {
+        const it = iterator()
+        var prev = null
+        while (true) {
+            const n = it.next(prev)
+            prev = await n.value(t)
+            console.log(prev)
+            if (n.done) {
+                break;
+            }
+        }
+    }.bind(this)
+}
 
 export const clientsProviders: DataProviderDefinitions = {
 
@@ -105,40 +121,33 @@ export const clientsProviders: DataProviderDefinitions = {
             }
         },
         sync: {
-            onBeforeInsert: [
+            /*onBeforeInsert: [
                 [
                     MmsClientLocation,
-                    async (changes) => async (t) => {
-                        console.log(`before insert ${changes.address}`)
-                    }
-                ]
-            ],
-            onAfterInsert: [
-                [
-                    MmsClientLocation,
-                    async (changes, location: MmsClientLocation) => async function (t) {
-                        if (changes.createAsset) {
-                            const model = await changes.assetModel(t)
-                            const g = this.service(MmsService).createCompositeAsset(location, model)
-
-                            var prev = null
-                            while (true) {
-                                const it = g.next(prev)
-                                const val = it.value
-                                prev = await (typeof val == "function" ? val(t as TypeORMTransaction) : val)
-                                if (typeof prev == "function") { // handle errors
-                                    prev = await prev(t)
-                                }
-
-                                if (it.done) {
-                                    break;
-                                }
-                            }
-
+                    async function (changes) {
+                        console.log(this)
+                        return function*() {
+                            const model = yield changes.assetModel
+                            console.log(model)
                         }
                     }
                 ]
-            ],
+            ],*/
+            onAfterInsert: [
+                [
+                    MmsClientLocation,
+                    function* (changes, location: MmsClientLocation) {
+                        console.log(changes)
+                        if (changes.createAsset) {
+                            const model = (yield changes.assetModel) as MmsAssetModel
+                            const g = yield* this.service(MmsService).createCompositeAsset(location, model)
+
+                            console.log(g)
+                            //throw new Error("88")
+                        }
+                    }
+                ]
+            ],/*
             onBeforeUpdate: [
                 [
                     MmsClientLocation,
@@ -154,7 +163,7 @@ export const clientsProviders: DataProviderDefinitions = {
                         console.log(`after update ${location.address}`)
                     }
                 ]
-            ],
+            ],*/
         },
         output: [
             [MmsClientLocation, 'address', 'client', 'locality'],

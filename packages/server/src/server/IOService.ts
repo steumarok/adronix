@@ -1,15 +1,48 @@
-import { EntityClass, EntityEventKind, EntityId, EntityIO, EntityProps, TransactionEventKind } from "@adronix/persistence/src"
+import { EntityClass, EntityEventKind, EntityId, EntityIO, EntityProps, Transaction, TransactionEventKind } from "@adronix/persistence/src"
+import { Errors } from "packages/base/src"
 import { AbstractService } from "./AbstractService"
-import { Application } from "./Application"
 import { Context } from "./Context"
-import { InjectService } from "./InjectService"
-import { NotificationService } from "./NotificationService"
 
 type EntityType<T> = string | EntityClass<T>
+
+class Throwing {
+    constructor(private ioService: IOService) { }
+
+    private makeThrowing<R>(res: Promise<Errors | ((t: Transaction) => Promise<R>)>)
+        : (t: Transaction) => Promise<R> {
+        return async (t) => {
+            const r = await res
+            if (typeof r == "object") {
+                throw r
+            } else {
+                return await r(t)
+            }
+        }
+    }
+
+    insert<T>(
+        type: EntityType<T>,
+        changes: EntityProps) {
+        return this.makeThrowing(this.ioService.insert(type, changes))
+    }
+
+    delete<T>(type: EntityType<T>, entity: T) {
+        return this.makeThrowing(this.ioService.delete(type, entity))
+    }
+
+    update<T>(
+        type: EntityType<T>,
+        entity: T,
+        changes: EntityProps) {
+        return this.makeThrowing(this.ioService.update(type, entity, changes))
+    }
+}
 
 export class IOService extends AbstractService {
 
     static readonly entityIOCreatorMap = new Map<EntityClass<unknown>, (context: Context) => EntityIO<unknown>>()
+
+    readonly throwing = new Throwing(this)
 
     getTransactionManager<T>(type: EntityType<T>) {
         return this.getEntityIO<T>(type).transactionManager
@@ -43,6 +76,7 @@ export class IOService extends AbstractService {
         changes: EntityProps) {
         return this.getEntityIO<T>(type).insert(changes)
     }
+
 
     static addEntityIOCreator<T>(
         entityClass: EntityClass<T>,

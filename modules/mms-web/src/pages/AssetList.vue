@@ -33,7 +33,7 @@
                 </template>
 
                 <template #locality="{ row }">
-                    {{row.location.locality.name}}
+                    {{row.location.locality?.name}}
                 </template>
 
                  <template #nextTask="{ row }">

@@ -18,7 +18,10 @@ export const areasProviders: DataProviderDefinitions = {
         handler: async function ({ locationId, page, limit }) {
 
             const clientLocation = await this.service(MmsService).clientLocationRepository
-                    .findOne({ relations: { client: true, locality: true }, where: { id: locationId } })
+                    .findOne({
+                        relations: { client: true, locality: true },
+                        where: { id: locationId }
+                    })
 
             const [ rows, count ] = await this.service(MmsService).areaRepository
                 .findAndCount({

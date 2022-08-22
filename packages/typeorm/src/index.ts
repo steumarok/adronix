@@ -5,3 +5,4 @@ export { TypeORMTransactionManager } from './persistence/TypeORMTransactionManag
 export { TypeORMContext, extendTypeORMContext } from './persistence/TypeORMContext'
 export { InjectDataSource } from './server/InjectDataSource'
 export { TypeORMRulePatterns } from './persistence/TypeORMRulePatterns'
+export { InjectTypeORM, TypeORM } from './server/InjectTypeORM'

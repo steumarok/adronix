@@ -23,7 +23,7 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
                 <template #links="{ row }">
-                    <q-btn color="secondary" flat :to="`/areas/${row.id}`">Locali</q-btn>
+                    <q-btn color="secondary" flat :to="`/areas/${row.id}`">Aree</q-btn>
                 </template>
 
             </adx-data-table>

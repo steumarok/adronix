@@ -1,8 +1,9 @@
-import { Transaction } from "@adronix/persistence";
+import { Errors } from "@adronix/base/src";
+import { Transaction } from "@adronix/persistence/src";
 import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
-import { InjectDataSource, TypeORMTransaction } from "@adronix/typeorm";
+import { InjectDataSource, InjectTypeORM, TypeORM, TypeORMTransaction } from "@adronix/typeorm";
 import { DateTime } from "luxon";
-import { DataSource, EntityManager, In, InitializedRelationError } from "typeorm";
+import { DataSource, EntityManager, EntityTarget, FindOneOptions, In } from "typeorm";
 import { MmsArea } from "../persistence/entities/MmsArea";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
@@ -44,39 +45,60 @@ export type TaskModelDate = {
     date: DateTime
 }
 
-function getEntityManager() {
-    return async (t: TypeORMTransaction) => t.entityManager
-}
-
-const findOne = EntityManager.prototype.findOne
-
 export class MmsService extends AbstractService {
 
     @InjectDataSource
     dataSource: DataSource
 
     @InjectService
-    ioService: IOService
+    io: IOService
 
+    @InjectTypeORM
+    typeorm: TypeORM
+
+    *findLocation(location: MmsClientLocation) {
+        return yield this.typeorm.findOne(MmsClientLocation, {
+            where: { id: location.id },
+            relations: { client: true }
+        })
+    }
 
     *createCompositeAsset(location: MmsClientLocation, model: MmsAssetModel) {
 
-        const em: EntityManager = yield getEntityManager()
+        const loc: MmsClientLocation = yield* this.findLocation(location)
 
-        const loc = yield findOne(MmsClientLocation, {
-            where: { id: location.id},
-            relations: { client: true }
-        })
-        console.log(loc)
-
-        const asset = yield this.ioService.insert(MmsAsset, {
+        const asset = yield this.io.throwing.insert(MmsAsset, {
             location,
             model,
             name: 'Sede',
             client: loc.client
         })
 
-        console.log(asset)
+        const pivots: MmsAssetModelPivot[] = yield this.typeorm.find(MmsAssetModelPivot, {
+            where: { assetModel: model },
+            relations: { areaModel: true, componentModel: true }
+        })
+
+        const groups = Utils.groupBy(pivots, item => item.rowGroup)
+
+        for (const rowGroup in groups) {
+            const area = yield this.io.insert(MmsArea, {
+                name: groups[rowGroup]
+            })
+            for (const pivot of groups[rowGroup]) {
+                for (var i = 0; i < pivot.quantity; i++) {
+                    yield this.io.throwing.insert(MmsAssetComponent, {
+                        quantity: 1,
+                        name: i,
+                        asset,
+                        model: pivot.componentModel,
+                        area
+                    })
+                }
+            }
+        }
+
+        return asset
         /*
 
         return async (t: Transaction) => {

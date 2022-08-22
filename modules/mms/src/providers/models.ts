@@ -83,7 +83,7 @@ export const modelsProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsAssetModel, 'name']
+            [MmsAssetModel, 'name', 'assetType']
         ]
     },
 

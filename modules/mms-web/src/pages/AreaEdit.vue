@@ -1,13 +1,11 @@
 <template>
-    <adx-dialog ref="dialog" title="Dati locale">
+    <adx-dialog ref="dialog" title="Dati area" :loading="!area">
 
         <adx-d vertical y-spacing="sm">
 
             <adx-data-input
-                v-if="area"
                 v-model="area.name"
                 label="Nome"
-                filled
                 :errors="area.errors.name"
                 />
 
@@ -18,7 +16,6 @@
                 lookup-type="MmsAreaModel"
                 lookup-display-property="name"
                 clearable
-                filled
                 multiple
             />
 

@@ -1,6 +1,7 @@
 import { Error, Errors, Objects, Validator } from "@adronix/base"
 import { EntityClass, EntityProps, IPersistenceExtender, Persistence, PersistenceBuilder, PersistenceExtension, Transaction } from "@adronix/persistence"
 import { rawListeners } from "process"
+import { isGeneratorFunction } from "util/types"
 import { AbstractService } from "./AbstractService"
 import { Application } from "./Application"
 import { BetterSseNotificationChannel } from "./BetterSseNotificationChannel"
@@ -10,7 +11,7 @@ import { FormProcessor } from "./FormProcessor"
 import { IOService } from "./IOService"
 import { ItemCollector } from "./ItemCollector"
 import { NotificationChannel } from "./NotificationChannel"
-import { Action, ActionOrErrors, DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, FormRule, FormRules, ModuleOptions, Params, ReturnType, SyncConfig, SyncHandler } from "./types"
+import { Action, ActionOrErrors, AfterSyncHandler, BeforeSyncHandler, DataProvider, DataProviderDefinitions, FormDefinitions, FormHandler, FormRule, FormRules, ModuleOptions, Params, ReturnType, SyncConfig } from "./types"
 
 
 
@@ -177,14 +178,14 @@ export abstract class Module<A extends Application = Application> {
                     .map(({ sync }) => sync[name])
                     .map(handlers => handlers.find(h => h[0] == entityClass))
                     .filter(h => !!h)
-                    .map(h => h[1]);
+                    .map(h => h[1] as BeforeSyncHandler);
 
                 const errors: Errors[] = []
                 const beforeActions: Action<void>[] = []
                 for (const handler of handlers) {
                     const handlerResult: ActionOrErrors<void> = await handler.apply(context, params)
                     if (typeof handlerResult == "function") {
-                        beforeActions.push(handlerResult)
+                        beforeActions.push(this.run(handlerResult.bind(context)()))
                     }
                     else {
                         errors.push(handlerResult)
@@ -192,6 +193,12 @@ export abstract class Module<A extends Application = Application> {
                 }
 
                 return { errors, beforeActions }
+            }
+
+            run(gen: Generator<Action<Promise<void>, HttpContext>, void, unknown>) {
+                return (t: Transaction) => {
+                    return t.saga(gen)
+                }
             }
 
             async invokeAfterHandler(
@@ -205,12 +212,12 @@ export abstract class Module<A extends Application = Application> {
                     .map(({ sync }) => sync[name])
                     .map(handlers => handlers.find(h => h[0] == entityClass))
                     .filter(h => !!h)
-                    .map(h => h[1] as SyncHandler);
+                    .map(h => h[1] as AfterSyncHandler);
 
                 const afterActions: Action<void>[] = []
                 for (const handler of handlers) {
-                    const handlerResult: Action<void> = await handler.apply(context, params)
-                    afterActions.push(handlerResult)
+                    const handlerResult = await handler.apply(context, params)
+                    afterActions.push(this.run(handlerResult))
                 }
 
                 return { afterActions }

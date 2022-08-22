@@ -1,6 +1,7 @@
 import { DataSource, QueryRunner } from "typeorm"
 import { Transaction } from '@adronix/persistence'
 import { Context } from "@adronix/server"
+import { Errors } from "@adronix/base/src"
 
 
 export class TypeORMTransaction extends Transaction {
@@ -10,6 +11,20 @@ export class TypeORMTransaction extends Transaction {
         context: Context,
         protected dataSource: DataSource) {
         super(context)
+    }
+
+    async saga(gen: Generator<(t: Transaction) => Promise<unknown>>) {
+        var prev = null
+        while (true) {
+            const n = gen.next(prev)
+            console.log(n)
+            if (n.done) {
+                break;
+            }
+            prev = await n.value(this)
+            console.log(prev)
+
+        }
     }
 
     async start() {

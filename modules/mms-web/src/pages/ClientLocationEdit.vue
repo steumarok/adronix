@@ -1,5 +1,5 @@
 <template>
-    <adx-dialog ref="dialog" title="Dati sede" :loading="!clientLocation">
+    <adx-dialog ref="dialog" title="Dati sede" :loading="!clientLocation" style="min-width: 80vw">
 
         <adx-d vertical y-spacing="sm">
 
@@ -22,14 +22,15 @@
 
         <adx-d horizontal fit justify="evenly">
             <adx-d vertical padding="xs">
-                <q-checkbox
-                    v-model="clientLocation.createAsset"
-                    label="Crea asset"
+                <mms-asset-model-select
+                    v-model="clientLocation.assetModel"
                     />
             </adx-d>
             <adx-d vertical padding="xs">
-                <mms-asset-model-select
-                    v-model="clientLocation.assetModel"
+                <q-checkbox
+                    v-if="clientLocation.assetModel?.assetType == 'composite'"
+                    v-model="clientLocation.createAsset"
+                    label="Crea asset"
                     />
             </adx-d>
         </adx-d>
