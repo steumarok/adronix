@@ -17,13 +17,10 @@ export class TypeORMTransaction extends Transaction {
         var prev = null
         while (true) {
             const n = gen.next(prev)
-            console.log(n)
             if (n.done) {
                 break;
             }
             prev = await n.value(this)
-            console.log(prev)
-
         }
     }
 

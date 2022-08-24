@@ -80,16 +80,28 @@ export class MmsService extends AbstractService {
         })
 
         const groups = Utils.groupBy(pivots, item => item.rowGroup)
+        const counters = new Map<number, number>()
 
-        for (const rowGroup in groups) {
-            const area = yield this.io.insert(MmsArea, {
-                name: groups[rowGroup]
+        for (const [ rowGroup, pivots ] of groups) {
+            const area = yield this.io.throwing.insert(MmsArea, {
+                name: pivots[0].areaModel.name,
+                location: loc
             })
-            for (const pivot of groups[rowGroup]) {
+            const modelAttribution = yield this.io.throwing.insert(MmsAreaModelAttribution, {
+                area,
+                model: pivots[0].areaModel
+            })
+            for (const pivot of pivots) {
                 for (var i = 0; i < pivot.quantity; i++) {
+
+                    const index = counters.get(pivot.componentModel.id) || 1
+                    counters.set(pivot.componentModel.id, index + 1)
+
+                    const name = `${pivot.componentModel.name} #${index}`
+
                     yield this.io.throwing.insert(MmsAssetComponent, {
                         quantity: 1,
-                        name: i,
+                        name,
                         asset,
                         model: pivot.componentModel,
                         area
@@ -99,45 +111,6 @@ export class MmsService extends AbstractService {
         }
 
         return asset
-        /*
-
-        return async (t: Transaction) => {
-            const loc = await this.clientLocationRepository.findOne({
-                where: { id: location.id},
-                relations: { client: true }
-            })
-            const asset = await this.ioService.insert(MmsAsset, {
-                location,
-                model,
-                name: 'Sede',
-                client: loc.client
-            })(t)
-            const pivots = await this.assetModelPivotRepository
-                .find({
-                    where: { assetModel: model },
-                    relations: { areaModel: true, componentModel: true }
-                })
-
-            const groups = Utils.groupBy(pivots, item => item.rowGroup)
-
-            //for (const pivot of pivots) {
-            for (const rowGroup in groups) {
-                const area = this.ioService.insert(MmsArea, {
-                    name: groups[rowGroup]
-                })(t)
-                for (const pivot of groups[rowGroup]) {
-                    for (var i = 0; i < pivot.quantity; i++) {
-                        this.ioService.insert(MmsAssetComponent, {
-                            quantity: 1,
-                            name: i,
-                            asset,
-                            model: pivot.componentModel,
-                            area
-                        })
-                    }
-                }
-            }
-        }*/
     }
 
     async findNearestTaskModel(asset: MmsAsset): Promise<TaskModelDate | null> {

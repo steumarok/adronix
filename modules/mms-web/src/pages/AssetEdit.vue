@@ -22,9 +22,9 @@
                 <adx-d horizontal fit justify="evenly" content="center">
                     <adx-d vertical padding="xs">
                         <adx-data-input
-                            v-model="asset.serialNumber"
-                            label="Matricola"
-                            :errors="asset?.errors.serialNumber"
+                            v-model="asset.name"
+                            label="Nome/codice"
+                            :errors="asset?.errors.name"
                             />
                     </adx-d>
                     <adx-d vertical padding="xs">

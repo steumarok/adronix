@@ -20,6 +20,7 @@ import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { config } from "process";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsScheduling } from "../persistence/entities/MmsScheduling";
+import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 
 
 export const workPlanProviders: DataProviderDefinitions = {
@@ -32,6 +33,7 @@ export const workPlanProviders: DataProviderDefinitions = {
                     relations: {
                         assetModel: true,
                         taskModel: true,
+                        assetComponentModel: true,
                         assetAttributes: true,
                         part: {
                             measurementUnit: true
@@ -42,11 +44,13 @@ export const workPlanProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetAttributes', 'part', 'quantity'],
+            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetComponentModel', 'assetAttributes', 'part', 'quantity'],
             [MmsPart, 'name'],
             [MmsTaskModel, 'name'],
             [MmsPart, 'name', 'measurementUnit'],
             [MmsAssetAttribute, 'name'],
+            [MmsAssetModel, 'name', 'assetType'],
+            [MmsAssetComponentModel, 'name'],
             [CmnMeasurementUnit, 'name'],
         ]
     },
@@ -58,9 +62,14 @@ export const workPlanProviders: DataProviderDefinitions = {
                     ? await this.service(MmsService).partRequirementRepository
                         .findOne({
                             relations: {
-                                assetModel: true,
+                                assetModel: {
+                                    measurementUnit: true
+                                },
                                 taskModel: true,
                                 assetAttributes: true,
+                                assetComponentModel: {
+                                    measurementUnit: true
+                                },
                                 part: {
                                     measurementUnit: true
                                 }
@@ -71,11 +80,12 @@ export const workPlanProviders: DataProviderDefinitions = {
             return [po]
         },
         output: [
-            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetAttributes', 'part', 'quantity'],
-            [MmsAssetModel, 'name'],
+            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetComponentModel', 'assetAttributes', 'part', 'quantity'],
+            [MmsAssetModel, 'name', 'measurementUnit', 'assetType'],
             [MmsTaskModel, 'name'],
             [MmsPart, 'name', 'measurementUnit'],
             [MmsAssetAttribute, 'name'],
+            [MmsAssetComponentModel, 'name', 'measurementUnit', 'unitQuantity'],
             [CmnMeasurementUnit, 'name'],
         ]
     },

@@ -15,4 +15,6 @@ export class MmsAssetComponentModel {
     @ManyToOne(() => CmnMeasurementUnit)
     measurementUnit: CmnMeasurementUnit;
 
+    @Column({ type: "decimal", default: 1.0, precision: 10, scale: 4 })
+    unitQuantity: number;
 }

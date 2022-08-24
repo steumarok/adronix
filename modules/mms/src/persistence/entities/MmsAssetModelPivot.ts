@@ -1,12 +1,7 @@
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
-import { MmsArea } from "./MmsArea";
 import { MmsAreaModel } from "./MmsAreaModel";
-import { MmsAreaModelAttribution } from "./MmsAreaModelAttribution";
-import { MmsAsset } from "./MmsAsset";
 import { MmsAssetComponentModel } from "./MmsAssetComponentModel";
 import { MmsAssetModel } from "./MmsAssetModel";
-import { MmsClient } from "./MmsClient";
-import { MmsClientLocation } from "./MmsClientLocation";
 
 @Entity("mms_asset_model_pivots")
 export class MmsAssetModelPivot {
@@ -17,7 +12,7 @@ export class MmsAssetModelPivot {
     @Column()
     rowGroup: number;
 
-    @Column()
+    @Column({ type: "decimal", default: 1.0, precision: 10, scale: 4 })
     quantity: number;
 
     @ManyToOne(() => MmsAssetModel)

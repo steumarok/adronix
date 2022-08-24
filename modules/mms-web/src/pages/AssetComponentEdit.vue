@@ -1,19 +1,28 @@
 <template>
-    <adx-dialog ref="dialog" title="Modello di risorsa" :loading="!assetAttribute">
+    <adx-dialog ref="dialog" title="Componente" :loading="!assetComponent">
 
         <adx-d vertical y-spacing="sm">
 
             <adx-data-input
-                v-model="assetAttribute.name"
+                v-model="assetComponent.name"
                 label="Name"
-                :errors="assetAttribute.errors.name"
+                :errors="assetComponent.errors.name"
                 />
 
-            <mms-asset-attribute-select
-                v-model="assetAttribute.incompatibleAttributes"
-                :excluded="[assetAttribute]"
-                multiple
-                clearable
+            <adx-data-input
+                v-model.number="assetComponent.quantity"
+                type="number"
+                label="Quantità"
+                input-class="text-right"
+                :suffix="assetComponent.model?.measurementUnit.name"/>
+
+            <mms-asset-component-model-select
+                v-model="assetComponent.model"
+                />
+
+            <mms-area-select
+                v-model="assetComponent.area"
+                :clientLocationId="assetComponent.asset.location.id"
                 />
 
         </adx-d>
@@ -26,21 +35,23 @@
 import { buildUrl } from '@adronix/client';
 import { useAdronix } from '@adronix/vue'
 import { unref } from 'vue';
-import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
+import MmsAssetComponentModelSelect from '../components/MmsAssetComponentModelSelect.vue'
+import MmsAreaSelect from '../components/MmsAreaSelect.vue'
 
 const props = defineProps({
-  id: Number
+  id: Number,
+  assetId: Number
 })
 
 const $adx = useAdronix()
-const ds = $adx.dataSet(buildUrl('/api/mms/editAssetAttribute', { id: props.id }))
+const ds = $adx.dataSet(buildUrl('/api/mms/editAssetComponent', { id: props.id, assetId: props.assetId }))
 
-const assetAttribute = ds.ref('MmsAssetAttribute', props.id)
+const assetComponent = ds.ref('MmsAssetComponent', props.id)
 
 const { dialog } = $adx.dialog(
     async () => ({
         status: await ds.commit(),
-        payload: unref(assetAttribute)
+        payload: unref(assetComponent)
     })
 )
 </script>

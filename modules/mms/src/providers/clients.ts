@@ -195,7 +195,7 @@ export const clientsProviders: DataProviderDefinitions = {
     '/lookupClientLocations': {
         handler: async function ({ clientId }) {
 
-            this.output.add(MmsClientLocation, 'displayName', location => `${location.address} - ${location.locality.name}`)
+            this.output.add(MmsClientLocation, 'displayName', location => `${location.address} - ${location.locality?.name}`)
 
             return await this.service(MmsService).clientLocationRepository
                 .find({

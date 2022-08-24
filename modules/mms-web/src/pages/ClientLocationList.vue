@@ -23,7 +23,8 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
                 <template #links="{ row }">
-                    <q-btn color="secondary" flat :to="`/areas/${row.id}`">Aree</q-btn>
+                    <q-btn size="sm" color="secondary" flat :to="`/areas/${row.id}`">Aree</q-btn>
+                    <q-btn size="sm" color="secondary" flat :to="{ name: `assets`, params: { clientLocationId: row.id } }">Assets</q-btn>
                 </template>
 
             </adx-data-table>

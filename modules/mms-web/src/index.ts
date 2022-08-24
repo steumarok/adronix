@@ -15,10 +15,11 @@ import Planning from './pages/Planning.vue'
 import PartRequirementList from './pages/PartRequirementList.vue'
 import AssetAttributeList from './pages/AssetAttributeList.vue'
 import AssetComponentList from './pages/AssetComponentList.vue'
+import AssetComponentModelList from './pages/AssetComponentModelList.vue'
 import SchedulingList from './pages/SchedulingList.vue'
 
 export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     AreaList, AssetList, Models, AssetModelList, ResourceModelList,
     ResourceTypeList, PartList, TaskModelList, Planning,
     PartRequirementList, AssetAttributeList, SchedulingList,
-    AreaModelList, AssetComponentList }
+    AreaModelList, AssetComponentList, AssetComponentModelList }

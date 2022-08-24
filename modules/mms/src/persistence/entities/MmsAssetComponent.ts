@@ -15,7 +15,7 @@ export class MmsAssetComponent {
     @Column()
     name: string;
 
-    @Column()
+    @Column({ type: "decimal", default: 1.0, precision: 10, scale: 4 })
     quantity: number;
 
     @ManyToOne(() => MmsAsset)

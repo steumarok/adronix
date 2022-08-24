@@ -3,11 +3,9 @@
 
     <adx-d vertical y-spacing="sm">
 
-        <adx-breadcrumbs separator=" > ">
-            <q-breadcrumbs-el label="Home" icon="home" to="/home" />
-            <q-breadcrumbs-el label="Assets" to="/assets" />
+        <nav-assets>
             <q-breadcrumbs-el>Componenti asset</q-breadcrumbs-el>
-        </adx-breadcrumbs>
+        </nav-assets>
 
         <adx-d>
             <adx-data-table
@@ -36,6 +34,7 @@ import { useAdronix } from '@adronix/vue';
 import { Item, DataSetUtils, buildUrl } from '@adronix/client';
 import AssetComponentEdit from './AssetComponentEdit.vue'
 import { computed } from 'vue';
+import NavAssets from './NavAssets.vue'
 
 const props = defineProps({
   assetId: Number
@@ -47,11 +46,12 @@ const dataTable = $adx.dataTable(
   'MmsAssetComponent',
   {
     actions:      { label: 'Azioni', width: "100px" },
-    nome:         { label: 'Nome', width: "30%", sortable: true, field: (row: Item) => row.name },
+    name:         { label: 'Nome', width: "30%", sortable: true, field: (row: Item) => row.name },
+    quantity:     { label: 'Quantità', width: "100px", sortable: true, field: (row: Item) => `${row.quantity} ${row.model.measurementUnit.name}` },
     model:        { label: 'Modello', width: "30%", sortable: true, field: (row: Item) => row.ref('model').name },
     area:         { label: 'Posizione', width: "30%", sortable: true, field: (row: Item) => row.ref('area').name },
   },
-  { sortBy: "model.name" })
+  { sortBy: "model.name", page: 1, limit: 10 })
 
 const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listAssetComponents', {
     assetId: props.assetId,

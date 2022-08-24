@@ -1,7 +1,7 @@
 <template>
     <adx-select
         v-model="value"
-        label="Locale"
+        label="Area"
         :lookup-data-set="dsAreas"
         lookup-type="MmsArea"
         lookup-display-property="name"

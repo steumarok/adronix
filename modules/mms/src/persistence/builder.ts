@@ -1,6 +1,6 @@
 import { MmsClient } from "./entities/MmsClient";
-import { EntityIODefinitions, RulePatterns } from "@adronix/persistence"
-import { TypeORMPersistence, TypeORMRulePatterns } from "@adronix/typeorm";
+import { EntityEventKind, EntityIODefinitions, RulePatterns, Transaction } from "@adronix/persistence"
+import { TypeORMPersistence, TypeORMRulePatterns, TypeORMTransaction } from "@adronix/typeorm";
 import { MmsClientLocation } from "./entities/MmsClientLocation";
 import { MmsArea } from "./entities/MmsArea";
 import { MmsAreaModel } from "./entities/MmsAreaModel";
@@ -18,6 +18,7 @@ import { MmsScheduling } from "./entities/MmsScheduling";
 import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
 import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
 import { MmsAssetComponent } from "./entities/MmsAssetComponent";
+import { IOService } from "@adronix/server/src";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -87,5 +88,15 @@ const ioDefinitions: EntityIODefinitions = [
 
 
 export default TypeORMPersistence.build()
-    .addDefinitions(ioDefinitions);
+    .addDefinitions(ioDefinitions)
+    .addEventHandler(MmsAsset, async function(eventKind: EntityEventKind, asset: MmsAsset, transaction: TypeORMTransaction) {
+        if (eventKind == EntityEventKind.Deleting) {
+            const components = await transaction.entityManager.find(MmsAssetComponent, {
+                where: { asset }
+            })
+            for (const component of components) {
+                await this.service(IOService).throwing.delete(MmsAssetComponent, component)(transaction)
+            }
+        }
+    });
 

@@ -59,6 +59,9 @@ export class Utils {
         }, {})
     }
 
+    static where(param: any, cond: object) {
+        return param ? cond : { }
+    }
 
     static async tableHandler<T>(
         entityClass: EntityClass<T>,

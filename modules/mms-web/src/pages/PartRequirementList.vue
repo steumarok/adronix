@@ -28,6 +28,9 @@
                 <template #assetModel="{ row }">
                     {{row.assetModel?.name}}
                 </template>
+                <template #assetComponentModel="{ row }">
+                    {{row.assetComponentModel?.name}}
+                </template>
                 <template #part="{ row }">
                     {{row.part.name}}
                 </template>
@@ -63,6 +66,7 @@ const dataTable = $adx.dataTable(
     actions:      { label: 'Azioni', width: "100px" },
     taskModel:    { label: 'Modello attività', width: "20%", sortable: true },
     assetModel:   { label: 'Modello asset', width: "20%", sortable: true },
+    assetComponentModel:   { label: 'Modello componente', width: "20%", sortable: true },
     assetAttributes: { label: 'Attributi', width: "20%", sortable: true },
     part:         { label: 'Articolo', width: "20%", sortable: true },
     quantity:     { label: 'Quantità', align: 'right', sortable: true },

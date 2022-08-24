@@ -3,7 +3,7 @@ import { DataProviderDefinitions } from "@adronix/server";
 import { MmsService, TaskModelDate } from "../services/MmsService";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
-import { CmnLocality } from "@adronix/cmn";
+import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
 import { MmsArea } from "../persistence/entities/MmsArea";
 import { Brackets, Like, Repository } from "typeorm";
 import { Utils } from "@adronix/server";
@@ -19,12 +19,15 @@ import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponen
 export const assetsProviders: DataProviderDefinitions = {
 
     '/listAssets': {
-        handler: async function ({ page, limit, sortBy, descending, filter }) {
+        handler: async function ({ page, limit, sortBy, descending, filter, clientId, clientLocationId }) {
 
             const service = this.service(MmsService)
-            const where = filter
-                ? { serialNumber: Like(`${filter}%`) }
-                : {}
+
+            const where = {
+                ...Utils.where(filter, { name: Like(`${filter}%`) }),
+                ...Utils.where(clientId, { client: { id: clientId } }),
+                ...Utils.where(clientLocationId, { location: { id: clientLocationId } })
+            }
 
             const [ rows, count ] = await service.assetRepository
                 .createQueryBuilder('a')
@@ -47,15 +50,27 @@ export const assetsProviders: DataProviderDefinitions = {
                 }
             }
 
-            this.output.add(MmsAsset, "nextTaskModel", (asset) =>  dateMap.get(asset)?.taskModel)
-            this.output.add(MmsAsset, "nextTaskDate", (asset) =>  dateMap.get(asset)?.date?.toISODate())
+            this.output.add(MmsAsset, "nextTaskModel", (asset) => dateMap.get(asset)?.taskModel)
+            this.output.add(MmsAsset, "nextTaskDate", (asset) => dateMap.get(asset)?.date?.toISODate())
 
-            return [PaginatedList(MmsAsset, rows, count)]
+            const results = [PaginatedList(MmsAsset, rows, count)]
+
+            if (clientId) {
+                results.push(await service.clientRepository.findOneBy({ id: clientId }))
+            }
+            if (clientLocationId) {
+                results.push(await service.clientLocationRepository.findOne({
+                    where: { id: clientLocationId },
+                    relations: { locality: true }
+                }))
+            }
+
+            return results
         },
         output: [
-            [MmsAsset, 'serialNumber', 'client', 'location', 'model'],
+            [MmsAsset, 'name', 'client', 'location', 'model'],
             [MmsClient, 'name'],
-            [MmsAssetModel, 'name'],
+            [MmsAssetModel, 'name', 'assetType'],
             [MmsClientLocation, 'address', 'locality'],
             [CmnLocality, 'name'],
         ]
@@ -65,7 +80,7 @@ export const assetsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
 
             this.output.add(MmsClientLocation,
-                'displayName', location => `${location.address} - ${location.locality.name}`)
+                'displayName', location => `${location.address} - ${location.locality?.name}`)
 
             const asset =
                 id
@@ -95,7 +110,7 @@ export const assetsProviders: DataProviderDefinitions = {
             return [asset, ...ltis]
         },
         output: [
-            [MmsAsset, 'serialNumber', 'client', 'location', 'model', 'area', 'attributes'],
+            [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'attributes'],
             [MmsClientLocation, 'address', 'locality'],
             [MmsClient, 'name'],
             [MmsAssetAttribute, 'name', 'incompatibleAttributes'],
@@ -108,15 +123,17 @@ export const assetsProviders: DataProviderDefinitions = {
 
 
     '/listAssetComponents': {
-        handler: async function ({ assetId, sortBy, descending }) {
+        handler: async function ({ page, limit, assetId, sortBy, descending }) {
 
             const asset = await this.service(MmsService).assetRepository
                     .findOneBy({ id: Utils.toInt(assetId) })
 
             const [ rows, count ] = await this.service(MmsService).assetComponentRepository
                 .findAndCount({
-                    relations: { model: true, asset: true, area: true },
+                    relations: { model: { measurementUnit: true }, asset: true, area: true },
                     where: { asset },
+                    skip: (Utils.toInt(page) - 1) * Utils.toInt(limit),
+                    take: Utils.toInt(limit),
                     ...Utils.orderClause(sortBy, descending)
                 })
 
@@ -126,11 +143,44 @@ export const assetsProviders: DataProviderDefinitions = {
         output: [
             [MmsAssetComponent, 'model', 'name', 'quantity', 'area'],
             [MmsAsset, 'name'],
-            [MmsAssetComponentModel, 'name'],
+            [MmsAssetComponentModel, 'name', 'measurementUnit'],
+            [CmnMeasurementUnit, 'name'],
             [MmsArea, 'name']
         ]
     },
 
+    '/editAssetComponent': {
+        handler: async function({ id, assetId }) {
 
+            let assetComponent: MmsAssetComponent
+            if (id) {
+                assetComponent = await this.service(MmsService).assetComponentRepository
+                    .findOne({
+                        relations: {
+                            model: { measurementUnit: true },
+                            area: true,
+                            asset: { client: true, location: true }
+                        },
+                        where: { id }})
+            } else {
+                assetComponent = new MmsAssetComponent()
+                assetComponent.asset = await this.service(MmsService).assetRepository
+                        .findOne({
+                            relations: { client: true, location: true },
+                            where: { id: assetId }
+                        })
+            }
+            return [assetComponent]
+        },
+        output: [
+            [MmsAssetComponent, 'name', 'quantity', 'asset', 'model', 'area'],
+            [MmsClient, 'name'],
+            [MmsAsset, 'name', 'client', 'location'],
+            [MmsArea, 'name'],
+            [MmsClientLocation, 'name'],
+            [MmsAssetComponentModel, 'name', 'measurementUnit'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
 }
 

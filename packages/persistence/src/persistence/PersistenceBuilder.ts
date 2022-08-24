@@ -72,8 +72,8 @@ export class PersistenceBuilder implements IPersistenceExtender {
 
     addEventHandler<T>(
         entityClass: EntityClass<T>,
-        handler: EntityEventHandler<T>): IPersistenceExtender {
-
+        handler: EntityEventHandler<T>
+    ): PersistenceBuilder {
         this.eventHandlers.push({ entityClass, handler })
         return this
     }

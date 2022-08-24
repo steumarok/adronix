@@ -1,3 +1,4 @@
+import { CmnMeasurementUnit } from "@adronix/cmn";
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
 import { MmsChecklistModel } from "./MmsChecklistModel";
 
@@ -24,4 +25,7 @@ export class MmsAssetModel {
 
     @ManyToOne(() => MmsChecklistModel)
     checklistModel: MmsChecklistModel;
+
+    @ManyToOne(() => CmnMeasurementUnit)
+    measurementUnit: CmnMeasurementUnit;
 }

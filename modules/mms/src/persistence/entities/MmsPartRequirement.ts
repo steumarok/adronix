@@ -1,5 +1,6 @@
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
 import { MmsAssetAttribute } from "./MmsAssetAttribute";
+import { MmsAssetComponentModel } from "./MmsAssetComponentModel";
 import { MmsAssetModel } from "./MmsAssetModel";
 import { MmsPart } from "./MmsPart";
 import { MmsTaskModel } from "./MmsTaskModel";
@@ -16,6 +17,9 @@ export class MmsPartRequirement {
     @ManyToOne(() => MmsAssetModel)
     assetModel: MmsAssetModel;
 
+    @ManyToOne(() => MmsAssetComponentModel)
+    assetComponentModel: MmsAssetComponentModel;
+
     @ManyToMany(() => MmsAssetAttribute)
     @JoinTable({name: "mms_part_requirements_mms_attributes"})
     assetAttributes: MmsAssetAttribute[];
@@ -23,7 +27,7 @@ export class MmsPartRequirement {
     @ManyToOne(() => MmsPart)
     part: MmsPart;
 
-    @Column()
+    @Column({ type: "decimal", default: 1.0, precision: 10, scale: 4 })
     quantity: Number;
 
 }

@@ -41,6 +41,7 @@
           </q-td>
         </q-tr>
       </template>
+
       <slot/>
     </q-table>
 </template>

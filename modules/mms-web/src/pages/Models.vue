@@ -25,6 +25,12 @@ const assetModelCount = ds.ref("Metadata", "assetModelCount")
                     </q-item-section>
                 </q-item>
 
+                <q-item clickable to="/assetComponentModels">
+                    <q-item-section>
+                        <span class="adx-reference">Modelli di componenti</span>
+                    </q-item-section>
+                </q-item>
+
                 <q-item clickable to="/taskModels">
                     <q-item-section>
                         <span class="adx-reference">Modelli di attività</span>

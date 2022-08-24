@@ -19,7 +19,7 @@ export class GenericEntityIO<T> extends TypeORMEntityIO<T> {
             context.dataSources[name],
             entityClass)
 
-        eventHandlers.forEach(handler => this.addEventHandler(handler))
+        eventHandlers.forEach(handler => this.addEventHandler(handler.bind(context)))
     }
 
     validate(

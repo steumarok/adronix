@@ -23,6 +23,48 @@ import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponen
 
 export const modelsProviders: DataProviderDefinitions = {
 
+    '/listAssetComponentModels': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsService).assetComponentModelRepository
+                .find({
+                    where,
+                    relations: {
+                        measurementUnit: true
+                    },
+                    order: { [sortBy]: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsAssetComponentModel, 'name', 'measurementUnit', 'unitQuantity'],
+            [CmnMeasurementUnit, 'name']
+        ]
+    },
+
+    '/editAssetComponentModel': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsService).assetComponentModelRepository
+                        .findOne({
+                            relations: { measurementUnit: true },
+                            where: { id }})
+                    : new MmsAssetComponentModel()
+
+            return [po]
+        },
+        output: [
+            [MmsAssetComponentModel, 'name', 'measurementUnit', 'unitQuantity'],
+            [CmnMeasurementUnit, 'name']
+        ]
+    },
+
+
     '/listAssetModels': {
         handler: async function ({ sortBy, descending, filter }) {
 
@@ -48,7 +90,7 @@ export const modelsProviders: DataProviderDefinitions = {
             const assetModel =
                 id  ? await service.assetModelRepository
                         .findOne({
-                            relations: { },
+                            relations: { measurementUnit: true },
                             where: { id }})
                     : new MmsAssetModel()
 
@@ -67,7 +109,7 @@ export const modelsProviders: DataProviderDefinitions = {
             return [assetModel, ...pivots]
         },
         output: [
-            [MmsAssetModel, 'name', 'assetType'],
+            [MmsAssetModel, 'name', 'assetType', 'measurementUnit'],
             [MmsAssetModelPivot, 'assetModel', 'areaModel', 'componentModel', 'quantity', 'rowGroup'],
             [MmsAreaModel, 'name'],
             [MmsAssetComponentModel, 'name', 'measurementUnit'],
@@ -99,7 +141,7 @@ export const modelsProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsAssetComponentModel, 'name', 'measurementUnit'],
+            [MmsAssetComponentModel, 'name', 'measurementUnit', 'unitQuantity'],
             [CmnMeasurementUnit, 'name'],
         ]
     },

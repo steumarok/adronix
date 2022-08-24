@@ -1,5 +1,5 @@
 <template>
-    <adx-dialog ref="dialog" title="Dati sede" :loading="!clientLocation" style="min-width: 80vw">
+    <adx-dialog ref="dialog" title="Dati sede" :loading="!clientLocation" style="min-width: 40vw">
 
         <adx-d vertical y-spacing="sm">
 
@@ -30,7 +30,7 @@
                 <q-checkbox
                     v-if="clientLocation.assetModel?.assetType == 'composite'"
                     v-model="clientLocation.createAsset"
-                    label="Crea asset"
+                    label="Crea asset e aree in base al modello"
                     />
             </adx-d>
         </adx-d>

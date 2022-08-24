@@ -12,7 +12,7 @@ export class MmsArea {
     @Column()
     name: string;
 
-    @ManyToOne(() => MmsClient)
+    @ManyToOne(() => MmsClientLocation)
     location: MmsClientLocation;
 
     @OneToMany(() => MmsAreaModelAttribution, attribution => attribution.area)

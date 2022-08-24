@@ -13,6 +13,11 @@
                 v-model="assetModel.assetType"
                 />
 
+            <cmn-measurement-unit-select
+                v-model="assetModel.measurementUnit"
+                :errors="assetModel?.errors.measurementUnit"
+                />
+
             <adx-d v-if="showComponentModelPivot">
                 <span class="text-subtitle1">Griglia modelli</span>
 
@@ -64,6 +69,7 @@ import { unref, computed, reactive } from 'vue';
 import MmsAreaModelSelect from '../components/MmsAreaModelSelect.vue'
 import MmsAssetComponentModelSelect from '../components/MmsAssetComponentModelSelect.vue'
 import MmsAssetTypeSelect from '../components/MmsAssetTypeSelect.vue'
+import { CmnMeasurementUnitSelect } from '@adronix/cmn-web'
 
 const props = defineProps({
   id: Number
