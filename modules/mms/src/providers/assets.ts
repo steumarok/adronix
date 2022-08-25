@@ -51,7 +51,7 @@ export const assetsProviders: DataProviderDefinitions = {
             }
 
             this.output.add(MmsAsset, "nextTaskModel", (asset) => dateMap.get(asset)?.taskModel)
-            this.output.add(MmsAsset, "nextTaskDate", (asset) => dateMap.get(asset)?.date?.toISODate())
+            this.output.add(MmsAsset, "nextTaskDate", (asset) => dateMap.get(asset)?.date?.toISO())
 
             const results = [PaginatedList(MmsAsset, rows, count)]
 
@@ -108,6 +108,18 @@ export const assetsProviders: DataProviderDefinitions = {
             }
 
             return [asset, ...ltis]
+        },
+        sync: {
+            onAfterUpdate: [
+                [
+                    MmsAsset,
+                    function* (changes, asset: MmsAsset) {
+                        if (changes.recreateTasks) {
+                            yield* this.service(MmsService).generateTasks(asset)
+                        }
+                    }
+                ]
+            ]
         },
         output: [
             [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'attributes'],

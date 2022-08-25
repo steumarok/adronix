@@ -113,6 +113,11 @@ export class MmsService extends AbstractService {
         return asset
     }
 
+
+    *generateTasks(asset: MmsAsset) {
+
+    }
+
     async findNearestTaskModel(asset: MmsAsset): Promise<TaskModelDate | null> {
 
         const taskModelDateGenerator = await this.computeNextTaskModels(asset)
@@ -156,9 +161,11 @@ export class MmsService extends AbstractService {
         return Utils.groupByAndMap(
             schedulings,
             s => s.taskModel,
-            (ss: MmsScheduling[], taskModel: MmsTaskModel) => this.dateGenerator(
-                this.getLastTaskDate(ltis, taskModel),
-                ss))
+            (ss: MmsScheduling[], taskModel: MmsTaskModel) =>
+                this.dateGenerator(
+                    this.getLastTaskDate(ltis, taskModel),
+                    ss
+                ))
     }
 
     getLastTaskDate(ltis: MmsLastTaskInfo[], taskModel: MmsTaskModel) {
@@ -167,6 +174,9 @@ export class MmsService extends AbstractService {
     }
 
     *dateGenerator(startDate: DateTime, schedulings: MmsScheduling[]) {
+        if (schedulings.some(s => s.startImmediately)) {
+            startDate = DateTime.now()
+        }
         if (!startDate) {
             return
         }
@@ -183,14 +193,21 @@ export class MmsService extends AbstractService {
 
     calcNextDate(startDate: DateTime, scheduling: MmsScheduling) {
         const unit = scheduling.unit
-        return startDate.plus({ [unit]: scheduling.every })
+        const nextDate = startDate.plus({ [unit]: scheduling.every })
+        if (scheduling.startTime) {
+            const { hour, minute } = DateTime.fromISO(scheduling.startTime)
+            return nextDate.set({ hour, minute })
+        }
+        else {
+            return nextDate
+        }
     }
 
     async findSchedulingsByAsset(asset: MmsAsset) {
 
         const executedTaskModels = (await this.lastTaskInfoRepository
             .find({
-                relations: {taskModel: true },
+                relations: { taskModel: true },
                 where: { asset }
             }))
             .map(lti => lti.taskModel)
@@ -204,9 +221,10 @@ export class MmsService extends AbstractService {
                     taskModel: true,
                     startFromLasts: true
                 },
-                where: {
-                    taskModel: In(executedTaskModels)
-                }
+                where: [
+                    { startImmediately: true },
+                    { taskModel: In(executedTaskModels) },
+                ]
             })
 
         return schedulings
@@ -244,6 +262,10 @@ export class MmsService extends AbstractService {
 
     matchAssetModels(scheduling: MmsScheduling, asset: MmsAsset) {
         if (!scheduling.assetModels || scheduling.assetModels.length == 0) {
+            return true
+        }
+
+        if (!asset.model) {
             return true
         }
 

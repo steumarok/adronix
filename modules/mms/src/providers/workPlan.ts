@@ -135,7 +135,7 @@ export const workPlanProviders: DataProviderDefinitions = {
         output: [
             [MmsScheduling, 'taskModel', 'areaModels', 'assetAttributes',
                 'assetModels', 'startFromLasts', 'dayMonthFrom', 'dayMonthTo',
-                'every', 'unit'],
+                'every', 'unit', 'startImmediately', 'startTime', 'daysOfWeek'],
             [MmsTaskModel, 'name'],
             [MmsAreaModel, 'name'],
             [MmsAssetModel, 'name'],

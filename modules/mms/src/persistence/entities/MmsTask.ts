@@ -16,9 +16,12 @@ export class MmsTask {
     @ManyToOne(() => MmsTaskModel)
     model: MmsTaskModel;
 
-    @Column({name: "execution_date"})
+    @Column()
+    scheduledDate: Date;
+
+    @Column()
     executionDate: Date;
 
-    @Column({name: "finish_date"})
+    @Column()
     completeDate: Date;
 }

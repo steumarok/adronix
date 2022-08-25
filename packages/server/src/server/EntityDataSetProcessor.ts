@@ -34,11 +34,15 @@ export abstract class EntityDataSetProcessor extends DataSetProcessor {
                 if (Array.isArray(value)) {
                     data[key] = () => {
                         return Promise.all(value.map(element => {
-                            return this.resolveEntityRef(
-                                element.$type,
-                                element.$idRef,
-                                idMap,
-                                ioService)
+                            if (typeof element == "object") {
+                                return this.resolveEntityRef(
+                                    element.$type,
+                                    element.$idRef,
+                                    idMap,
+                                    ioService)
+                            } else {
+                                return element
+                            }
                         }))
                     }
                 }

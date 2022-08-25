@@ -43,7 +43,7 @@ export class DataSet {
       return delta
     }
 
-    protected convertPropForDelta(prop: ItemProp) {
+    protected convertPropForDelta(prop: ItemProp): any {
       if (prop instanceof Item) {
         return {
           $idRef: prop.id,
@@ -51,10 +51,7 @@ export class DataSet {
         } as ItemRef
       }
       else if (Array.isArray(prop)) {
-        return (prop as Item[]).map(item => ({
-          $idRef: item.id,
-          $type: item.type
-        } as ItemRef))
+        return (prop as Item[]).map(item => this.convertPropForDelta(item))
       }
       else {
         return prop

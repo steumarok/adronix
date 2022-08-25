@@ -43,6 +43,9 @@
                 <template #links="{ row }">
                     <q-btn v-if="row.model.assetType == 'composite'" color="secondary" flat :to="`/assetComponents/${row.id}`" size="sm">Componenti</q-btn>
                 </template>
+                <template #links2="{ row }">
+                    <q-btn color="secondary" flat :to="`/assetComponents/${row.id}`" size="sm">Attività</q-btn>
+                </template>
             </adx-data-table>
         </adx-d>
 
@@ -102,7 +105,8 @@ const dataTable = $adx.dataTable(
     address:      { label: 'Indirizzo', width: "20%", sortable: true },
     locality:     { label: 'Località', width: "20%", sortable: true },
     nextTask:     { label: 'Prossima attività', width: "20%", sortable: true },
-    links:        { label: 'Collegamenti' }
+    links:        { label: 'Collegamenti' },
+    links2:       { label: '' }
   },
   store.getTableParams('assets', 'name'))
 

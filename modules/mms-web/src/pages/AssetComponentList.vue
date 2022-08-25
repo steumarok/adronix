@@ -4,7 +4,7 @@
     <adx-d vertical y-spacing="sm">
 
         <nav-assets>
-            <q-breadcrumbs-el>Componenti asset</q-breadcrumbs-el>
+            <q-breadcrumbs-el>Componenti di {{asset?.name}}</q-breadcrumbs-el>
         </nav-assets>
 
         <adx-d>
@@ -48,8 +48,8 @@ const dataTable = $adx.dataTable(
     actions:      { label: 'Azioni', width: "100px" },
     name:         { label: 'Nome', width: "30%", sortable: true, field: (row: Item) => row.name },
     quantity:     { label: 'Quantità', width: "100px", sortable: true, field: (row: Item) => `${row.quantity} ${row.model.measurementUnit.name}` },
-    model:        { label: 'Modello', width: "30%", sortable: true, field: (row: Item) => row.ref('model').name },
-    area:         { label: 'Posizione', width: "30%", sortable: true, field: (row: Item) => row.ref('area').name },
+    model:        { label: 'Modello', width: "30%", sortable: true, field: (row: Item) => row.ref('model')?.name },
+    area:         { label: 'Posizione', width: "30%", sortable: true, field: (row: Item) => row.ref('area')?.name },
   },
   { sortBy: "model.name", page: 1, limit: 10 })
 
@@ -57,8 +57,10 @@ const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listAssetComponents', 
     assetId: props.assetId,
     ...dataTable.params})))
 
+const asset = ds.ref("MmsAsset")
+
 function onInsert() {
-    $adx.openDialog(AssetComponentEdit)
+    $adx.openDialog(AssetComponentEdit, { assetId: props.assetId })
 }
 
 function onDelete(key: string) {

@@ -30,6 +30,7 @@
                     <adx-d vertical padding="xs">
                         <mms-asset-model-select
                             v-model="asset.model"
+                            clearable
                             />
                     </adx-d>
                 </adx-d>
@@ -72,6 +73,16 @@
                             :excluded="getIncompatibleAttributes(asset.attributes)"
                             multiple
                             clearable
+                            />
+                    </adx-d>
+                </adx-d>
+
+                <adx-d horizontal fit justify="evenly">
+                    <adx-d vertical padding="xs">
+                        <q-checkbox
+                            v-model="asset.recreateTasks"
+                            label="Rigenera interventi"
+                            :false-value="null"
                             />
                     </adx-d>
                 </adx-d>
