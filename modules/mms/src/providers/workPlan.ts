@@ -1,34 +1,91 @@
-import { HttpContext, PaginatedList } from "@adronix/server";
 import { DataProviderDefinitions } from "@adronix/server";
-import { MmsService } from "../services/MmsService";
-import { MmsClient } from "../persistence/entities/MmsClient";
-import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
-import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
-import { MmsArea } from "../persistence/entities/MmsArea";
-import { Brackets, ConnectionIsNotSetError, Like, Repository } from "typeorm";
-import { EntityClass } from "@adronix/persistence/src";
-import { ReturnType } from "@adronix/server";
+import { MmsRepoService } from "../services/MmsRepoService";
+import { CmnMeasurementUnit } from "@adronix/cmn";
 import { Utils } from "@adronix/server";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
-import { Metadata } from "@adronix/server/src/server/ItemCollector";
-import { MmsResourceType } from "../persistence/entities/MmsResourceType";
-import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
 import { MmsPart } from "../persistence/entities/MmsPart";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
-import { MmsPartRequirement } from "../persistence/entities/MmsPartRequirement";
+import { MmsPartRequirement, MmsQuantityType } from "../persistence/entities/MmsPartRequirement";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
-import { config } from "process";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsScheduling } from "../persistence/entities/MmsScheduling";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
+import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
+import { MmsService } from "../persistence/entities/MmsService";
 
 
 export const workPlanProviders: DataProviderDefinitions = {
 
+    '/listWorkPlans': {
+        handler: async function ({ sortBy, descending }) {
+
+            return await this.service(MmsRepoService).workPlanRepository
+                .find({
+                    relations: {
+                        assetComponentModel: true,
+                        assetModel: true,
+                        taskModel: true,
+                        assetAttributes: true,
+                        service: {
+                            measurementUnit: true
+                        }
+                    },
+                    order: Utils.orderClause(sortBy, descending)
+                })
+
+        },
+        output: [
+            [MmsWorkPlan, 'taskModel', 'assetModel', 'assetComponentModel',
+                'assetAttributes', 'service', 'quantity'],
+            [MmsService, 'name', 'measurementUnit'],
+            [MmsTaskModel, 'name'],
+            [MmsAssetAttribute, 'name'],
+            [MmsAssetModel, 'name', 'assetType'],
+            [MmsAssetComponentModel, 'name'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
+    '/editWorkPlan': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsRepoService).workPlanRepository
+                        .findOne({
+                            relations: {
+                                assetModel: {
+                                    measurementUnit: true
+                                },
+                                taskModel: true,
+                                assetAttributes: true,
+                                assetComponentModel: {
+                                    measurementUnit: true
+                                },
+                                service: {
+                                    measurementUnit: true
+                                }
+                            },
+                            where: { id }})
+                    : new MmsWorkPlan({ quantityType: MmsQuantityType.RELATIVE })
+
+            return [po]
+        },
+        output: [
+            [MmsWorkPlan, 'taskModel', 'assetModel', 'assetComponentModel',
+                'assetAttributes', 'service', 'quantity', 'quantityType'],
+            [MmsAssetModel, 'name', 'measurementUnit', 'assetType'],
+            [MmsTaskModel, 'name'],
+            [MmsService, 'name', 'measurementUnit'],
+            [MmsAssetAttribute, 'name'],
+            [MmsAssetComponentModel, 'name', 'measurementUnit', 'unitQuantity'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
     '/listPartRequirements': {
         handler: async function ({ sortBy, descending }) {
 
-            return await this.service(MmsService).partRequirementRepository
+            return await this.service(MmsRepoService).partRequirementRepository
                 .find({
                     relations: {
                         assetModel: true,
@@ -44,8 +101,8 @@ export const workPlanProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetComponentModel', 'assetAttributes', 'part', 'quantity'],
-            [MmsPart, 'name'],
+            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetComponentModel',
+                'assetAttributes', 'part', 'quantity'],
             [MmsTaskModel, 'name'],
             [MmsPart, 'name', 'measurementUnit'],
             [MmsAssetAttribute, 'name'],
@@ -59,7 +116,7 @@ export const workPlanProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).partRequirementRepository
+                    ? await this.service(MmsRepoService).partRequirementRepository
                         .findOne({
                             relations: {
                                 assetModel: {
@@ -75,12 +132,13 @@ export const workPlanProviders: DataProviderDefinitions = {
                                 }
                             },
                             where: { id }})
-                    : new MmsPartRequirement()
+                    : new MmsPartRequirement({ quantityType: MmsQuantityType.RELATIVE })
 
             return [po]
         },
         output: [
-            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetComponentModel', 'assetAttributes', 'part', 'quantity'],
+            [MmsPartRequirement, 'taskModel', 'assetModel', 'assetComponentModel',
+                'assetAttributes', 'part', 'quantity', 'quantityType'],
             [MmsAssetModel, 'name', 'measurementUnit', 'assetType'],
             [MmsTaskModel, 'name'],
             [MmsPart, 'name', 'measurementUnit'],
@@ -93,7 +151,7 @@ export const workPlanProviders: DataProviderDefinitions = {
     '/listSchedulings': {
         handler: async function ({ sortBy, descending }) {
 
-            return await this.service(MmsService).schedulingRepository
+            return await this.service(MmsRepoService).schedulingRepository
                 .find({
                     relations: {
                         areaModels: true,
@@ -118,7 +176,7 @@ export const workPlanProviders: DataProviderDefinitions = {
     '/editScheduling': {
         handler: async function({ id }) {
             const po =
-                id  ? await this.service(MmsService).schedulingRepository
+                id  ? await this.service(MmsRepoService).schedulingRepository
                         .findOne({
                             relations: {
                                 areaModels: true,

@@ -15,6 +15,8 @@ import { SchedulingList } from '@adronix/mms-web'
 import { AreaModelList } from '@adronix/mms-web'
 import { AssetComponentList } from '@adronix/mms-web'
 import { AssetComponentModelList } from '@adronix/mms-web'
+import { TaskList } from '@adronix/mms-web'
+import { WorkPlanList } from '@adronix/mms-web'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -27,6 +29,7 @@ const routes: RouteRecordRaw[] = [
       { path: '/clientLocations/:clientId', component: () => ClientLocationList, props: true, meta: { context: 'clients' } },
       { path: '/areas/:clientLocationId', component: () => AreaList, props: true, meta: { context: 'clients' } },
 
+      { path: '/tasks', name: 'tasks', component: () => TaskList, props: true, meta: { context: 'tasks' } },
       { path: '/assets', name: 'assets', component: () => AssetList, props: true, meta: { context: 'assets' } },
       { path: '/assetComponents/:assetId', component: () => AssetComponentList, props: true, meta: { context: 'assets' } },
 
@@ -42,6 +45,7 @@ const routes: RouteRecordRaw[] = [
 
       { path: '/planning', component: () => Planning, meta: { context: 'planning' } },
       { path: '/partRequirements', component: () => PartRequirementList, meta: { context: 'planning' } },
+      { path: '/workPlans', component: () => WorkPlanList, meta: { context: 'planning' } },
       { path: '/schedulings', component: () => SchedulingList, meta: { context: 'planning' } },
     ],
   },

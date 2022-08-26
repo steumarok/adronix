@@ -1,3 +1,4 @@
+import { ColumnNumericTransformer } from "@adronix/typeorm/src";
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
 import { MmsArea } from "./MmsArea";
 import { MmsAreaModelAttribution } from "./MmsAreaModelAttribution";
@@ -15,7 +16,13 @@ export class MmsAssetComponent {
     @Column()
     name: string;
 
-    @Column({ type: "decimal", default: 1.0, precision: 10, scale: 4 })
+    @Column({
+        type: "decimal",
+        default: 1.0,
+        precision: 10,
+        scale: 4,
+        transformer: new ColumnNumericTransformer()
+    })
     quantity: number;
 
     @ManyToOne(() => MmsAsset)

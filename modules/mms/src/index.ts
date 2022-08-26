@@ -5,12 +5,17 @@ import { assetsProviders } from "./providers/assets"
 import { areasProviders } from "./providers/areas"
 import { modelsProviders } from "./providers/models"
 import { workPlanProviders } from "./providers/workPlan"
-import { MmsService } from "./services/MmsService"
+import { tasksProviders } from "./providers/tasks"
+import { MmsRepoService } from "./services/MmsRepoService"
+import { MmsAssetService } from "./services/MmsAssetService"
+import { MmsTaskService } from "./services/MmsTaskService"
 
 export { MmsEntities } from "./persistence"
 
 export const MmsPersistenceModule = defineModule()
-    .addServices(MmsService)
+    .addServices(MmsTaskService)
+    .addServices(MmsAssetService)
+    .addServices(MmsRepoService)
     .buildPersistence(persistenceBuilder)
 
 export const MmsWebModule = defineModule()
@@ -19,4 +24,5 @@ export const MmsWebModule = defineModule()
         assetsProviders,
         areasProviders,
         modelsProviders,
+        tasksProviders,
         workPlanProviders)

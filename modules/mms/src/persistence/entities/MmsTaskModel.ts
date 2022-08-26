@@ -10,6 +10,15 @@ export class MmsTaskModel {
     @Column()
     name: string;
 
+    @Column()
+    codePrefix: string;
+
+    @Column()
+    codeSuffix: string;
+
+    @Column({ default: true })
+    useGlobalCounter: boolean;
+
     @ManyToMany(() => MmsResourceModel)
     @JoinTable()
     resourceModels: MmsResourceModel[];

@@ -6,7 +6,7 @@
         <adx-breadcrumbs separator=" > ">
             <q-breadcrumbs-el label="Home" icon="home" to="/home" />
             <q-breadcrumbs-el label="Pianificazione" to="/planning" />
-            <q-breadcrumbs-el>Fabbisogno articoli</q-breadcrumbs-el>
+            <q-breadcrumbs-el>Piani di lavoro</q-breadcrumbs-el>
         </adx-breadcrumbs>
 
         <adx-d>
@@ -16,7 +16,7 @@
                 bordered
             >
                 <template #top-left>
-                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci voce di fabbisogno</q-btn>
+                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci piano di lavoro</q-btn>
                 </template>
                 <template #actions="{ row }">
                     <q-btn icon="edit" flat size="sm" @click="onEdit(row.id)"/>
@@ -31,14 +31,14 @@
                 <template #assetComponentModel="{ row }">
                     {{row.assetComponentModel?.name}}
                 </template>
-                <template #part="{ row }">
-                    {{row.part.name}}
+                <template #service="{ row }">
+                    {{row.service.name}}
                 </template>
                 <template #quantity="{ row }">
                     {{row.quantity}}
                 </template>
                 <template #measurementUnit="{ row }">
-                    {{row.part.measurementUnit.name}}
+                    {{row.service.measurementUnit?.name}}
                 </template>
                 <template #assetAttributes="{ row }">
                     {{row.assetAttributes?.map(a => a.name).join(", ")}}
@@ -55,37 +55,37 @@
 <script setup lang="ts">
 import { useAdronix } from '@adronix/vue';
 import { Item, DataSetUtils, buildUrl } from '@adronix/client';
-import PartRequirementEdit from './PartRequirementEdit.vue'
+import WorkPlanEdit from './WorkPlanEdit.vue'
 import { computed } from 'vue';
 
 const $adx = useAdronix()
 
 const dataTable = $adx.dataTable(
-  'MmsPartRequirement',
+  'MmsWorkPlan',
   {
     actions:      { label: 'Azioni', width: "100px" },
     taskModel:    { label: 'Modello attività', width: "20%", sortable: true },
     assetModel:   { label: 'Modello asset', width: "20%", sortable: true },
     assetComponentModel:   { label: 'Modello componente', width: "20%", sortable: true },
     assetAttributes: { label: 'Attributi', width: "20%", sortable: true },
-    part:         { label: 'Articolo', width: "20%", sortable: true },
+    service:         { label: 'Servizio', width: "20%", sortable: true },
     quantity:     { label: 'Quantità', align: 'right', sortable: true },
     measurementUnit: { label: 'U.m.', sortable: true },
   },
   { sortBy: "taskModel.name" })
 
-const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listPartRequirements', dataTable.params)))
+const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listWorkPlans', dataTable.params)))
 
 function onInsert() {
-    $adx.openDialog(PartRequirementEdit)
+    $adx.openDialog(WorkPlanEdit)
 }
 
 function onDelete(key: string) {
-    DataSetUtils.deleteItem(ds, "MmsPartRequirement", key, () => ds.commit())
+    DataSetUtils.deleteItem(ds, "MmsWorkPlan", key, () => ds.commit())
 }
 
 function onEdit(key: string) {
-    $adx.openDialog(PartRequirementEdit, { id: key })
+    $adx.openDialog(WorkPlanEdit, { id: key })
 }
 
 const dataBindings = dataTable.bind(ds)

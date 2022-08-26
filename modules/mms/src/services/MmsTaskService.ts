@@ -1,9 +1,9 @@
-import { Errors } from "@adronix/base/src";
-import { Transaction } from "@adronix/persistence/src";
+import { Errors } from "@adronix/base";
+import { Transaction } from "@adronix/persistence";
 import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
 import { InjectDataSource, InjectTypeORM, TypeORM, TypeORMTransaction } from "@adronix/typeorm";
 import { DateTime } from "luxon";
-import { DataSource, EntityManager, EntityTarget, FindOneOptions, In } from "typeorm";
+import { DataSource, EntityManager, EntityTarget, FindOneOptions, In, TreeLevelColumn } from "typeorm";
 import { MmsArea } from "../persistence/entities/MmsArea";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
@@ -11,17 +11,22 @@ import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
-import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
+import { MmsAssetModel, MmsAssetType } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
+import { MmsCounter } from "../persistence/entities/MmsCounter";
 import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
 import { MmsPart } from "../persistence/entities/MmsPart";
-import { MmsPartRequirement } from "../persistence/entities/MmsPartRequirement";
+import { MmsPartRequirement, MmsQuantityType } from "../persistence/entities/MmsPartRequirement";
 import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
 import { MmsResourceType } from "../persistence/entities/MmsResourceType";
 import { MmsScheduling } from "../persistence/entities/MmsScheduling";
+import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
+import { MmsTask } from "../persistence/entities/MmsTask";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
+import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
+import { assetsProviders } from "../providers/assets";
 
 function toDateTime(obj: null | string | Date) {
     let dt = null
@@ -45,10 +50,7 @@ export type TaskModelDate = {
     date: DateTime
 }
 
-export class MmsService extends AbstractService {
-
-    @InjectDataSource
-    dataSource: DataSource
+export class MmsTaskService extends AbstractService {
 
     @InjectService
     io: IOService
@@ -56,68 +58,203 @@ export class MmsService extends AbstractService {
     @InjectTypeORM
     typeorm: TypeORM
 
-    *findLocation(location: MmsClientLocation) {
-        return yield this.typeorm.findOne(MmsClientLocation, {
-            where: { id: location.id },
-            relations: { client: true }
-        })
-    }
-
-    *createCompositeAsset(location: MmsClientLocation, model: MmsAssetModel) {
-
-        const loc: MmsClientLocation = yield* this.findLocation(location)
-
-        const asset = yield this.io.throwing.insert(MmsAsset, {
-            location,
-            model,
-            name: 'Sede',
-            client: loc.client
-        })
-
-        const pivots: MmsAssetModelPivot[] = yield this.typeorm.find(MmsAssetModelPivot, {
-            where: { assetModel: model },
-            relations: { areaModel: true, componentModel: true }
-        })
-
-        const groups = Utils.groupBy(pivots, item => item.rowGroup)
-        const counters = new Map<number, number>()
-
-        for (const [ rowGroup, pivots ] of groups) {
-            const area = yield this.io.throwing.insert(MmsArea, {
-                name: pivots[0].areaModel.name,
-                location: loc
-            })
-            const modelAttribution = yield this.io.throwing.insert(MmsAreaModelAttribution, {
-                area,
-                model: pivots[0].areaModel
-            })
-            for (const pivot of pivots) {
-                for (var i = 0; i < pivot.quantity; i++) {
-
-                    const index = counters.get(pivot.componentModel.id) || 1
-                    counters.set(pivot.componentModel.id, index + 1)
-
-                    const name = `${pivot.componentModel.name} #${index}`
-
-                    yield this.io.throwing.insert(MmsAssetComponent, {
-                        quantity: 1,
-                        name,
-                        asset,
-                        model: pivot.componentModel,
-                        area
-                    })
-                }
-            }
-        }
-
-        return asset
-    }
-
 
     *generateTasks(asset: MmsAsset) {
+        asset = yield this.typeorm.findOne(
+            MmsAsset,
+            {
+                where: { id: asset.id },
+                relations: {
+                    attributes: true,
+                    model: true,
+                    area: {
+                        modelAttributions: {
+                            model: true
+                        }
+                    }
+                }
+            })
 
+        const tasks: MmsTask[] = yield this.typeorm.find(
+            MmsTask,
+            {
+                where: {
+                    executionDate: null,
+                    asset: { id: asset.id }
+                }
+            })
+
+        for (const task of tasks) {
+            yield this.io.throwing.delete(MmsTask, task)
+        }
+
+        const lastTaskInfos: MmsLastTaskInfo[] = yield* this.getLastTaskInfo(asset)
+        const executedTaskModels = lastTaskInfos.map(lti => lti.taskModel)
+
+        const schedulings: MmsScheduling[] = yield* this.getSchedulings(executedTaskModels)
+
+        const matchingSchedulings = schedulings
+            .filter(s => {
+                const assetModelsMatched = this.matchAssetModels(s, asset)
+                const assetAttributesMatched = this.matchAssetAttributes(s, asset)
+                const areaModelsMatched = this.matchAreaModels(s, asset)
+
+                return assetModelsMatched && assetAttributesMatched && areaModelsMatched
+            })
+
+        const group1 = Utils.groupByAndMap(
+            matchingSchedulings.filter(s => s.startImmediately),
+            s => s.taskModel,
+            s =>
+                this.dateGenerator(
+                    DateTime.now(),
+                    s
+                ))
+
+        for (const [ model, it ] of group1) {
+            for (let i = 0; i < 10; i++) {
+                const scheduledDate = it.next().value.toJSDate()
+                const code = yield* this.generateTaskCode(model)
+
+                const task: MmsTask = yield this.io.throwing.insert(MmsTask, {
+                    asset,
+                    model,
+                    code,
+                    codePrefix: model.codePrefix,
+                    codeSuffix: model.codeSuffix,
+                    scheduledDate
+                })
+
+                yield* this.createServiceProvisions(task)
+            }
+        }
     }
 
+    *createServiceProvisions(
+        task: MmsTask
+    ) {
+        const workPlans: MmsWorkPlan[] = yield this.typeorm.find(MmsWorkPlan, {
+            where: {
+                taskModel: {
+                    id: task.model.id
+                }
+            },
+            relations: {
+                assetModel: true,
+                assetAttributes: true,
+                assetComponentModel: true,
+                service: true
+            }
+        })
+
+        const matchingWorkPlans: MmsWorkPlan[] = workPlans
+            .filter(wp => {
+                const assetModelMatched = wp.assetModel == null || wp.assetModel.id == task.asset.model.id
+                const assetAttributesMatched = this.matchAssetAttributes(wp, task.asset)
+
+                return assetModelMatched && assetAttributesMatched
+            })
+
+        for (const workPlan of matchingWorkPlans) {
+
+            const [ expectedQuantity, assetComponents ] = yield* this.calcExpectedQuantity(workPlan, task)
+
+            yield this.io.throwing.insert(MmsServiceProvision, {
+                task,
+                service: workPlan.service,
+                expectedQuantity,
+                workPlan,
+                assetComponents
+            })
+        }
+    }
+
+    *calcExpectedQuantity(
+        workPlan: MmsWorkPlan,
+        task: MmsTask
+    ) {
+        if (workPlan.assetModel == null ||
+            workPlan.assetModel.assetType == MmsAssetType.COMPOSITE) {
+            if (workPlan.assetComponentModel) {
+                const components: MmsAssetComponent[] = yield this.typeorm.find(MmsAssetComponent, {
+                    where: {
+                        asset: { id: task.asset.id },
+                        model: { id: workPlan.assetComponentModel.id }
+                    }
+                })
+
+                const totalQuantity = components.map(c => c.quantity).reduce((a, b) => a + b, 0)
+
+                return [ (totalQuantity / workPlan.assetComponentModel.unitQuantity) * workPlan.quantity, components ]
+            }
+        }
+        else {
+            return [ (task.asset.quantity / workPlan.assetModel.unitQuantity) * workPlan.quantity ]
+        }
+
+        return [ workPlan.quantity ]
+    }
+
+    *generateTaskCode(
+        model: MmsTaskModel
+    ) {
+        const counterName = model.useGlobalCounter ? null : `taskModel-${model.id}`
+        const value: number = yield* this.getCounterValue(counterName)
+        return value
+    }
+
+    *getCounterValue(
+        name: string | null
+    ) {
+        name = name || '__global'
+        let counter: MmsCounter = yield this.typeorm.findOne(
+            MmsCounter,
+            {
+                where: {
+                    name
+                }
+            }
+        )
+        if (!counter) {
+            counter = yield this.io.throwing.insert(MmsCounter, {
+                name,
+                value: 1
+            })
+        }
+        const value = counter.value
+        yield this.io.throwing.update(MmsCounter, counter, {
+            value: value + 1
+        })
+        return value
+    }
+
+    *getLastTaskInfo(asset: MmsAsset) {
+        return yield this.typeorm.find(
+            MmsLastTaskInfo,
+            {
+                relations: { taskModel: true },
+                where: { asset: { id: asset.id } }
+            })
+    }
+
+    *getSchedulings(executedTaskModels: MmsTaskModel[]) {
+        return yield this.typeorm.find(
+            MmsScheduling,
+            {
+                relations: {
+                    areaModels: true,
+                    assetAttributes: true,
+                    assetModels: true,
+                    taskModel: true,
+                    startFromLasts: true
+                },
+                where: [
+                    { startImmediately: true },
+                    { taskModel: In(executedTaskModels) },
+                ]
+            })
+    }
+/*
     async findNearestTaskModel(asset: MmsAsset): Promise<TaskModelDate | null> {
 
         const taskModelDateGenerator = await this.computeNextTaskModels(asset)
@@ -171,7 +308,7 @@ export class MmsService extends AbstractService {
     getLastTaskDate(ltis: MmsLastTaskInfo[], taskModel: MmsTaskModel) {
         const lti = ltis.find(lti => lti.taskModel.id == taskModel.id)
         return lti ? toDateTime(lti.executionDate) : null
-    }
+    }*/
 
     *dateGenerator(startDate: DateTime, schedulings: MmsScheduling[]) {
         if (schedulings.some(s => s.startImmediately)) {
@@ -202,7 +339,7 @@ export class MmsService extends AbstractService {
             return nextDate
         }
     }
-
+/*
     async findSchedulingsByAsset(asset: MmsAsset) {
 
         const executedTaskModels = (await this.lastTaskInfoRepository
@@ -235,7 +372,7 @@ export class MmsService extends AbstractService {
 
                 return assetModelsMatched && assetAttributesMatched && areaModelsMatched
             })
-    }
+    }*/
 
     matchAreaModels(scheduling: MmsScheduling, asset: MmsAsset) {
         //
@@ -272,7 +409,7 @@ export class MmsService extends AbstractService {
         return scheduling.assetModels.some(model => model.id == asset.model.id)
     }
 
-    matchAssetAttributes(scheduling: MmsScheduling, asset: MmsAsset) {
+    matchAssetAttributes(scheduling: MmsScheduling | MmsWorkPlan, asset: MmsAsset) {
         if (!scheduling.assetAttributes || scheduling.assetAttributes.length == 0) {
             return true
         }
@@ -283,79 +420,5 @@ export class MmsService extends AbstractService {
 
         return scheduling.assetAttributes.every(attr => asset.attributes.some(a => a.id == attr.id))
     }
-
-    get clientRepository() {
-        return this.dataSource.getRepository(MmsClient)
-    }
-
-    get clientLocationRepository() {
-        return this.dataSource.getRepository(MmsClientLocation)
-    }
-
-    get areaRepository() {
-        return this.dataSource.getRepository(MmsArea)
-    }
-
-    get areaModelRepository() {
-        return this.dataSource.getRepository(MmsAreaModel)
-    }
-
-    get areaModelAttributionRepository() {
-        return this.dataSource.getRepository(MmsAreaModelAttribution)
-    }
-
-    get assetRepository() {
-        return this.dataSource.getRepository(MmsAsset)
-    }
-
-    get assetModelRepository() {
-        return this.dataSource.getRepository(MmsAssetModel)
-    }
-
-    get assetComponentModelRepository() {
-        return this.dataSource.getRepository(MmsAssetComponentModel)
-    }
-
-    get assetModelPivotRepository() {
-        return this.dataSource.getRepository(MmsAssetModelPivot)
-    }
-
-    get resourceTypeRepository() {
-        return this.dataSource.getRepository(MmsResourceType)
-    }
-
-    get resourceModelRepository() {
-        return this.dataSource.getRepository(MmsResourceModel)
-    }
-
-    get partRepository() {
-        return this.dataSource.getRepository(MmsPart)
-    }
-
-    get taskModelRepository() {
-        return this.dataSource.getRepository(MmsTaskModel)
-    }
-
-    get partRequirementRepository() {
-        return this.dataSource.getRepository(MmsPartRequirement)
-    }
-
-    get assetAttributeRepository() {
-        return this.dataSource.getRepository(MmsAssetAttribute)
-    }
-
-    get lastTaskInfoRepository() {
-        return this.dataSource.getRepository(MmsLastTaskInfo)
-    }
-
-    get schedulingRepository() {
-        return this.dataSource.getRepository(MmsScheduling)
-    }
-
-    get assetComponentRepository() {
-        return this.dataSource.getRepository(MmsAssetComponent)
-    }
-
-
 }
 

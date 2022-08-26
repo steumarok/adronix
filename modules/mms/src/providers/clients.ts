@@ -1,6 +1,6 @@
 import { HttpContext, PaginatedList } from "@adronix/server";
 import { DataProviderDefinitions } from "@adronix/server";
-import { MmsService } from "../services/MmsService";
+import { MmsRepoService } from "../services/MmsRepoService";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { CmnLocality } from "@adronix/cmn";
@@ -13,6 +13,7 @@ import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { TypeORMTransaction } from "@adronix/typeorm/src";
 import { isAsyncFunction } from "util/types";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
+import { MmsAssetService } from "../services/MmsAssetService";
 
 function transactional(iterator: () => Generator<any, void, unknown>) {
     console.log(this)
@@ -39,7 +40,7 @@ export const clientsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            const [ rows, count ] = await this.service(MmsService).clientRepository
+            const [ rows, count ] = await this.service(MmsRepoService).clientRepository
                 .createQueryBuilder('a')
                 .loadRelationCountAndMap('a.locationCount', 'a.locations')
                 /*.addSelect(qb => qb.subQuery()
@@ -65,7 +66,7 @@ export const clientsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).clientRepository
+                    ? await this.service(MmsRepoService).clientRepository
                         .findOne({
                             relations: { },
                             where: { id }})
@@ -82,10 +83,10 @@ export const clientsProviders: DataProviderDefinitions = {
     '/listClientLocations': {
         handler: async function ({ clientId, page, limit, sortBy, descending }) {
 
-            const client = await this.service(MmsService).clientRepository
+            const client = await this.service(MmsRepoService).clientRepository
                     .findOneBy({ id: Utils.toInt(clientId) })
 
-            const [ rows, count ] = await this.service(MmsService).clientLocationRepository
+            const [ rows, count ] = await this.service(MmsRepoService).clientLocationRepository
                 .findAndCount({
                     relations: { locality: true, client: true },
                     where: { client: { id: client.id} },
@@ -107,7 +108,7 @@ export const clientsProviders: DataProviderDefinitions = {
         handler: async function({ id, clientId }) {
 
             if (id) {
-                const l = await this.service(MmsService).clientLocationRepository
+                const l = await this.service(MmsRepoService).clientLocationRepository
                     .findOne({
                         relations: { client: true, locality: true },
                         where: { id }})
@@ -115,7 +116,7 @@ export const clientsProviders: DataProviderDefinitions = {
             }
             else {
                 const l = new MmsClientLocation()
-                l.client = await this.service(MmsService).clientRepository
+                l.client = await this.service(MmsRepoService).clientRepository
                     .findOneBy({ id: clientId })
                 return [l]
             }
@@ -140,7 +141,7 @@ export const clientsProviders: DataProviderDefinitions = {
                         console.log(changes)
                         if (changes.createAsset) {
                             const model = (yield changes.assetModel) as MmsAssetModel
-                            const g = yield* this.service(MmsService).createCompositeAsset(location, model)
+                            const g = yield* this.service(MmsAssetService).createCompositeAsset(location, model)
 
                             console.log(g)
                             //throw new Error("88")
@@ -180,7 +181,7 @@ export const clientsProviders: DataProviderDefinitions = {
                 return []
             }
 
-            return await this.service(MmsService).clientRepository
+            return await this.service(MmsRepoService).clientRepository
                 .find({
                     where: { name: Like(`${search}%`) } ,
                     order: { name: "asc" }
@@ -197,7 +198,7 @@ export const clientsProviders: DataProviderDefinitions = {
 
             this.output.add(MmsClientLocation, 'displayName', location => `${location.address} - ${location.locality?.name}`)
 
-            return await this.service(MmsService).clientLocationRepository
+            return await this.service(MmsRepoService).clientLocationRepository
                 .find({
                     relations: { locality: true },
                     where: { client: { id: clientId } } ,

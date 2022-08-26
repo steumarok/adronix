@@ -1,6 +1,6 @@
 import { HttpContext, PaginatedList } from "@adronix/server";
 import { DataProviderDefinitions } from "@adronix/server";
-import { MmsService, TaskModelDate } from "../services/MmsService";
+import { MmsRepoService } from "../services/MmsRepoService";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
@@ -14,6 +14,7 @@ import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
+import { MmsTaskService } from "../services/MmsTaskService";
 
 
 export const assetsProviders: DataProviderDefinitions = {
@@ -21,7 +22,7 @@ export const assetsProviders: DataProviderDefinitions = {
     '/listAssets': {
         handler: async function ({ page, limit, sortBy, descending, filter, clientId, clientLocationId }) {
 
-            const service = this.service(MmsService)
+            const service = this.service(MmsRepoService)
 
             const where = {
                 ...Utils.where(filter, { name: Like(`${filter}%`) }),
@@ -42,6 +43,7 @@ export const assetsProviders: DataProviderDefinitions = {
                 .orderBy('a.' + sortBy, Utils.toBool(descending) ? "DESC": "ASC")
                 .getManyAndCount();
 
+            /*
             const dateMap = new Map<MmsAsset, TaskModelDate>()
             for (const asset of rows) {
                 const taskDate = await service.findNearestTaskModel(asset)
@@ -52,6 +54,7 @@ export const assetsProviders: DataProviderDefinitions = {
 
             this.output.add(MmsAsset, "nextTaskModel", (asset) => dateMap.get(asset)?.taskModel)
             this.output.add(MmsAsset, "nextTaskDate", (asset) => dateMap.get(asset)?.date?.toISO())
+            */
 
             const results = [PaginatedList(MmsAsset, rows, count)]
 
@@ -84,7 +87,7 @@ export const assetsProviders: DataProviderDefinitions = {
 
             const asset =
                 id
-                    ? await this.service(MmsService).assetRepository
+                    ? await this.service(MmsRepoService).assetRepository
                         .findOne({
                             relations: {
                                 attributes: {
@@ -100,7 +103,7 @@ export const assetsProviders: DataProviderDefinitions = {
 
             let ltis = []
             if (id) {
-                ltis = await this.service(MmsService).lastTaskInfoRepository
+                ltis = await this.service(MmsRepoService).lastTaskInfoRepository
                     .find({
                         relations: { asset: true, taskModel: true },
                         where: { asset }
@@ -115,7 +118,7 @@ export const assetsProviders: DataProviderDefinitions = {
                     MmsAsset,
                     function* (changes, asset: MmsAsset) {
                         if (changes.recreateTasks) {
-                            yield* this.service(MmsService).generateTasks(asset)
+                            yield* this.service(MmsTaskService).generateTasks(asset)
                         }
                     }
                 ]
@@ -137,10 +140,10 @@ export const assetsProviders: DataProviderDefinitions = {
     '/listAssetComponents': {
         handler: async function ({ page, limit, assetId, sortBy, descending }) {
 
-            const asset = await this.service(MmsService).assetRepository
+            const asset = await this.service(MmsRepoService).assetRepository
                     .findOneBy({ id: Utils.toInt(assetId) })
 
-            const [ rows, count ] = await this.service(MmsService).assetComponentRepository
+            const [ rows, count ] = await this.service(MmsRepoService).assetComponentRepository
                 .findAndCount({
                     relations: { model: { measurementUnit: true }, asset: true, area: true },
                     where: { asset },
@@ -166,7 +169,7 @@ export const assetsProviders: DataProviderDefinitions = {
 
             let assetComponent: MmsAssetComponent
             if (id) {
-                assetComponent = await this.service(MmsService).assetComponentRepository
+                assetComponent = await this.service(MmsRepoService).assetComponentRepository
                     .findOne({
                         relations: {
                             model: { measurementUnit: true },
@@ -176,7 +179,7 @@ export const assetsProviders: DataProviderDefinitions = {
                         where: { id }})
             } else {
                 assetComponent = new MmsAssetComponent()
-                assetComponent.asset = await this.service(MmsService).assetRepository
+                assetComponent.asset = await this.service(MmsRepoService).assetRepository
                         .findOne({
                             relations: { client: true, location: true },
                             where: { id: assetId }

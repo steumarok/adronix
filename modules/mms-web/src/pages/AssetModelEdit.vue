@@ -13,10 +13,23 @@
                 v-model="assetModel.assetType"
                 />
 
-            <cmn-measurement-unit-select
-                v-model="assetModel.measurementUnit"
-                :errors="assetModel?.errors.measurementUnit"
-                />
+            <adx-d horizontal fit justify="evenly" v-if="assetModel.assetType == 'simple'">
+                <adx-d vertical padding="xs">
+                    <cmn-measurement-unit-select
+                        v-model="assetModel.measurementUnit"
+                        :errors="assetModel?.errors.measurementUnit"
+                        />
+                </adx-d>
+
+                <adx-d vertical padding="xs">
+                    <adx-data-input
+                        v-model="assetModel.unitQuantity"
+                        label="Quantità unitaria"
+                        :suffix="assetModel.measurementUnit?.name"
+                        :errors="assetModel.errors.unitQuantity"
+                        />
+                </adx-d>
+            </adx-d>
 
             <adx-d v-if="showComponentModelPivot">
                 <span class="text-subtitle1">Griglia modelli</span>

@@ -17,9 +17,12 @@ import AssetAttributeList from './pages/AssetAttributeList.vue'
 import AssetComponentList from './pages/AssetComponentList.vue'
 import AssetComponentModelList from './pages/AssetComponentModelList.vue'
 import SchedulingList from './pages/SchedulingList.vue'
+import TaskList from './pages/TaskList.vue'
+import WorkPlanList from './pages/WorkPlanList.vue'
 
 export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     AreaList, AssetList, Models, AssetModelList, ResourceModelList,
     ResourceTypeList, PartList, TaskModelList, Planning,
     PartRequirementList, AssetAttributeList, SchedulingList,
-    AreaModelList, AssetComponentList, AssetComponentModelList }
+    AreaModelList, AssetComponentList, AssetComponentModelList,
+    TaskList, WorkPlanList }

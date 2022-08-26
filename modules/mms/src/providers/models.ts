@@ -1,6 +1,6 @@
 import { HttpContext, PaginatedList } from "@adronix/server";
 import { DataProviderDefinitions } from "@adronix/server";
-import { MmsService } from "../services/MmsService";
+import { MmsRepoService } from "../services/MmsRepoService";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
@@ -19,6 +19,7 @@ import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
+import { MmsService } from "../persistence/entities/MmsService";
 
 
 export const modelsProviders: DataProviderDefinitions = {
@@ -30,7 +31,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).assetComponentModelRepository
+            return await this.service(MmsRepoService).assetComponentModelRepository
                 .find({
                     where,
                     relations: {
@@ -50,7 +51,7 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).assetComponentModelRepository
+                    ? await this.service(MmsRepoService).assetComponentModelRepository
                         .findOne({
                             relations: { measurementUnit: true },
                             where: { id }})
@@ -72,7 +73,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).assetModelRepository
+            return await this.service(MmsRepoService).assetModelRepository
                 .find({
                     where,
                     order: { [sortBy]: Utils.sortDir(descending) }
@@ -86,7 +87,7 @@ export const modelsProviders: DataProviderDefinitions = {
 
     '/editAssetModel': {
         handler: async function({ id }) {
-            const service = this.service(MmsService)
+            const service = this.service(MmsRepoService)
             const assetModel =
                 id  ? await service.assetModelRepository
                         .findOne({
@@ -109,7 +110,7 @@ export const modelsProviders: DataProviderDefinitions = {
             return [assetModel, ...pivots]
         },
         output: [
-            [MmsAssetModel, 'name', 'assetType', 'measurementUnit'],
+            [MmsAssetModel, 'name', 'assetType', 'measurementUnit', 'unitQuantity'],
             [MmsAssetModelPivot, 'assetModel', 'areaModel', 'componentModel', 'quantity', 'rowGroup'],
             [MmsAreaModel, 'name'],
             [MmsAssetComponentModel, 'name', 'measurementUnit'],
@@ -120,7 +121,7 @@ export const modelsProviders: DataProviderDefinitions = {
     '/lookupAssetModels': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).assetModelRepository
+            return await this.service(MmsRepoService).assetModelRepository
                 .find({order: { name: "asc" }})
 
         },
@@ -133,7 +134,7 @@ export const modelsProviders: DataProviderDefinitions = {
     '/lookupAssetComponentModels': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).assetComponentModelRepository
+            return await this.service(MmsRepoService).assetComponentModelRepository
                 .find({
                     relations: { measurementUnit: true },
                     order: { name: "asc" }
@@ -154,7 +155,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).areaModelRepository
+            return await this.service(MmsRepoService).areaModelRepository
                 .find({
                     where,
                     order: { [sortBy]: Utils.sortDir(descending) }
@@ -170,7 +171,7 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).areaModelRepository
+                    ? await this.service(MmsRepoService).areaModelRepository
                         .findOne({
                             relations: { },
                             where: { id }})
@@ -186,7 +187,7 @@ export const modelsProviders: DataProviderDefinitions = {
     '/lookupAreaModels': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).areaModelRepository
+            return await this.service(MmsRepoService).areaModelRepository
                 .find({order: { name: "asc" }})
 
         },
@@ -203,7 +204,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).resourceTypeRepository
+            return await this.service(MmsRepoService).resourceTypeRepository
                 .find({
                     where,
                     order: { [sortBy]: Utils.sortDir(descending) }
@@ -219,7 +220,7 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).resourceTypeRepository
+                    ? await this.service(MmsRepoService).resourceTypeRepository
                         .findOne({
                             relations: { },
                             where: { id }})
@@ -235,7 +236,7 @@ export const modelsProviders: DataProviderDefinitions = {
     '/lookupResourceTypes': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).resourceTypeRepository
+            return await this.service(MmsRepoService).resourceTypeRepository
                 .find({order: { name: "asc" }})
 
         },
@@ -252,7 +253,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).resourceModelRepository
+            return await this.service(MmsRepoService).resourceModelRepository
                 .find({
                     where,
                     relations: { resourceType: true },
@@ -270,7 +271,7 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).resourceModelRepository
+                    ? await this.service(MmsRepoService).resourceModelRepository
                         .findOne({
                             relations: { resourceType: true },
                             where: { id }})
@@ -287,7 +288,7 @@ export const modelsProviders: DataProviderDefinitions = {
     '/lookupResourceModels': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).resourceModelRepository
+            return await this.service(MmsRepoService).resourceModelRepository
                 .find({order: { name: "asc" }})
 
         },
@@ -304,7 +305,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).partRepository
+            return await this.service(MmsRepoService).partRepository
                 .find({
                     where,
                     relations: { measurementUnit: true },
@@ -322,7 +323,7 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).partRepository
+                    ? await this.service(MmsRepoService).partRepository
                         .findOne({
                             relations: { measurementUnit: true },
                             where: { id }})
@@ -339,7 +340,7 @@ export const modelsProviders: DataProviderDefinitions = {
 	'/lookupParts': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).partRepository
+            return await this.service(MmsRepoService).partRepository
                 .find({
                     relations: { measurementUnit: true },
                     order: { name: "asc" }})
@@ -359,7 +360,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).taskModelRepository
+            return await this.service(MmsRepoService).taskModelRepository
                 .find({
                     where,
                     relations: { resourceModels: true },
@@ -377,7 +378,7 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).taskModelRepository
+                    ? await this.service(MmsRepoService).taskModelRepository
                         .findOne({
                             relations: { resourceModels: true },
                             where: { id }})
@@ -386,7 +387,7 @@ export const modelsProviders: DataProviderDefinitions = {
             return [po]
         },
         output: [
-            [MmsTaskModel, 'name', 'resourceModels'],
+            [MmsTaskModel, 'name', 'resourceModels', 'codeSuffix', 'codePrefix', 'useGlobalCounter'],
             [MmsResourceModel, 'name'],
         ]
     },
@@ -394,7 +395,7 @@ export const modelsProviders: DataProviderDefinitions = {
 	'/lookupTaskModels': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).taskModelRepository
+            return await this.service(MmsRepoService).taskModelRepository
                 .find({order: { name: "asc" }})
 
         },
@@ -412,7 +413,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 ? { name: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsService).assetAttributeRepository
+            return await this.service(MmsRepoService).assetAttributeRepository
                 .find({
                     where,
                     relations: { incompatibleAttributes: true },
@@ -429,7 +430,7 @@ export const modelsProviders: DataProviderDefinitions = {
         handler: async function({ id }) {
             const po =
                 id
-                    ? await this.service(MmsService).assetAttributeRepository
+                    ? await this.service(MmsRepoService).assetAttributeRepository
                         .findOne({
                             relations: { incompatibleAttributes: true },
                             where: { id }})
@@ -445,7 +446,7 @@ export const modelsProviders: DataProviderDefinitions = {
     '/lookupAssetAttributes': {
         handler: async function ({ }) {
 
-            return await this.service(MmsService).assetAttributeRepository
+            return await this.service(MmsRepoService).assetAttributeRepository
                 .find({
                     relations: { incompatibleAttributes: true },
                     order: { name: "asc" }
@@ -461,12 +462,26 @@ export const modelsProviders: DataProviderDefinitions = {
     '/modelCounts': {
         handler: async function ({ }) {
 
-            const assetModelCount = await this.service(MmsService).assetModelRepository.count()
+            const assetModelCount = await this.service(MmsRepoService).assetModelRepository.count()
 
             return [new Metadata('assetModelCount', assetModelCount)]
         }
-    }
+    },
 
 
+    '/lookupServices': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsRepoService).serviceRepository
+                .find({
+                    relations: { measurementUnit: true },
+                    order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsService, 'name', 'measurementUnit'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
 }
 

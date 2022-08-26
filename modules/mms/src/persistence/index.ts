@@ -10,15 +10,19 @@ import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
 import { MmsChecklistModel } from "./entities/MmsChecklistModel";
 import { MmsClient } from "./entities/MmsClient";
 import { MmsClientLocation } from "./entities/MmsClientLocation";
+import { MmsCounter } from "./entities/MmsCounter";
 import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
 import { MmsPart } from "./entities/MmsPart";
 import { MmsPartRequirement } from "./entities/MmsPartRequirement";
 import { MmsResourceModel } from "./entities/MmsResourceModel";
 import { MmsResourceType } from "./entities/MmsResourceType";
 import { MmsScheduling } from "./entities/MmsScheduling";
+import { MmsService } from "./entities/MmsService";
+import { MmsServiceProvision } from "./entities/MmsServiceProvision";
 import { MmsTask } from "./entities/MmsTask";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
+import { MmsWorkPlan } from "./entities/MmsWorkPlan";
 
 export const MmsEntities = [
     MmsAsset,
@@ -41,5 +45,9 @@ export const MmsEntities = [
     MmsAssetComponent,
     MmsAssetComponentModel,
     MmsAssetModelPivot,
-    MmsChecklistModel
+    MmsChecklistModel,
+    MmsCounter,
+    MmsWorkPlan,
+    MmsService,
+    MmsServiceProvision
 ]

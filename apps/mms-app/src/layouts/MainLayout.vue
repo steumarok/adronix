@@ -25,6 +25,9 @@
         <q-item clickable to="/assets" :active="isActiveContext('assets')" active-class="text-white text-bold bg-grey-8">
           <q-item-section>Assets</q-item-section>
         </q-item>
+        <q-item clickable to="/tasks" :active="isActiveContext('tasks')" active-class="text-white text-bold bg-grey-8">
+          <q-item-section>Attività</q-item-section>
+        </q-item>
         <q-item clickable v-close-popup>
           <q-item-section>Ordini di lavoro</q-item-section>
         </q-item>

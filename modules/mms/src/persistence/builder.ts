@@ -19,6 +19,11 @@ import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
 import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
 import { MmsAssetComponent } from "./entities/MmsAssetComponent";
 import { IOService } from "@adronix/server/src";
+import { MmsTask } from "./entities/MmsTask";
+import { MmsCounter } from "./entities/MmsCounter";
+import { MmsWorkPlan } from "./entities/MmsWorkPlan";
+import { MmsService } from "./entities/MmsService";
+import { MmsServiceProvision } from "./entities/MmsServiceProvision";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -84,6 +89,21 @@ const ioDefinitions: EntityIODefinitions = [
     {
         entityClass: MmsAssetComponent
     },
+    {
+        entityClass: MmsTask
+    },
+    {
+        entityClass: MmsService
+    },
+    {
+        entityClass: MmsServiceProvision
+    },
+    {
+        entityClass: MmsWorkPlan
+    },
+    {
+        entityClass: MmsCounter
+    },
 ]
 
 
@@ -92,10 +112,20 @@ export default TypeORMPersistence.build()
     .addEventHandler(MmsAsset, async function(eventKind: EntityEventKind, asset: MmsAsset, transaction: TypeORMTransaction) {
         if (eventKind == EntityEventKind.Deleting) {
             const components = await transaction.entityManager.find(MmsAssetComponent, {
-                where: { asset }
+                where: { asset: { id: asset.id } }
             })
             for (const component of components) {
                 await this.service(IOService).throwing.delete(MmsAssetComponent, component)(transaction)
+            }
+        }
+    })
+    .addEventHandler(MmsTask, async function(eventKind: EntityEventKind, task: MmsTask, transaction: TypeORMTransaction) {
+        if (eventKind == EntityEventKind.Deleting) {
+            const serviceProvisions = await transaction.entityManager.find(MmsServiceProvision, {
+                where: { task: { id: task.id } }
+            })
+            for (const serviceProvision of serviceProvisions) {
+                await this.service(IOService).throwing.delete(MmsServiceProvision, serviceProvision)(transaction)
             }
         }
     });

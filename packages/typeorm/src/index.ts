@@ -6,3 +6,4 @@ export { TypeORMContext, extendTypeORMContext } from './persistence/TypeORMConte
 export { InjectDataSource } from './server/InjectDataSource'
 export { TypeORMRulePatterns } from './persistence/TypeORMRulePatterns'
 export { InjectTypeORM, TypeORM } from './server/InjectTypeORM'
+export { ColumnNumericTransformer } from './persistence/ColumnNumericTransformer'

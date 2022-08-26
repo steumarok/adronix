@@ -1,8 +1,5 @@
-import { CmnMeasurementUnit } from "modules/cmn/src";
-import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
-import { MmsAreaModelAttribution } from "./MmsAreaModelAttribution";
-import { MmsClient } from "./MmsClient";
-import { MmsClientLocation } from "./MmsClientLocation";
+import { CmnMeasurementUnit } from "@adronix/cmn";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne } from "typeorm";
 
 @Entity("mms_services")
 export class MmsService {
@@ -16,4 +13,6 @@ export class MmsService {
     @ManyToOne(() => CmnMeasurementUnit)
     measurementUnit: CmnMeasurementUnit;
 
+    @Column({ type: "decimal", precision: 10, scale: 4 })
+    price: Number;
 }

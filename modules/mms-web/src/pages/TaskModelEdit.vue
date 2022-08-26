@@ -15,6 +15,23 @@
                 multiple
                 />
 
+            <adx-data-input
+                v-model="taskModel.codePrefix"
+                label="Prefisso"
+                :errors="taskModel.errors.codePrefix"
+                />
+
+            <adx-data-input
+                v-model="taskModel.codeSuffix"
+                label="Suffisso"
+                :errors="taskModel.errors.codeSuffix"
+                />
+
+            <q-checkbox
+                v-model="taskModel.useGlobalCounter"
+                :false-value="null"
+                label="Usa counter globale"
+                />
         </adx-d>
 
     </adx-dialog>
