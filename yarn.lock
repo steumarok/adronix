@@ -143,6 +143,8 @@ __metadata:
     "@adronix/client": "workspace:^"
     "@adronix/cmn-web": "workspace:^"
     "@adronix/vue": "workspace:^"
+    "@fullcalendar/core": ^5.11.3
+    "@fullcalendar/vue3": ^5.11.2
     deep-object-diff: ^1.1.7
     pinia: ^2.0.17
   peerDependencies:
@@ -174,8 +176,10 @@ __metadata:
     "@adronix/base": "workspace:^"
     "@adronix/server": "workspace:^"
     "@types/jest": ^27.4.0
+    "@types/luxon": ^3.0.0
     "@types/pubsub-js": ^1.8.3
     jest: ^27.5.1
+    luxon: ^3.0.2
     pubsub-js: ^1.9.4
     ts-jest: ^27.1.3
   languageName: unknown
@@ -187,7 +191,9 @@ __metadata:
   dependencies:
     "@adronix/vue": "workspace:^"
     "@types/jest": ^27.4.0
+    "@types/luxon": ^3.0.0
     jest: ^27.5.1
+    luxon: ^3.0.1
     ts-jest: ^27.1.3
   peerDependencies:
     vue: ^3.0.0
@@ -1800,6 +1806,38 @@ __metadata:
     minimatch: ^3.0.4
     strip-json-comments: ^3.1.1
   checksum: 03a7704150b868c318aab6a94d87a33d30dc2ec579d27374575014f06237ba1370ae11178db772f985ef680d469dc237e7b16a1c5d8edaaeb8c3733e7a95a6d3
+  languageName: node
+  linkType: hard
+
+"@fullcalendar/common@npm:~5.11.3":
+  version: 5.11.3
+  resolution: "@fullcalendar/common@npm:5.11.3"
+  dependencies:
+    tslib: ^2.1.0
+  checksum: be4b365dca5ed075cc03aedbc0d6dcaa11f6e2ea6833c783212c79c7b657686a2dfc5390f1ead32bf596445a025daaa1a1179f2d4d563b71b4e1986d801c2fd4
+  languageName: node
+  linkType: hard
+
+"@fullcalendar/core@npm:^5.11.3, @fullcalendar/core@npm:~5.11.2":
+  version: 5.11.3
+  resolution: "@fullcalendar/core@npm:5.11.3"
+  dependencies:
+    "@fullcalendar/common": ~5.11.3
+    preact: ^10.0.5
+    tslib: ^2.1.0
+  checksum: 2774d0fa18c7a54676f706a1fdec7dd009b1d00add2dce68cd144b763d851d458461c67a9d534e5e553d7a133c49b0f1ea4868d286a5af57029092248421652a
+  languageName: node
+  linkType: hard
+
+"@fullcalendar/vue3@npm:^5.11.2":
+  version: 5.11.2
+  resolution: "@fullcalendar/vue3@npm:5.11.2"
+  dependencies:
+    "@fullcalendar/core": ~5.11.2
+    tslib: ^2.1.0
+  peerDependencies:
+    vue: ^3.0.11
+  checksum: 779f4d8d857acf1a60ce8251fbd9670b0deb6d943c71d0c1792c80799514ab154f85f4c68eb9b42027c22f896c9086baf96183dd30d69de1b940b18b93bd2b3f
   languageName: node
   linkType: hard
 
@@ -9082,6 +9120,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"luxon@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "luxon@npm:3.0.2"
+  checksum: 39a29b225cb951530cfec0a18b336841c427edd29af0a26649179b892a5bb9c9134012c0d985a3a3a7667612c84db0a54fa353ca152c80033d5acb78a7ba80da
+  languageName: node
+  linkType: hard
+
 "magic-string@npm:^0.25.7":
   version: 0.25.9
   resolution: "magic-string@npm:0.25.9"
@@ -10781,6 +10826,13 @@ __metadata:
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
   checksum: fe58766ff32e4becf65a7d57678995cfd239df6deed2fe0557f038b47c94e4132e7e5f68b5aa820c13adfec32e523b693efaeb65798efb995ce49ccd83953816
+  languageName: node
+  linkType: hard
+
+"preact@npm:^10.0.5":
+  version: 10.10.6
+  resolution: "preact@npm:10.10.6"
+  checksum: 60d47f068979fb796832a4cb8c817e7dc58fcc4c3e72cbb5356aa7c54e0e512bb80c3aab0e5220d5cc0ce179d64d474240b382980a26e8baef6399e37542448b
   languageName: node
   linkType: hard
 

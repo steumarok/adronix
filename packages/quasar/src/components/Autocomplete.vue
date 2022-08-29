@@ -54,6 +54,5 @@ const errorMessage = computed(() => props.errors ? props.errors.map(error => err
     <template v-for="(_, name) in $slots" :slot="name">
       <slot :name="name"/>
     </template>
-
   </q-select>
 </template>

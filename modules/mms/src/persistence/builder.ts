@@ -24,6 +24,12 @@ import { MmsCounter } from "./entities/MmsCounter";
 import { MmsWorkPlan } from "./entities/MmsWorkPlan";
 import { MmsService } from "./entities/MmsService";
 import { MmsServiceProvision } from "./entities/MmsServiceProvision";
+import { MmsResource } from "./entities/MmsResource";
+import { MmsWorkOrder } from "./entities/MmsWorkOrder";
+import { MmsTaskService } from "../services/MmsTaskService";
+import { DateTime } from "luxon";
+import { MmsTaskAttribute } from "./entities/MmsTaskAttribute";
+import { MmsChecklistModel } from "./entities/MmsChecklistModel";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -90,7 +96,10 @@ const ioDefinitions: EntityIODefinitions = [
         entityClass: MmsAssetComponent
     },
     {
-        entityClass: MmsTask
+        entityClass: MmsTask,
+        rules: {
+            'scheduledDate':   [ [ RulePatterns.isDateTime(), 'notValid' ] ]
+        }
     },
     {
         entityClass: MmsService
@@ -103,6 +112,18 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsCounter
+    },
+    {
+        entityClass: MmsResource
+    },
+    {
+        entityClass: MmsWorkOrder
+    },
+    {
+        entityClass: MmsTaskAttribute
+    },
+    {
+        entityClass: MmsChecklistModel
     },
 ]
 
@@ -127,6 +148,12 @@ export default TypeORMPersistence.build()
             for (const serviceProvision of serviceProvisions) {
                 await this.service(IOService).throwing.delete(MmsServiceProvision, serviceProvision)(transaction)
             }
+        }
+    })
+    .addEventHandler(MmsWorkOrder, async function(eventKind: EntityEventKind, workOrder: MmsWorkOrder, transaction: TypeORMTransaction) {
+        if (eventKind == EntityEventKind.Inserting) {
+            workOrder.code = await transaction.saga(this.service(MmsTaskService).generateWorkOrderCode())
+            workOrder.insertDate = DateTime.now().toJSDate()
         }
     });
 

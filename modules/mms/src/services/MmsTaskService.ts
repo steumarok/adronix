@@ -58,6 +58,9 @@ export class MmsTaskService extends AbstractService {
     @InjectTypeORM
     typeorm: TypeORM
 
+    *generateWorkOrderCode() {
+        return yield* this.getCounterValue("workOrder")
+    }
 
     *generateTasks(asset: MmsAsset) {
         asset = yield this.typeorm.findOne(
@@ -162,7 +165,9 @@ export class MmsTaskService extends AbstractService {
             yield this.io.throwing.insert(MmsServiceProvision, {
                 task,
                 service: workPlan.service,
+                assetComponentModel: workPlan.assetComponentModel,
                 expectedQuantity,
+                actualQuantity: expectedQuantity,
                 workPlan,
                 assetComponents
             })

@@ -2,6 +2,7 @@ import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable
 import { MmsAsset } from "./MmsAsset";
 import { MmsAssetComponent } from "./MmsAssetComponent";
 import { MmsChecklistModel } from "./MmsChecklistModel";
+import { MmsWorkOrder } from "./MmsWorkOrder";
 
 @Entity("mms_checklists")
 export class MmsChecklist {
@@ -20,4 +21,7 @@ export class MmsChecklist {
 
     @ManyToOne(() => MmsAssetComponent)
     assetComponent: MmsAssetComponent;
+
+    @ManyToOne(() => MmsWorkOrder)
+    workOrder: MmsWorkOrder;
 }

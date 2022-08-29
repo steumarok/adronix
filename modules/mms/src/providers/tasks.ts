@@ -19,25 +19,118 @@ import { MmsTaskService } from "../services/MmsTaskService";
 import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
 import { MmsService } from "../persistence/entities/MmsService";
 import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
+import { MmsResource } from "../persistence/entities/MmsResource";
+import { MmsWorkOrder } from "../persistence/entities/MmsWorkOrder";
+import { MmsTaskAttribute } from "../persistence/entities/MmsTaskAttribute";
 
 
 export const tasksProviders: DataProviderDefinitions = {
 
+    '/listWorkOrders': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { code: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsRepoService).workOrderRepository
+                .find({
+                    where,
+                    relations: {
+                        client: true,
+                        location: {
+                            locality: true
+                        }
+                    },
+                    order: Utils.orderClause(sortBy || 'code', descending)
+                })
+
+        },
+        output: [
+            [MmsWorkOrder, 'code', 'client', 'location'],
+            [MmsClient, 'name'],
+            [MmsClientLocation, 'address', 'locality'],
+            [CmnLocality, 'name'],
+        ]
+    },
+
+    '/editWorkOrder': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsRepoService).workOrderRepository
+                        .findOne({
+                            relations: {
+                                client: true,
+                                location: {
+                                    locality: true
+                                }
+                            },
+                            where: { id }})
+                    : new MmsWorkOrder()
+
+            return [po]
+        },
+        output: [
+            [MmsWorkOrder, 'code', 'client', 'location'],
+            [MmsClient, 'name'],
+            [MmsClientLocation, 'address', 'locality'],
+            [CmnLocality, 'name'],
+        ]
+    },
+
+
     '/listTasks': {
-        handler: async function ({ page, limit, sortBy, descending, filter, clientId, clientLocationId }) {
+        handler: async function ({
+            page,
+            limit,
+            sortBy,
+            descending,
+            filter,
+            clientId,
+            clientLocationId,
+            odlTaskId }) {
 
             const service = this.service(MmsRepoService)
+
+            async function buildOdlTaskIdWhere() {
+                if (odlTaskId) {
+                    const task = await service.taskRepository.findOne({
+                        relations: {
+                            asset: {
+                                location: true
+                            }
+                        },
+                        where: {
+                            id: odlTaskId
+                        },
+                    })
+                    return {
+                        asset: {
+                            location: {
+                                id: task.asset.location.id
+                            }
+                        }
+                    }
+                }
+                else {
+                    return {}
+                }
+            }
 
             const where = {
                 ...Utils.where(filter, { code: Like(`${filter}%`) }),
                 ...Utils.where(clientId, { client: { id: clientId } }),
-                ...Utils.where(clientLocationId, { location: { id: clientLocationId } })
+                ...Utils.where(clientLocationId, { location: { id: clientLocationId } }),
+                ...await buildOdlTaskIdWhere()
             }
 
             const [ rows, count ] = await service.taskRepository
                 .createQueryBuilder('a')
                 .leftJoinAndSelect('a.model', 'taskModel')
                 .leftJoinAndSelect('a.asset', 'asset')
+                .leftJoinAndSelect('a.workOrder', 'workOrder')
+                .leftJoinAndSelect('a.attributes', 'attributes')
                 .leftJoinAndSelect('asset.client', 'client')
                 .leftJoinAndSelect('asset.model', 'assetModel')
                 .leftJoinAndSelect('asset.location', 'location')
@@ -64,10 +157,12 @@ export const tasksProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsTask, 'code', 'model', 'asset', 'codePrefix', 'codeSuffix',
-                'scheduledDate', 'executionDate'],
+                'scheduledDate', 'executionDate', 'workOrder', 'attributes'],
             [MmsTaskModel, 'name'],
             [MmsAsset, 'name', 'client', 'location', 'model'],
+            [MmsWorkOrder, 'code'],
             [MmsClient, 'name'],
+            [MmsTaskAttribute, 'name'],
             [MmsAssetModel, 'name', 'assetType'],
             [MmsClientLocation, 'address', 'locality'],
             [CmnLocality, 'name'],
@@ -83,7 +178,10 @@ export const tasksProviders: DataProviderDefinitions = {
                         .findOne({
                             relations: {
                                 model: true,
-                                asset: true
+                                asset: true,
+                                resources: true,
+                                workOrder: true,
+                                attributes: true
                             },
                             where: { id }})
                     : new MmsTask()
@@ -100,7 +198,8 @@ export const tasksProviders: DataProviderDefinitions = {
                             workPlan: {
                                 assetComponentModel: true,
                                 assetModel: true
-                            }
+                            },
+                            assetComponentModel: true
                         },
                         where: { task: { id } }
                     })
@@ -112,17 +211,21 @@ export const tasksProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsTask, 'asset', 'model', 'codePrefix', 'codeSuffix', 'scheduledDate',
-                'executionDate', 'code'],
+                'executionDate', 'code', 'resources', 'workOrder', 'attributes'],
             [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'attributes'],
             [MmsClientLocation, 'address', 'locality'],
             [MmsClient, 'name'],
+            [MmsWorkOrder, 'code'],
             [MmsAssetModel, 'name'],
+            [MmsResource, 'name'],
             [MmsAssetComponentModel, 'name'],
             [MmsTaskModel, 'name'],
+            [MmsTaskAttribute, 'name'],
             [CmnMeasurementUnit, 'name'],
             [MmsService, 'name', 'measurementUnit'],
             [MmsWorkPlan, 'assetComponentModel', 'assetModel'],
-            [MmsServiceProvision, 'task', 'service', 'expectedQuantity', 'workPlan'],
+            [MmsServiceProvision, 'task', 'service', 'expectedQuantity', 'workPlan',
+                'removed', 'actualQuantity', 'assetComponentModel'],
         ]
     }
 }

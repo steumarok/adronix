@@ -28,7 +28,7 @@
         <q-item clickable to="/tasks" :active="isActiveContext('tasks')" active-class="text-white text-bold bg-grey-8">
           <q-item-section>Attività</q-item-section>
         </q-item>
-        <q-item clickable v-close-popup>
+        <q-item clickable to="/workOrders" :active="isActiveContext('workOrders')" active-class="text-white text-bold bg-grey-8">
           <q-item-section>Ordini di lavoro</q-item-section>
         </q-item>
         <q-item clickable v-close-popup>
@@ -37,6 +37,9 @@
         <q-separator />
         <q-item clickable to="/models">
           <q-item-section>Modelli</q-item-section>
+        </q-item>
+        <q-item clickable to="/resources" :active="isActiveContext('resources')" active-class="text-white text-bold bg-grey-8">
+          <q-item-section>Risorse</q-item-section>
         </q-item>
         <q-item clickable to="/planning">
           <q-item-section>Pianificazione</q-item-section>

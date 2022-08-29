@@ -8,6 +8,8 @@
       "@adronix/client": "workspace:^",
       "@adronix/cmn-web": "workspace:^",
       "@adronix/vue": "workspace:^",
+      "@fullcalendar/core": "^5.11.3",
+      "@fullcalendar/vue3": "^5.11.2",
       "deep-object-diff": "^1.1.7",
       "pinia": "^2.0.17"
    },

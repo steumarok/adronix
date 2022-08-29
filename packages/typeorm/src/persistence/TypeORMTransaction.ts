@@ -13,15 +13,18 @@ export class TypeORMTransaction extends Transaction {
         super(context)
     }
 
-    async saga(gen: Generator<(t: Transaction) => Promise<unknown>>) {
+    async saga<R>(gen: Generator<(t: Transaction) => Promise<unknown>>): Promise<R> {
         var prev = null
+        var value = null
         while (true) {
             const n = gen.next(prev)
+            value = n.value
             if (n.done) {
                 break;
             }
-            prev = await n.value(this)
+            prev = await value(this)
         }
+        return value
     }
 
     async start() {

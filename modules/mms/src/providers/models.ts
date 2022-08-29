@@ -20,6 +20,8 @@ import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 import { MmsService } from "../persistence/entities/MmsService";
+import { MmsTaskAttribute } from "../persistence/entities/MmsTaskAttribute";
+import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
 
 
 export const modelsProviders: DataProviderDefinitions = {
@@ -469,6 +471,45 @@ export const modelsProviders: DataProviderDefinitions = {
     },
 
 
+    '/listServices': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsRepoService).serviceRepository
+                .find({
+                    where,
+                    relations: { measurementUnit: true },
+                    order: Utils.orderClause(sortBy || 'name', descending)
+                })
+
+        },
+        output: [
+            [MmsService, 'name', 'measurementUnit', 'price'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
+    '/editService': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsRepoService).serviceRepository
+                        .findOne({
+                            relations: { measurementUnit: true },
+                            where: { id }})
+                    : new MmsService()
+
+            return [po]
+        },
+        output: [
+            [MmsService, 'name', 'measurementUnit', 'price'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
     '/lookupServices': {
         handler: async function ({ }) {
 
@@ -481,6 +522,75 @@ export const modelsProviders: DataProviderDefinitions = {
         output: [
             [MmsService, 'name', 'measurementUnit'],
             [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
+
+    '/listChecklistModels': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsRepoService).checklistModelRepository
+                .find({
+                    where,
+                    relations: { },
+                    order: Utils.orderClause(sortBy || 'name', descending)
+                })
+
+        },
+        output: [
+            [MmsChecklistModel, 'name']
+        ]
+    },
+
+    '/editChecklistModel': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsRepoService).checklistModelRepository
+                        .findOne({
+                            relations: { },
+                            where: { id }})
+                    : new MmsChecklistModel()
+
+            return [po]
+        },
+        output: [
+            [MmsChecklistModel, 'name']
+        ]
+    },
+
+    '/lookupChecklistModels': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsRepoService).serviceRepository
+                .find({
+                    relations: { measurementUnit: true },
+                    order: { name: "asc" }})
+
+        },
+        output: [
+            [MmsService, 'name', 'measurementUnit'],
+            [CmnMeasurementUnit, 'name'],
+        ]
+    },
+
+
+    '/lookupTaskAttributes': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsRepoService).taskAttributeRepository
+                .find({
+                    relations: { incompatibleAttributes: true },
+                    order: { name: "asc" }
+                })
+
+        },
+        output: [
+            [MmsTaskAttribute, 'name', 'incompatibleAttributes']
         ]
     },
 }

@@ -17,6 +17,10 @@ import { AssetComponentList } from '@adronix/mms-web'
 import { AssetComponentModelList } from '@adronix/mms-web'
 import { TaskList } from '@adronix/mms-web'
 import { WorkPlanList } from '@adronix/mms-web'
+import { ResourceList } from '@adronix/mms-web'
+import { ServiceList } from '@adronix/mms-web'
+import { WorkOrderList } from '@adronix/mms-web'
+import { ChecklistModelList } from '@adronix/mms-web'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -25,17 +29,22 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '/login', component: () => import('pages/Login.vue') },
 
+      { path: '/resources', component: () => ResourceList, meta: { context: 'resources' } },
+      { path: '/services', component: () => ServiceList, meta: { context: 'models' } },
+
       { path: '/clients', component: () => ClientList, meta: { context: 'clients' } },
       { path: '/clientLocations/:clientId', component: () => ClientLocationList, props: true, meta: { context: 'clients' } },
       { path: '/areas/:clientLocationId', component: () => AreaList, props: true, meta: { context: 'clients' } },
 
       { path: '/tasks', name: 'tasks', component: () => TaskList, props: true, meta: { context: 'tasks' } },
+      { path: '/workOrders', component: () => WorkOrderList, meta: { context: 'workOrders' } },
       { path: '/assets', name: 'assets', component: () => AssetList, props: true, meta: { context: 'assets' } },
       { path: '/assetComponents/:assetId', component: () => AssetComponentList, props: true, meta: { context: 'assets' } },
 
       { path: '/models', component: () => Models, meta: { context: 'models' } },
       { path: '/taskModels', component: () => TaskModelList, meta: { context: 'models' } },
       { path: '/assetModels', component: () => AssetModelList, meta: { context: 'models' } },
+      { path: '/checklistModels', component: () => ChecklistModelList, meta: { context: 'models' } },
       { path: '/assetComponentModels', component: () => AssetComponentModelList, meta: { context: 'models' } },
       { path: '/areaModels', component: () => AreaModelList, meta: { context: 'models' } },
       { path: '/assetAttributes', component: () => AssetAttributeList, meta: { context: 'models' } },

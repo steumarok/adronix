@@ -14,7 +14,8 @@
                 dense
                 >
                 <template #top-left>
-                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci asset</q-btn>
+                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci attività</q-btn>
+                    <q-btn @click="onCreateWorkOrder" color="secondary" unelevated class="q-ml-xs">Apri Ordine di Lavoro</q-btn>
                     <AssetListFilter v-bind="$props" :data-set="ds" />
                 </template>
                 <template #actions="{ row }">
@@ -22,8 +23,24 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
 
+                <template #wo="{ row }">
+                    <q-checkbox
+                        v-if="!row.workOrder"
+                        v-model="woSelection"
+                        :val="row.id"
+                        keep-color
+                        color="secondary"
+                        :false-value="null"
+                        dense
+                        />
+                </template>
+
                 <template #client="{ row }">
                     <span class="adx-reference" @click="onOpenCliente(row.asset.client.id)">{{row.asset.client.name}}</span>
+                </template>
+
+                <template #attributes="{ row }">
+                    <q-chip v-for="attribute in row.attributes" dense :label="attribute.name" />
                 </template>
 
                 <template #address="{ row }">
@@ -64,7 +81,7 @@ import { Item, DataSetUtils, buildUrl } from '@adronix/client';
 import ClientEdit from './ClientEdit.vue'
 import TaskEdit from './TaskEdit.vue'
 import { useAdronixStore } from '../store/adronix'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import NavTasks from './NavTasks.vue'
 import AssetListFilter from './AssetListFilter.vue'
 import { useNavigationStore } from '../store/navigation'
@@ -103,8 +120,10 @@ const dataTable = $adx.dataTable(
   'MmsTask',
   {
     actions:        { label: 'Azioni' },
+    wo:             { label: 'OdL' },
     code:           { label: 'Codice', width: "50px", sortable: true, field: (row: Item) => `${row.codePrefix}${row.code}${row.codeSuffix}` },
-    model:          { label: 'Modello attivita', width: "20%", sortable: true, field: (row: Item) => (row.model as Item).name },
+    attributes:     { label: 'Attributi' },
+    model:          { label: 'Modello attività', width: "20%", sortable: true, field: (row: Item) => (row.model as Item).name },
     assetModel:     { label: 'Modello asset', width: "20%", sortable: true },
     client:         { label: 'Cliente', width: "20%", sortable: true },
     address:        { label: 'Indirizzo', width: "20%", sortable: true },
@@ -113,10 +132,12 @@ const dataTable = $adx.dataTable(
   },
   store.getTableParams('tasks', 'code'))
 
+const woTaskId = ref()
 
 const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listTasks', {
     clientId: navStore.assetFilter.client.id,
     clientLocationId: navStore.assetFilter.clientLocation.id,
+    woTaskId: woTaskId.value,
     ...dataTable.params
 })))
 
@@ -145,6 +166,29 @@ function onEdit(id: string) {
     $adx.openDialog(TaskEdit, { id })
 }
 
+function onCreateWorkOrder() {
+    const workOrder = ds.insert("MmsWorkOrder")
+    const firstTask = ds.ref("MmsTask", woSelection.value[0])
+    workOrder.client = firstTask.value.asset.client
+    workOrder.location = firstTask.value.asset.location
+    for (const taskId of woSelection.value) {
+        const task = ds.findItem("MmsTask", (item) => item.id == taskId)
+        ds.update(task, { workOrder })
+    }
+    ds.commit()
+}
+
 const dataBindings = dataTable.bind(ds)
+
+const woSelection = ref([])
+
+watch(woSelection, () => {
+    if (woSelection.value.length == 0) {
+        woTaskId.value = null
+    }
+    else if (woSelection.value.length == 1) {
+        woTaskId.value = woSelection.value[0]
+    }
+})
 
 </script>

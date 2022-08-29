@@ -17,6 +17,9 @@ export class MmsChecklistItem {
     @ManyToOne(() => MmsChecklistModelItem)
     model: MmsChecklistModelItem;
 
+    @ManyToOne(() => MmsAssetComponent)
+    assetComponent: MmsAssetComponent;
+
     @Column()
     value: string;
 }

@@ -9,6 +9,7 @@ import { tasksProviders } from "./providers/tasks"
 import { MmsRepoService } from "./services/MmsRepoService"
 import { MmsAssetService } from "./services/MmsAssetService"
 import { MmsTaskService } from "./services/MmsTaskService"
+import { resourcesProviders } from "./providers/resources"
 
 export { MmsEntities } from "./persistence"
 
@@ -22,6 +23,7 @@ export const MmsWebModule = defineModule()
     .addDataProviders(
         clientsProviders,
         assetsProviders,
+        resourcesProviders,
         areasProviders,
         modelsProviders,
         tasksProviders,

@@ -1,4 +1,5 @@
 import { EntityClass, EntityProps } from "./types"
+import { DateTime } from 'luxon'
 
 export namespace RulePatterns {
     export function base(
@@ -24,4 +25,7 @@ export namespace RulePatterns {
         return base(value => value && value.length >= length, propName)
     }
 
+    export function isDateTime(propName?: string) {
+        return base(value => DateTime.fromISO(value).isValid || DateTime.fromJSDate(value).isValid, propName)
+    }
 }

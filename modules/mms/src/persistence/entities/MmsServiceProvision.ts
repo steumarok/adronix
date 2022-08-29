@@ -2,6 +2,7 @@ import { CmnMeasurementUnit } from "@adronix/cmn";
 import { ColumnNumericTransformer } from "@adronix/typeorm/src";
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne } from "typeorm";
 import { MmsAssetComponent } from "./MmsAssetComponent";
+import { MmsAssetComponentModel } from "./MmsAssetComponentModel";
 import { MmsService } from "./MmsService";
 import { MmsTask } from "./MmsTask";
 import { MmsWorkPlan } from "./MmsWorkPlan";
@@ -18,6 +19,9 @@ export class MmsServiceProvision {
     @ManyToOne(() => MmsService)
     service: MmsService;
 
+    @ManyToOne(() => MmsAssetComponentModel)
+    assetComponentModel: MmsAssetComponentModel;
+
     @ManyToOne(() => MmsWorkPlan)
     workPlan: MmsWorkPlan;
 
@@ -28,8 +32,21 @@ export class MmsServiceProvision {
     @Column({
         type: "decimal",
         precision: 10,
-        scale: 4,
-        transformer: new ColumnNumericTransformer()
+        scale: 2,
+        transformer: new ColumnNumericTransformer(),
+        nullable: true
     })
-    expectedQuantity: Number;
+    expectedQuantity: number;
+
+    @Column({
+        type: "decimal",
+        precision: 10,
+        scale: 2,
+        transformer: new ColumnNumericTransformer(),
+        nullable: true
+    })
+    actualQuantity: number;
+
+    @Column({ nullable: true })
+    removed: boolean;
 }

@@ -7,10 +7,12 @@
       "vue": "^3.0.0"
    },
    "dependencies": {
-      "@adronix/vue": "workspace:^"
+      "@adronix/vue": "workspace:^",
+      "luxon": "^3.0.1"
    },
    "devDependencies": {
       "@types/jest": "^27.4.0",
+      "@types/luxon": "^3.0.0",
       "jest": "^27.5.1",
       "ts-jest": "^27.1.3"
    }

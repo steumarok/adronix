@@ -1,9 +1,6 @@
-import { Errors } from "@adronix/base";
-import { Transaction } from "@adronix/persistence";
-import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
-import { InjectDataSource, InjectTypeORM, TypeORM, TypeORMTransaction } from "@adronix/typeorm";
-import { DateTime } from "luxon";
-import { DataSource, EntityManager, EntityTarget, FindOneOptions, In } from "typeorm";
+import { AbstractService } from "@adronix/server";
+import { InjectDataSource } from "@adronix/typeorm";
+import { DataSource } from "typeorm";
 import { MmsArea } from "../persistence/entities/MmsArea";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
@@ -13,19 +10,22 @@ import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
+import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
-import { MmsCounter } from "../persistence/entities/MmsCounter";
 import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
 import { MmsPart } from "../persistence/entities/MmsPart";
 import { MmsPartRequirement } from "../persistence/entities/MmsPartRequirement";
+import { MmsResource } from "../persistence/entities/MmsResource";
 import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
 import { MmsResourceType } from "../persistence/entities/MmsResourceType";
 import { MmsScheduling } from "../persistence/entities/MmsScheduling";
 import { MmsService } from "../persistence/entities/MmsService";
 import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
 import { MmsTask } from "../persistence/entities/MmsTask";
+import { MmsTaskAttribute } from "../persistence/entities/MmsTaskAttribute";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
+import { MmsWorkOrder } from "../persistence/entities/MmsWorkOrder";
 import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
 
 
@@ -64,6 +64,18 @@ export class MmsRepoService extends AbstractService {
 
     get serviceRepository() {
         return this.dataSource.getRepository(MmsService)
+    }
+
+    get checklistModelRepository() {
+        return this.dataSource.getRepository(MmsChecklistModel)
+    }
+
+    get workOrderRepository() {
+        return this.dataSource.getRepository(MmsWorkOrder)
+    }
+
+    get taskAttributeRepository() {
+        return this.dataSource.getRepository(MmsTaskAttribute)
     }
 
     get assetComponentModelRepository() {
@@ -120,6 +132,10 @@ export class MmsRepoService extends AbstractService {
 
     get taskRepository() {
         return this.dataSource.getRepository(MmsTask)
+    }
+
+    get resourceRepository() {
+        return this.dataSource.getRepository(MmsResource)
     }
 }
 

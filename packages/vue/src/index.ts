@@ -1,5 +1,5 @@
 export { VueDataSet, dataSet } from './client/VueDataSet'
-import { Item } from '@adronix/client/src'
+import { Item, ItemFilter } from '@adronix/client/src'
 import { Component, computed, onMounted, reactive, ref, Ref } from 'vue'
 import { GetParams, urlComposer } from './client/UrlComposer'
 import { dataSet, VueDataSet } from './client/VueDataSet'
@@ -37,11 +37,11 @@ export function dataTable(
     return {
         params,
         columns,
-        bind(dataSet: VueDataSet) {
+        bind(dataSet: VueDataSet, expr: ItemFilter = () => true) {
             return {
                 params,
                 columns,
-                rows: dataSet.list(typeName),
+                rows: dataSet.list(typeName, expr),
                 totalCount: dataSet.ref('Metadata', `${typeName}.totalCount`),
             }
         }

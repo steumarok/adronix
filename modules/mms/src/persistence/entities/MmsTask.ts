@@ -1,7 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne } from "typeorm";
 import { MmsAsset } from "./MmsAsset";
 import { MmsAssetComponent } from "./MmsAssetComponent";
+import { MmsResource } from "./MmsResource";
+import { MmsResourceModel } from "./MmsResourceModel";
+import { MmsTaskAttribute } from "./MmsTaskAttribute";
 import { MmsTaskModel } from "./MmsTaskModel";
+import { MmsWorkOrder } from "./MmsWorkOrder";
 
 @Entity("mms_tasks")
 export class MmsTask {
@@ -32,4 +36,15 @@ export class MmsTask {
 
     @Column({ nullable: true })
     completeDate: Date;
+
+    @ManyToMany(() => MmsResource)
+    @JoinTable({ name: "mms_tasks_mms_resources" })
+    resources: MmsResource[];
+
+    @ManyToOne(() => MmsWorkOrder)
+    workOrder: MmsWorkOrder;
+
+    @ManyToMany(() => MmsTaskAttribute)
+    @JoinTable({name: "mms_tasks_mms_attributes"})
+    attributes: MmsTaskAttribute[];
 }

@@ -20,11 +20,26 @@
         <q-tab-panels v-model="tab" animated style="min-height: 400px">
             <q-tab-panel name="general">
 
+                <adx-d horizontal fit justify="evenly" content="center" v-if="task.workOrder">
+                    <adx-d vertical padding="xs">
+                        <adx-data-input
+                            v-model="task.workOrder.code"
+                            label="Ordine di lavoro"
+                            />
+                    </adx-d>
+                </adx-d>
+
                 <adx-d horizontal fit justify="evenly" content="center">
                     <adx-d vertical padding="xs">
                         <adx-data-input
                             v-model="taskCode"
                             label="Nome/codice"
+                            />
+                    </adx-d>
+                    <adx-d vertical padding="xs">
+                        <mms-task-attribute-select
+                            v-model="task.attributes"
+                            multiple
                             />
                     </adx-d>
                     <adx-d vertical padding="xs">
@@ -34,20 +49,58 @@
                     </adx-d>
                 </adx-d>
 
+                <adx-d horizontal fit justify="evenly" content="center">
+                    <adx-d vertical padding="xs">
+                        <adx-data-input
+                            v-model="task.scheduledDate"
+                            data-type="datetime"
+                            label="Data pianificata"
+                            :errors="task.errors.scheduledDate"
+                            />
+                    </adx-d>
+                    <adx-d vertical padding="xs">
+                        <adx-data-input
+                            v-model="task.executionDate"
+                            data-type="datetime"
+                            label="Data di esecuzione"
+                            :errors="task.errors.executionDate"
+                            />
+                    </adx-d>
+                    <adx-d vertical padding="xs">
+                        <adx-data-input
+                            v-model="task.completeDate"
+                            data-type="datetime"
+                            label="Data di completamento"
+                            :errors="task.errors.completeDate"
+                            />
+                    </adx-d>
+                </adx-d>
+
+                <adx-d horizontal fit justify="evenly" content="center">
+                    <adx-d vertical padding="xs">
+                        <mms-resource-select
+                            v-model="task.resources"
+                            label="Risorse coinvolte"
+                            :errors="task.errors.resources"
+                            multiple
+                            />
+                    </adx-d>
+                </adx-d>
+
             </q-tab-panel>
 
             <q-tab-panel name="serviceProvision">
 
                 <adx-data-table
-                    :data-bindings="serviceProvisionDataTable.bind(ds)"
+                    :data-bindings="spBinding"
                     flat
                     dense
                     >
                     <template #top-left>
-                        <q-btn @click="onInsertLastTaskInfo" color="primary" outline>Inserisci riga</q-btn>
+                        <q-btn @click="onInsertServiceProvision" color="primary" outline>Inserisci riga</q-btn>
                     </template>
                     <template #actions="{ row }">
-                        <q-btn icon="delete" flat size="sm" @click="onDeleteLastTaskInfo(row)"/>
+                        <q-btn icon="delete" flat size="sm" @click="onDeleteServiceProvision(row)"/>
                     </template>
 
                     <template #service="{ row }">
@@ -59,17 +112,28 @@
                     </template>
                     <template #componentModel="{ row }">
                         <mms-asset-component-model-select
-                            v-model="row.workPlan.assetComponentModel"
+                            v-model="row.assetComponentModel"
                             label=""
                             dense
                             />
                     </template>
                     <template #expectedQuantity="{ row }">
                         <adx-data-input
+                            v-if="row.service?.measurementUnit"
                             v-model="row.expectedQuantity"
                             dense
                             clearable="false"
-                            :suffix="row.service.measurementUnit?.name"
+                            :suffix="row.service?.measurementUnit?.name"
+                            />
+                    </template>
+                    <template #actualQuantity="{ row }">
+                        <adx-data-input
+                            v-if="row.service?.measurementUnit"
+                            v-model="row.expectedQuantity"
+                            dense
+                            input-class="text-right"
+                            clearable="false"
+                            :suffix="row.service?.measurementUnit?.name"
                             />
                     </template>
                 </adx-data-table>
@@ -92,6 +156,8 @@ import MmsAreaSelect from '../components/MmsAreaSelect.vue'
 import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
 import MmsTaskModelSelect from '../components/MmsTaskModelSelect.vue'
 import MmsServiceSelect from '../components/MmsServiceSelect.vue'
+import MmsResourceSelect from '../components/MmsResourceSelect.vue'
+import MmsTaskAttributeSelect from '../components/MmsTaskAttributeSelect.vue'
 
 const props = defineProps({
   id: Number
@@ -102,21 +168,17 @@ const ds = $adx.dataSet(buildUrl('/api/mms/editTask', { id: props.id}))
 
 const task = ds.ref('MmsTask')
 
-const serviceProvisionDataTable = $adx.dataTable(
-  'MmsServiceProvision',
-  {
-    actions:            { label: 'Azioni', width: "40px" },
-    service:            { label: 'Servizio', width: "50%" },
-    componentModel:     { label: 'Modello componente', width: "50%" },
-    expectedQuantity:   { label: 'Quantità'},
-  })
 
-function onDeleteLastTaskInfo(lti: Item) {
-    ds.delete(lti)
+function onDeleteServiceProvision(sp: Item) {
+    if (sp.inserted) {
+        ds.delete(sp)
+    } else {
+        ds.update(sp, { removed: true })
+    }
 }
 
-function onInsertLastTaskInfo() {
-    ds.insert('MmsLastTaskInfo', { asset: unref(task) })
+function onInsertServiceProvision() {
+    ds.insert('MmsServiceProvision', { task: unref(task) })
 }
 
 const { dialog } = $adx.dialog(
@@ -124,6 +186,27 @@ const { dialog } = $adx.dialog(
 )
 
 const taskCode = computed(() => task.value.codePrefix + task.value.code + task.value.codeSuffix)
+const manageExpected = computed(() => !task.workOrder)
+const manageActual = computed(() => task.workOrder)
 
 const tab = ref('general')
+
+const spBinding = computed(() => {
+    if (!task.value) {
+        return
+    }
+
+    const quantityColName = task.value.workOrder ? 'actualQuantity' : 'expectedQuantity'
+
+    const serviceProvisionDataTable = $adx.dataTable(
+        'MmsServiceProvision',
+        {
+            actions:            { label: 'Azioni', width: "40px" },
+            service:            { label: 'Servizio', width: "40%" },
+            componentModel:     { label: 'Modello componente', width: "40%" },
+            [quantityColName]:  { label: 'Q.tà', width: '20%'},
+        })
+
+    return serviceProvisionDataTable.bind(ds, (item) => !item.removed)
+})
 </script>
