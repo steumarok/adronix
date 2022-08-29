@@ -1,27 +1,21 @@
-import { HttpContext, PaginatedList } from "@adronix/server";
-import { DataProviderDefinitions } from "@adronix/server";
-import { MmsRepoService } from "../services/MmsRepoService";
-import { MmsClient } from "../persistence/entities/MmsClient";
-import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
-import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
-import { MmsArea } from "../persistence/entities/MmsArea";
-import { Brackets, Like, Repository } from "typeorm";
-import { EntityClass } from "@adronix/persistence/src";
-import { ReturnType } from "@adronix/server";
-import { Utils } from "@adronix/server";
-import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
+import { CmnMeasurementUnit } from "@adronix/cmn";
+import { DataProviderDefinitions, Utils } from "@adronix/server";
 import { Metadata } from "@adronix/server/src/server/ItemCollector";
-import { MmsResourceType } from "../persistence/entities/MmsResourceType";
-import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
-import { MmsPart } from "../persistence/entities/MmsPart";
-import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
-import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
+import { Like } from "typeorm";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
-import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
+import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
+import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
+import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
+import { MmsChecklistItemModel } from "../persistence/entities/MmsChecklistItemModel";
+import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
+import { MmsPart } from "../persistence/entities/MmsPart";
+import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
+import { MmsResourceType } from "../persistence/entities/MmsResourceType";
 import { MmsService } from "../persistence/entities/MmsService";
 import { MmsTaskAttribute } from "../persistence/entities/MmsTaskAttribute";
-import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
+import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
+import { MmsRepoService } from "../services/MmsRepoService";
 
 
 export const modelsProviders: DataProviderDefinitions = {
@@ -55,14 +49,18 @@ export const modelsProviders: DataProviderDefinitions = {
                 id
                     ? await this.service(MmsRepoService).assetComponentModelRepository
                         .findOne({
-                            relations: { measurementUnit: true },
+                            relations: {
+                                measurementUnit: true,
+                                checklistItemModels: true
+                            },
                             where: { id }})
                     : new MmsAssetComponentModel()
 
             return [po]
         },
         output: [
-            [MmsAssetComponentModel, 'name', 'measurementUnit', 'unitQuantity'],
+            [MmsAssetComponentModel, 'name', 'measurementUnit', 'unitQuantity', 'checklistItemModels'],
+            [MmsChecklistItemModel, 'text'],
             [CmnMeasurementUnit, 'name']
         ]
     },
@@ -93,7 +91,10 @@ export const modelsProviders: DataProviderDefinitions = {
             const assetModel =
                 id  ? await service.assetModelRepository
                         .findOne({
-                            relations: { measurementUnit: true },
+                            relations: {
+                                measurementUnit: true,
+                                checklistModel: true
+                            },
                             where: { id }})
                     : new MmsAssetModel()
 
@@ -112,9 +113,10 @@ export const modelsProviders: DataProviderDefinitions = {
             return [assetModel, ...pivots]
         },
         output: [
-            [MmsAssetModel, 'name', 'assetType', 'measurementUnit', 'unitQuantity'],
+            [MmsAssetModel, 'name', 'assetType', 'measurementUnit', 'unitQuantity', 'checklistModel'],
             [MmsAssetModelPivot, 'assetModel', 'areaModel', 'componentModel', 'quantity', 'rowGroup'],
             [MmsAreaModel, 'name'],
+            [MmsChecklistModel, 'name'],
             [MmsAssetComponentModel, 'name', 'measurementUnit'],
             [CmnMeasurementUnit, 'name'],
         ]
@@ -536,13 +538,16 @@ export const modelsProviders: DataProviderDefinitions = {
             return await this.service(MmsRepoService).checklistModelRepository
                 .find({
                     where,
-                    relations: { },
+                    relations: {
+                        checklistItemModels: true
+                    },
                     order: Utils.orderClause(sortBy || 'name', descending)
                 })
 
         },
         output: [
-            [MmsChecklistModel, 'name']
+            [MmsChecklistModel, 'name', 'checklistItemModels'],
+            [MmsChecklistItemModel, 'text']
         ]
     },
 
@@ -552,29 +557,85 @@ export const modelsProviders: DataProviderDefinitions = {
                 id
                     ? await this.service(MmsRepoService).checklistModelRepository
                         .findOne({
-                            relations: { },
+                            relations: {
+                                checklistItemModels: true
+                            },
                             where: { id }})
                     : new MmsChecklistModel()
 
             return [po]
         },
         output: [
-            [MmsChecklistModel, 'name']
+            [MmsChecklistModel, 'name', 'checklistItemModels'],
+            [MmsChecklistItemModel, 'text']
         ]
     },
 
     '/lookupChecklistModels': {
         handler: async function ({ }) {
 
-            return await this.service(MmsRepoService).serviceRepository
+            return await this.service(MmsRepoService).checklistModelRepository
                 .find({
-                    relations: { measurementUnit: true },
+                    relations: { },
                     order: { name: "asc" }})
 
         },
         output: [
-            [MmsService, 'name', 'measurementUnit'],
-            [CmnMeasurementUnit, 'name'],
+            [MmsChecklistModel, 'name']
+        ]
+    },
+
+
+    '/listChecklistItemModels': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { text: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsRepoService).checklistItemModelRepository
+                .find({
+                    where,
+                    relations: {
+                    },
+                    order: Utils.orderClause(sortBy || 'text', descending)
+                })
+
+        },
+        output: [
+            [MmsChecklistItemModel, 'text', 'dataType']
+        ]
+    },
+
+    '/editChecklistItemModel': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsRepoService).checklistItemModelRepository
+                        .findOne({
+                            relations: {
+                            },
+                            where: { id }})
+                    : new MmsChecklistItemModel()
+
+            return [po]
+        },
+        output: [
+            [MmsChecklistItemModel, 'text', 'dataType', 'typeOptions']
+        ]
+    },
+
+    '/lookupChecklistItemModels': {
+        handler: async function ({ }) {
+
+            return await this.service(MmsRepoService).checklistItemModelRepository
+                .find({
+                    relations: { },
+                    order: { text: "asc" }})
+
+        },
+        output: [
+            [MmsChecklistItemModel, 'text']
         ]
     },
 

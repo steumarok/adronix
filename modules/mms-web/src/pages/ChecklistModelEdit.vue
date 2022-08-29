@@ -11,6 +11,15 @@
 
         </adx-d>
 
+        <adx-d vertical padding="xs">
+            <mms-checklist-item-model-select
+                label="Modelli di elementi di checklist"
+                v-model="checklistModel.checklistItemModels"
+                :errors="checklistModel.errors.checklistItemModels"
+                multiple
+                />
+        </adx-d>
+
     </adx-dialog>
 </template>
 
@@ -20,6 +29,7 @@ import { buildUrl } from '@adronix/client';
 import { useAdronix } from '@adronix/vue'
 import { unref } from 'vue';
 import { CmnMeasurementUnitSelect } from '@adronix/cmn-web'
+import MmsChecklistItemModelSelect from '../components/MmsChecklistItemModelSelect.vue'
 
 const props = defineProps({
   id: Number

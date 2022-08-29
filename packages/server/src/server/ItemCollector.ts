@@ -126,7 +126,10 @@ export class ItemCollector {
         if (this.dynamicPropertyMap.has(item.constructor)) {
             const dynamicProperties = this.dynamicPropertyMap.get(item.constructor)
             for (const propName in dynamicProperties) {
-                itemData[propName] = dynamicProperties[propName](item)
+                const dummyItem = {
+                    [propName]: dynamicProperties[propName](item)
+                }
+                itemData[propName] = this.readProperty(dummyItem, propName, dataMap)
             }
         }
 

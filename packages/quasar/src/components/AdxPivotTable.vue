@@ -20,7 +20,7 @@
       <template v-slot:body="props">
         <q-tr :props="props">
           <q-td>
-            <slot name="row" :row="rowItemMap[props.row.rowGroup]"></slot>
+            <slot name="row" :row="rowItemMap[getRowGroup(props.row)]"></slot>
           </q-td>
           <q-td
             v-for="col in props.cols"
@@ -29,10 +29,10 @@
           >
 
             <slot name="pivot"
-                :pivot="data[props.row.rowGroup][col.name]"
-                :[rowProperty]="rowItemMap[props.row.rowGroup].item"
+                :pivot="data[getRowGroup(props.row)][col.name]"
+                :[rowProperty]="rowItemMap[getRowGroup(props.row)].item"
                 :[columnProperty]="columnItemMap[col.name].item"
-                v-if="isPivotEnabled(props.row.rowGroup, col.name)"></slot>
+                v-if="isPivotEnabled(getRowGroup(props.row), col.name)"></slot>
           </q-td>
         </q-tr>
       </template>
@@ -49,11 +49,12 @@ const props = defineProps<{
   dataSet: VueDataSet,
   itemType: string,
   rowProperty: string,
+  rowGroupProperty: string,
   columnProperty: string,
   insertionProperties: { [key: string]: ItemProp }
 }>()
 
-const { rowProperty, columnProperty } = props
+const { rowProperty, columnProperty, rowGroupProperty } = props
 const rowItemMap = reactive({})
 const columnItemMap = reactive({})
 const data = reactive({})
@@ -75,8 +76,12 @@ function checkItem(rowGroup, index, rowItem, colItem, pivot) {
     }
 }
 
+function getRowGroup(item) {
+    return rowGroupProperty ? item[rowGroupProperty] : item.id
+}
+
 function calcNextRowGroup(items) {
-    return Math.max(...items.map(item => item.rowGroup).concat([0])) + 1
+    return Math.max(...items.map(item => getRowGroup(item)).concat([0])) + 1
 }
 
 
@@ -87,7 +92,7 @@ watch(items, () => {
     const rows = Object.fromEntries(
         Array.from(groupBy(
             items,
-            item => item.rowGroup)
+            item => getRowGroup(item))
         )
         .map(elem => [elem[0], { item: elem[1][0][rowProperty] }])
         .concat([ [ nextRowGroup, { item: null } ] ])
@@ -112,7 +117,7 @@ watch(items, () => {
 
             const item = props.dataSet.findItem(
                 props.itemType,
-                (item) => item.rowGroup == rowGroup && item[columnProperty]?.id == colItem?.id)
+                (item) => getRowGroup(item) == rowGroup && item[columnProperty]?.id == colItem?.id)
 
             if (!data[rowGroup][index]) {
                 if (item) {
@@ -134,7 +139,7 @@ watch(items, () => {
 
 watch(rowItemMap, () => {
     for (const rowGroup in rowItemMap) {
-        props.dataSet.filterItems(props.itemType, (item) => item.rowGroup == rowGroup)
+        props.dataSet.filterItems(props.itemType, (item) => getRowGroup(item) == rowGroup)
             .forEach(item => {
                 if (item[rowProperty].id != rowItemMap[rowGroup].item.id) {
                     props.dataSet.update(item, { [rowProperty]: rowItemMap[rowGroup].item })
@@ -178,7 +183,7 @@ const rows = computed(() => {
     return Array.from(
         groupBy(
             items,
-            item => item.rowGroup)
+            item => getRowGroup(item))
         ).map(r => ({
             rowGroup: r[0]
         }))

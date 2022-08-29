@@ -1,8 +1,8 @@
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
 import { MmsAsset } from "./MmsAsset";
 import { MmsAssetComponent } from "./MmsAssetComponent";
+import { MmsChecklistItemModel } from "./MmsChecklistItemModel";
 import { MmsChecklistModel } from "./MmsChecklistModel";
-import { MmsChecklistModelItem } from "./MmsChecklistModelItem";
 
 
 @Entity("mms_checklist_items")
@@ -14,8 +14,8 @@ export class MmsChecklistItem {
     @Column()
     notes: string;
 
-    @ManyToOne(() => MmsChecklistModelItem)
-    model: MmsChecklistModelItem;
+    @ManyToOne(() => MmsChecklistItemModel)
+    itemModel: MmsChecklistItemModel;
 
     @ManyToOne(() => MmsAssetComponent)
     assetComponent: MmsAssetComponent;

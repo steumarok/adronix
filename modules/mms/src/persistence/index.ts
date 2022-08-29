@@ -7,8 +7,8 @@ import { MmsAssetComponent } from "./entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "./entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
+import { MmsChecklistItemModel } from "./entities/MmsChecklistItemModel";
 import { MmsChecklistModel } from "./entities/MmsChecklistModel";
-import { MmsChecklistModelItem } from "./entities/MmsChecklistModelItem";
 import { MmsClient } from "./entities/MmsClient";
 import { MmsClientLocation } from "./entities/MmsClientLocation";
 import { MmsCounter } from "./entities/MmsCounter";
@@ -55,5 +55,5 @@ export const MmsEntities = [
     MmsServiceProvision,
     MmsResource,
     MmsTaskAttribute,
-    MmsChecklistModelItem
+    MmsChecklistItemModel
 ]

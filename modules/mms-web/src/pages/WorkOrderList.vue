@@ -31,6 +31,25 @@
                     {{row.location?.locality?.name}}
                 </template>
 
+                <template #row-content="props">
+                    <q-tr :props="props">
+                        <q-td colspan="100%">
+                            <adx-data-table
+                                :data-bindings="detailBindings(props.row)"
+                                flat
+                                bordered
+                            >
+                                <template #links="{ row }">
+                                    <q-btn size="sm" color="secondary" flat
+                                        :to="{ name: 'tasks', params: { workOrderId: props.row.id } }">Attività</q-btn>
+                                    <q-btn size="sm" color="secondary" flat
+                                        :to="{ name: 'checkLists', params: { workOrderId: props.row.id, assetId: row.id } }">Checklist</q-btn>
+                                </template>
+                            </adx-data-table>
+                        </q-td>
+                    </q-tr>
+                </template>
+
             </adx-data-table>
         </adx-d>
 
@@ -69,4 +88,17 @@ function onEdit(id: string) {
 }
 
 const dataBindings = dataTable.bind(ds)
+
+function detailBindings(workOrder: Item) {
+    const dataTable = $adx.dataTable(
+        'MmsAsset',
+        {
+            name:  { label: 'Asset', width: "50%", field: (row: Item) => row.name },
+            model: { label: 'Modello', width: "50%", field: (row: Item) => row.model.name },
+            links: { label: 'Collegamenti', width: "100px" },
+        },
+        { sortBy: "name" })
+
+    return dataTable.bind(ds, item => item.workOrders.map(wo => wo.id).indexOf(workOrder.id) != -1)
+}
 </script>

@@ -7,13 +7,12 @@ import { unref, computed } from 'vue';
 import { storeToRefs } from 'pinia'
 
 const navStore = useNavigationStore()
-const { assetFilter } = storeToRefs(navStore)
+const { taskFilter } = storeToRefs(navStore)
 
 const to = {
     name: 'tasks',
     params: {
-        clientId: assetFilter.value.client.id,
-        clientLocationId: assetFilter.value.clientLocation.id
+        workOrderId: taskFilter.value.workOrder.id
     }
 }
 </script>
@@ -22,8 +21,7 @@ const to = {
     <nav-home>
         <q-breadcrumbs-el :to="to">
             Attività
-            <span v-if="assetFilter.clientLocation.ref">&nbsp;in {{assetFilter.clientLocation.ref.address}} - {{assetFilter.clientLocation.ref.locality?.name}}</span>
-            <span v-if="assetFilter.client.ref">&nbsp;di {{assetFilter.client.ref.name}}</span>
+            <span v-if="taskFilter.workOrder.ref">&nbsp;in {{taskFilter.workOrder.ref.code}}</span>
         </q-breadcrumbs-el>
         <slot />
     </nav-home>

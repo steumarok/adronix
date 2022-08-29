@@ -23,6 +23,7 @@ import ResourceList from './pages/ResourceList.vue'
 import ServiceList from './pages/ServiceList.vue'
 import WorkOrderList from './pages/WorkOrderList.vue'
 import ChecklistModelList from './pages/ChecklistModelList.vue'
+import ChecklistItemModelList from './pages/ChecklistItemModelList.vue'
 
 export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     AreaList, AssetList, Models, AssetModelList, ResourceModelList,
@@ -30,4 +31,4 @@ export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     PartRequirementList, AssetAttributeList, SchedulingList,
     AreaModelList, AssetComponentList, AssetComponentModelList,
     TaskList, WorkPlanList, ResourceList, ServiceList, WorkOrderList,
-    ChecklistModelList }
+    ChecklistModelList, ChecklistItemModelList }

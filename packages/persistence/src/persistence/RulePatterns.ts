@@ -17,6 +17,10 @@ export namespace RulePatterns {
         return base(value => !!value, propName)
     }
 
+    export function matchEnum(e: object, propName?: string) {
+        return base(value => Object.values(e).indexOf(value) != -1, propName)
+    }
+
     export function notNull(propName?: string) {
         return base(value => !!value, propName)
     }

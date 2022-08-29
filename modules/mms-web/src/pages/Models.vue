@@ -49,6 +49,12 @@ const assetModelCount = ds.ref("Metadata", "assetModelCount")
                     </q-item-section>
                 </q-item>
 
+                 <q-item clickable to="/checklistItemModels">
+                    <q-item-section>
+                        <span class="adx-reference">Modelli di elementi checklist</span>
+                    </q-item-section>
+                </q-item>
+
                 <q-item clickable to="/areaModels">
                     <q-item-section>
                         <span class="adx-reference">Modelli di locale</span>

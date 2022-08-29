@@ -5,7 +5,7 @@ import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
 import { MmsArea } from "../persistence/entities/MmsArea";
-import { Brackets, Like, Repository } from "typeorm";
+import { Brackets, In, Like, Repository } from "typeorm";
 import { Utils } from "@adronix/server";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
@@ -33,7 +33,7 @@ export const tasksProviders: DataProviderDefinitions = {
                 ? { code: Like(`${filter}%`) }
                 : {}
 
-            return await this.service(MmsRepoService).workOrderRepository
+            const workOrders = await this.service(MmsRepoService).workOrderRepository
                 .find({
                     where,
                     relations: {
@@ -45,10 +45,32 @@ export const tasksProviders: DataProviderDefinitions = {
                     order: Utils.orderClause(sortBy || 'code', descending)
                 })
 
+            const tasks = await this.service(MmsRepoService).taskRepository
+                .find({
+                    where: {
+                        workOrder: { id: In(workOrders.map(wo => wo.id)) }
+                    },
+                    relations: {
+                        asset: {
+                            model: true
+                        },
+                        workOrder: true
+                    }
+                })
+
+            this.output.add(MmsAsset, 'workOrders', asset => {
+                return tasks.filter(t => t.asset.id == asset.id).map(t => t.workOrder)
+            })
+
+            const assets = new Set(tasks.map(t => t.asset))
+
+            return [...workOrders, ...assets]
         },
         output: [
             [MmsWorkOrder, 'code', 'client', 'location'],
             [MmsClient, 'name'],
+            [MmsAsset, 'name', 'model'],
+            [MmsAssetModel, 'name'],
             [MmsClientLocation, 'address', 'locality'],
             [CmnLocality, 'name'],
         ]
@@ -87,6 +109,7 @@ export const tasksProviders: DataProviderDefinitions = {
             sortBy,
             descending,
             filter,
+            workOrderId,
             clientId,
             clientLocationId,
             odlTaskId }) {
@@ -120,6 +143,7 @@ export const tasksProviders: DataProviderDefinitions = {
 
             const where = {
                 ...Utils.where(filter, { code: Like(`${filter}%`) }),
+                ...Utils.where(workOrderId, { workOrder: { id: workOrderId } }),
                 ...Utils.where(clientId, { client: { id: clientId } }),
                 ...Utils.where(clientLocationId, { location: { id: clientLocationId } }),
                 ...await buildOdlTaskIdWhere()

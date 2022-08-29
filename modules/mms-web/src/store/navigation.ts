@@ -13,6 +13,13 @@ export const useNavigationStore = defineStore('navigation', () => {
         },
     })
 
+    const taskFilter = reactive({
+        workOrder: {
+            id: null,
+            ref: null
+        }
+    })
+
     function clearAssetFilter(item: string) {
         assetFilter[item] = {
             id: null,
@@ -20,5 +27,15 @@ export const useNavigationStore = defineStore('navigation', () => {
         }
     }
 
-    return { assetFilter, clearAssetFilter }
+    function clearTaskFilter(item: string) {
+        taskFilter[item] = {
+            id: null,
+            ref: null
+        }
+    }
+
+    return {
+        assetFilter, clearAssetFilter ,
+        taskFilter, clearTaskFilter
+    }
 })

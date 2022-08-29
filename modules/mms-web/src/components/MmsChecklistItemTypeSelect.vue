@@ -34,12 +34,16 @@ const errorMessage = computed(() => props.errors ? props.errors.map(error => err
 
 const options = [
     {
-        label: "Assoluta",
-        value: "absolute"
+        label: "Sì/No",
+        value: "bool"
     },
     {
-        label: "Relativa",
-        value: "relative"
+        label: "Range",
+        value: "range"
+    },
+    {
+        label: "Scelta",
+        value: "option"
     }
 ]
 

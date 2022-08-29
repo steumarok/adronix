@@ -13,7 +13,7 @@
                 bordered
                 dense
                 >
-                <template #top-left>
+                <template #top-left v-if="topLeftShown">
                     <q-btn @click="onInsert" color="primary" unelevated>Inserisci attività</q-btn>
                     <q-btn @click="onCreateWorkOrder" color="secondary" unelevated class="q-ml-xs">Apri Ordine di Lavoro</q-btn>
                     <AssetListFilter v-bind="$props" :data-set="ds" />
@@ -89,25 +89,18 @@ import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router';
 
 const props = defineProps({
-  clientId: Number,
-  clientLocationId: Number
+    workOrderId: Number
 })
 
 const route = useRoute();
 const navStore = useNavigationStore()
 
-if (route.name == 'assets') {
-    if (props.clientId) {
-        navStore.assetFilter.client = { id: props.clientId }
-        navStore.clearAssetFilter('clientLocation')
-    }
-    else if (props.clientLocationId) {
-        navStore.assetFilter.clientLocation = { id: props.clientLocationId }
-        navStore.clearAssetFilter('client')
+if (route.name == 'tasks') {
+    if (props.workOrderId) {
+        navStore.taskFilter.workOrder = { id: props.workOrderId }
     }
     else {
-        navStore.clearAssetFilter('clientLocation')
-        navStore.clearAssetFilter('client')
+        navStore.clearTaskFilter('workOrder')
     }
 }
 
@@ -135,14 +128,12 @@ const dataTable = $adx.dataTable(
 const woTaskId = ref()
 
 const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listTasks', {
-    clientId: navStore.assetFilter.client.id,
-    clientLocationId: navStore.assetFilter.clientLocation.id,
-    woTaskId: woTaskId.value,
+    workOrderId: navStore.taskFilter.workOrder.id,
     ...dataTable.params
 })))
 
-if (navStore.assetFilter.client.id) {
-    navStore.assetFilter.client.ref = ds.ref('MmsClient', navStore.assetFilter.client.id)
+if (navStore.taskFilter.workOrder.id) {
+    navStore.taskFilter.workOrder.ref = ds.ref('MmsWorkOrder', navStore.taskFilter.workOrder.id)
 }
 
 if (navStore.assetFilter.clientLocation.id) {
@@ -190,5 +181,7 @@ watch(woSelection, () => {
         woTaskId.value = woSelection.value[0]
     }
 })
+
+const topLeftShown = computed(() => !navStore.taskFilter.workOrder.id)
 
 </script>

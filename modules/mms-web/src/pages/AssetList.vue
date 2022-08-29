@@ -45,6 +45,7 @@
                 </template>
                 <template #links2="{ row }">
                     <q-btn color="secondary" flat :to="`/assetComponents/${row.id}`" size="sm">Attività</q-btn>
+                    <q-btn color="secondary" flat :to="`/checklists/${row.id}`" size="sm">Checklists</q-btn>
                 </template>
             </adx-data-table>
         </adx-d>

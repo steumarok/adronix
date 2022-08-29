@@ -1,8 +1,7 @@
 import { CmnMeasurementUnit } from "@adronix/cmn";
 import { ColumnNumericTransformer } from "@adronix/typeorm/src";
-import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
-import { MmsClient } from "./MmsClient";
-import { MmsClientLocation } from "./MmsClientLocation";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { MmsChecklistItemModel } from "./MmsChecklistItemModel";
 
 @Entity("mms_asset_component_models")
 export class MmsAssetComponentModel {
@@ -15,6 +14,10 @@ export class MmsAssetComponentModel {
 
     @ManyToOne(() => CmnMeasurementUnit)
     measurementUnit: CmnMeasurementUnit;
+
+    @ManyToMany(() => MmsChecklistItemModel)
+    @JoinTable({name: "mms_asset_component_models_mms_checklist_item_models"})
+    checklistItemModels: MmsChecklistItemModel[];
 
     @Column({
         type: "decimal",

@@ -30,6 +30,7 @@ import { MmsTaskService } from "../services/MmsTaskService";
 import { DateTime } from "luxon";
 import { MmsTaskAttribute } from "./entities/MmsTaskAttribute";
 import { MmsChecklistModel } from "./entities/MmsChecklistModel";
+import { MmsChecklistItemModel, MmsChecklistItemType } from "./entities/MmsChecklistItemModel";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -124,6 +125,16 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsChecklistModel
+    },
+    {
+        entityClass: MmsChecklistItemModel,
+        rules: {
+            'text':     [ [ RulePatterns.notBlank(), 'blank' ] ],
+            'dataType': [
+                [ RulePatterns.notBlank(), 'blank' ],
+                [ RulePatterns.matchEnum(MmsChecklistItemType), 'notValid' ]
+            ]
+        }
     },
 ]
 

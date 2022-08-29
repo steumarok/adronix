@@ -8,8 +8,8 @@
       :hide-bottom="pagination.rowsNumber === undefined"
       @request="onRequest"
     >
-      <template v-slot:top-left>
-        <slot name="top-left"></slot>
+      <template v-slot:top-left v-if="Object.keys($slots).filter(name => name == 'top-left').length != 0">
+        <slot name="top-left" />
       </template>
 
       <template v-slot:top-right v-if="filtering">
@@ -40,6 +40,7 @@
             <slot :name="col.name" :row="props.row">{{ col.value }}</slot>
           </q-td>
         </q-tr>
+        <slot name="row-content" :row="props.row" />
       </template>
 
       <slot/>

@@ -10,6 +10,7 @@ import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
+import { MmsChecklistItemModel } from "../persistence/entities/MmsChecklistItemModel";
 import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
@@ -68,6 +69,10 @@ export class MmsRepoService extends AbstractService {
 
     get checklistModelRepository() {
         return this.dataSource.getRepository(MmsChecklistModel)
+    }
+
+    get checklistItemModelRepository() {
+        return this.dataSource.getRepository(MmsChecklistItemModel)
     }
 
     get workOrderRepository() {

@@ -31,6 +31,12 @@
                 </adx-d>
             </adx-d>
 
+            <mms-checklist-model-select
+                label="Modelli di checklist"
+                v-model="assetModel.checklistModel"
+                :errors="assetModel.errors.checklistModel"
+                />
+
             <adx-d v-if="showComponentModelPivot">
                 <span class="text-subtitle1">Griglia modelli</span>
 
@@ -39,7 +45,8 @@
                     item-type="MmsAssetModelPivot"
                     row-property="areaModel"
                     column-property="componentModel"
-                    :insertionProperties="{ assetModel }"
+                    row-group-property="rowGroup"
+                    :insertion-properties="{ assetModel }"
                     flat
                     dense
                     >
@@ -83,6 +90,7 @@ import MmsAreaModelSelect from '../components/MmsAreaModelSelect.vue'
 import MmsAssetComponentModelSelect from '../components/MmsAssetComponentModelSelect.vue'
 import MmsAssetTypeSelect from '../components/MmsAssetTypeSelect.vue'
 import { CmnMeasurementUnitSelect } from '@adronix/cmn-web'
+import MmsChecklistModelSelect from '../components/MmsChecklistModelSelect.vue'
 
 const props = defineProps({
   id: Number
