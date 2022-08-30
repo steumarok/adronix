@@ -31,6 +31,9 @@ import { DateTime } from "luxon";
 import { MmsTaskAttribute } from "./entities/MmsTaskAttribute";
 import { MmsChecklistModel } from "./entities/MmsChecklistModel";
 import { MmsChecklistItemModel, MmsChecklistItemType } from "./entities/MmsChecklistItemModel";
+import { MmsChecklistItemOption } from "./entities/MmsChecklistItemOption";
+import { MmsChecklistItem } from "./entities/MmsChecklistItem";
+import { MmsChecklist } from "./entities/MmsChecklist";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -125,6 +128,15 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsChecklistModel
+    },
+    {
+        entityClass: MmsChecklistItemOption
+    },
+    {
+        entityClass: MmsChecklist
+    },
+    {
+        entityClass: MmsChecklistItem
     },
     {
         entityClass: MmsChecklistItemModel,

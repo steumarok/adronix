@@ -129,6 +129,7 @@ const woTaskId = ref()
 
 const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listTasks', {
     workOrderId: navStore.taskFilter.workOrder.id,
+    workOrderTaskId: woTaskId.value,
     ...dataTable.params
 })))
 

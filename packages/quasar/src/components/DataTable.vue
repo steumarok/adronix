@@ -96,7 +96,7 @@ const pagination = computed({
           rowsNumber: props.dataBindings.totalCount.value?.value,
           rowsPerPage: props.dataBindings.params.limit
         }
-      : { }
+      : { rowsPerPage: null }
 
     return {
       sortBy: props.dataBindings.params.sortBy,

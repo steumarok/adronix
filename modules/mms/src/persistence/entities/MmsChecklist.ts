@@ -14,7 +14,7 @@ export class MmsChecklist {
     model: MmsChecklistModel;
 
     @Column({type: "datetime"})
-    compilationDate: string;
+    compilationDate: Date;
 
     @ManyToOne(() => MmsAsset)
     asset: MmsAsset;

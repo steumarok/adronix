@@ -22,6 +22,7 @@ import { ServiceList } from '@adronix/mms-web'
 import { WorkOrderList } from '@adronix/mms-web'
 import { ChecklistModelList } from '@adronix/mms-web'
 import { ChecklistItemModelList } from '@adronix/mms-web'
+import { ChecklistList } from '@adronix/mms-web'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -41,6 +42,7 @@ const routes: RouteRecordRaw[] = [
       { path: '/workOrders', component: () => WorkOrderList, meta: { context: 'workOrders' } },
       { path: '/assets', name: 'assets', component: () => AssetList, props: true, meta: { context: 'assets' } },
       { path: '/assetComponents/:assetId', component: () => AssetComponentList, props: true, meta: { context: 'assets' } },
+      { path: '/checklists/:assetId', component: () => ChecklistList, props: true, meta: { context: 'assets' } },
 
       { path: '/models', component: () => Models, meta: { context: 'models' } },
       { path: '/taskModels', component: () => TaskModelList, meta: { context: 'models' } },

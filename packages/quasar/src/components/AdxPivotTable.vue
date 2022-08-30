@@ -51,6 +51,8 @@ const props = defineProps<{
   rowProperty: string,
   rowGroupProperty: string,
   columnProperty: string,
+  allowRowInsertion: boolean,
+  allowColumnInsertion: boolean,
   insertionProperties: { [key: string]: ItemProp }
 }>()
 
@@ -95,7 +97,7 @@ watch(items, () => {
             item => getRowGroup(item))
         )
         .map(elem => [elem[0], { item: elem[1][0][rowProperty] }])
-        .concat([ [ nextRowGroup, { item: null } ] ])
+        .concat(props.allowRowInsertion ? [ [ nextRowGroup, { item: null } ] ] : [])
     )
 
     const group = Array.from(
@@ -106,7 +108,8 @@ watch(items, () => {
     const columns = Object.fromEntries(
         group
             .map((items, index) => [index + 1, { item: items[0] }])
-            .concat([[ group.length + 1, { item: null } ]]))
+            .concat(props.allowColumnInsertion ? [[ group.length + 1, { item: null } ]] : [])
+    )
 
     for (const rowGroup in rows) {
         if (!data[rowGroup]) {
@@ -185,9 +188,9 @@ const rows = computed(() => {
             items,
             item => getRowGroup(item))
         ).map(r => ({
-            rowGroup: r[0]
+            [props.rowGroupProperty || 'id']: r[0]
         }))
-        .concat([ { rowGroup: nextRowGroup }])
+        .concat(props.allowRowInsertion ? [ { rowGroup: nextRowGroup }] : [])
 })
 
 const columns = computed(() => {
@@ -196,11 +199,16 @@ const columns = computed(() => {
             items,
             item => item[columnProperty])
         )
-    return group.map((c, index) => ({
+    const cols = group.map((c, index) => ({
             name: index + 1,
             items: c[1]
         }))
-        .concat({ name: group.length + 1 })
+
+    if (props.allowColumnInsertion) {
+        return cols.concat({ name: group.length + 1 })
+    } else {
+        return cols
+    }
 })
 
 function isPivotEnabled(rowGroup, index) {

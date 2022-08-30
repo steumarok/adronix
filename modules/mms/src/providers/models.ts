@@ -8,6 +8,7 @@ import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponen
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
 import { MmsChecklistItemModel } from "../persistence/entities/MmsChecklistItemModel";
+import { MmsChecklistItemOption } from "../persistence/entities/MmsChecklistItemOption";
 import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
 import { MmsPart } from "../persistence/entities/MmsPart";
 import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
@@ -421,7 +422,7 @@ export const modelsProviders: DataProviderDefinitions = {
                 .find({
                     where,
                     relations: { incompatibleAttributes: true },
-                    order: { [sortBy]: Utils.sortDir(descending) }
+                    order: { [sortBy || 'name']: Utils.sortDir(descending) }
                 })
 
         },
@@ -609,19 +610,31 @@ export const modelsProviders: DataProviderDefinitions = {
 
     '/editChecklistItemModel': {
         handler: async function({ id }) {
-            const po =
-                id
-                    ? await this.service(MmsRepoService).checklistItemModelRepository
+            if (id) {
+                const m = await this.service(MmsRepoService).checklistItemModelRepository
                         .findOne({
                             relations: {
                             },
                             where: { id }})
-                    : new MmsChecklistItemModel()
 
-            return [po]
+                const options = await this.service(MmsRepoService).checklistItemOptionRepository
+                        .find({
+                            where: { model: { id: m.id } },
+                            relations: {
+                                assetAttributes: true
+                            },
+                            order: { seq: "asc" }
+                        })
+
+                return [m, ...options]
+
+            } else {
+                return [ new MmsChecklistItemModel() ]
+            }
         },
         output: [
-            [MmsChecklistItemModel, 'text', 'dataType', 'typeOptions']
+            [MmsChecklistItemModel, 'text', 'dataType', 'typeOptions'],
+            [MmsChecklistItemOption, 'assetAttributes', 'model', 'value', 'desc', 'seq']
         ]
     },
 

@@ -19,6 +19,10 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
 
+                <template #insertDate="{ row }">
+                    {{row.insertDate}}
+                </template>
+
                 <template #client="{ row }">
                     {{row.client.name}}
                 </template>
@@ -35,6 +39,7 @@
                     <q-tr :props="props">
                         <q-td colspan="100%">
                             <adx-data-table
+                                class="q-mb-md"
                                 :data-bindings="detailBindings(props.row)"
                                 flat
                                 bordered
@@ -71,6 +76,7 @@ const dataTable = $adx.dataTable(
   {
     actions:            { label: 'Azioni', width: "100px" },
     code:               { label: 'Codice', width: "100%", sortable: true, field: (row: Item) => row.code },
+    insertDate:         { label: 'Data apertura', width: "20%", sortable: true },
     client:             { label: 'Cliente', width: "20%", sortable: true },
     address:            { label: 'Indirizzo', width: "20%", sortable: true },
     locality:           { label: 'Località', width: "20%", sortable: true },

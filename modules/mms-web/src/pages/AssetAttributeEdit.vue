@@ -12,6 +12,7 @@
             <mms-asset-attribute-select
                 v-model="assetAttribute.incompatibleAttributes"
                 :excluded="[assetAttribute]"
+                label="Attributi non compatibili"
                 multiple
                 clearable
                 />

@@ -10,7 +10,10 @@ import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
+import { MmsChecklist } from "../persistence/entities/MmsChecklist";
+import { MmsChecklistItem } from "../persistence/entities/MmsChecklistItem";
 import { MmsChecklistItemModel } from "../persistence/entities/MmsChecklistItemModel";
+import { MmsChecklistItemOption } from "../persistence/entities/MmsChecklistItemOption";
 import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
@@ -59,6 +62,14 @@ export class MmsRepoService extends AbstractService {
         return this.dataSource.getRepository(MmsAsset)
     }
 
+    get checklistRepository() {
+        return this.dataSource.getRepository(MmsChecklist)
+    }
+
+    get checklistItemRepository() {
+        return this.dataSource.getRepository(MmsChecklistItem)
+    }
+
     get assetModelRepository() {
         return this.dataSource.getRepository(MmsAssetModel)
     }
@@ -73,6 +84,10 @@ export class MmsRepoService extends AbstractService {
 
     get checklistItemModelRepository() {
         return this.dataSource.getRepository(MmsChecklistItemModel)
+    }
+
+    get checklistItemOptionRepository() {
+        return this.dataSource.getRepository(MmsChecklistItemOption)
     }
 
     get workOrderRepository() {

@@ -67,7 +67,7 @@ export const tasksProviders: DataProviderDefinitions = {
             return [...workOrders, ...assets]
         },
         output: [
-            [MmsWorkOrder, 'code', 'client', 'location'],
+            [MmsWorkOrder, 'code', 'client', 'location', 'insertDate'],
             [MmsClient, 'name'],
             [MmsAsset, 'name', 'model'],
             [MmsAssetModel, 'name'],
@@ -112,12 +112,12 @@ export const tasksProviders: DataProviderDefinitions = {
             workOrderId,
             clientId,
             clientLocationId,
-            odlTaskId }) {
+            workOrderTaskId }) {
 
             const service = this.service(MmsRepoService)
 
-            async function buildOdlTaskIdWhere() {
-                if (odlTaskId) {
+            async function buildWorkOrderTaskIdWhere() {
+                if (workOrderTaskId) {
                     const task = await service.taskRepository.findOne({
                         relations: {
                             asset: {
@@ -125,7 +125,7 @@ export const tasksProviders: DataProviderDefinitions = {
                             }
                         },
                         where: {
-                            id: odlTaskId
+                            id: workOrderTaskId
                         },
                     })
                     return {
@@ -146,7 +146,7 @@ export const tasksProviders: DataProviderDefinitions = {
                 ...Utils.where(workOrderId, { workOrder: { id: workOrderId } }),
                 ...Utils.where(clientId, { client: { id: clientId } }),
                 ...Utils.where(clientLocationId, { location: { id: clientLocationId } }),
-                ...await buildOdlTaskIdWhere()
+                ...await buildWorkOrderTaskIdWhere()
             }
 
             const [ rows, count ] = await service.taskRepository

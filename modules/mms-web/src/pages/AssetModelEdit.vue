@@ -47,6 +47,8 @@
                     column-property="componentModel"
                     row-group-property="rowGroup"
                     :insertion-properties="{ assetModel }"
+                    :allow-row-insertion="true"
+                    :allow-column-insertion="true"
                     flat
                     dense
                     >
