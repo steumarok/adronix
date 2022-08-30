@@ -1,6 +1,7 @@
 import { EntityClass } from "@adronix/persistence"
 import { PaginatedList, ReturnType } from "@adronix/server"
 import { Like, Repository } from "typeorm"
+import { ItemData } from "./types"
 
 type TableParams = {
     page: string,
@@ -17,6 +18,10 @@ export class Utils {
 
     static toInt(str: string): number {
         return Number.parseInt(str)
+    }
+
+    static distinct(elements: any[], idProp: string) {
+        return elements.filter((v, i, a) => a.map(e => e[idProp]).indexOf(v[idProp]) === i)
     }
 
     static groupBy<K, V>(array: V[], grouper: (item: V) => K) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Item, ItemProp, ServerError } from '@adronix/client';
+import { ItemId, ItemFilter, Item, ItemProp, ServerError } from '@adronix/client';
 import { VueDataSet } from '@adronix/vue';
 import { computed, ref } from 'vue'
 
@@ -7,6 +7,7 @@ const props = defineProps<{
   modelValue: ItemProp;
   lookupType: string,
   lookupDataSet: VueDataSet;
+  lookupFilter: ItemId | ItemFilter;
   lookupDisplayProperty: string;
   excluded: Item[],
   errors: ServerError[]
@@ -23,7 +24,7 @@ const value = computed({
 })
 
 const options = computed(() => {
-  const items = props.lookupDataSet.list(props.lookupType)
+  const items = props.lookupDataSet.list(props.lookupType, props.lookupFilter || (() => true))
   return items.filter(item => (props.excluded || []).map(excl => excl.id).indexOf(item.id) == -1)
 })
 const errorMessage = computed(() => props.errors ? props.errors.map(error => error.message).join(', ') : '')

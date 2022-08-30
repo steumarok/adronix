@@ -43,11 +43,12 @@
 import { computed, ref, reactive, watch } from 'vue'
 import { groupBy, groupByAndMap } from '@adronix/client'
 import { diff } from 'deep-object-diff'
-import { Item } from '@adronix/client'
+import { Item, ItemFilter } from '@adronix/client'
 
 const props = defineProps<{
   dataSet: VueDataSet,
   itemType: string,
+  itemFilter: ItemFilter,
   rowProperty: string,
   rowGroupProperty: string,
   columnProperty: string,
@@ -61,7 +62,7 @@ const rowItemMap = reactive({})
 const columnItemMap = reactive({})
 const data = reactive({})
 
-const items = props.dataSet.list(props.itemType)
+const items = props.dataSet.list(props.itemType, props.itemFilter || (() => true))
 
 function checkItem(rowGroup, index, rowItem, colItem, pivot) {
     if (!(pivot instanceof Item)) {
@@ -198,8 +199,9 @@ const columns = computed(() => {
         groupBy(
             items,
             item => item[columnProperty])
-        )
-    const cols = group.map((c, index) => ({
+    )
+    const cols = group
+        .map((c, index) => ({
             name: index + 1,
             items: c[1]
         }))

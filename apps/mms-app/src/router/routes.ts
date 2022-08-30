@@ -11,6 +11,7 @@ import { PartList } from '@adronix/mms-web'
 import { TaskModelList } from '@adronix/mms-web'
 import { Planning } from '@adronix/mms-web'
 import { AssetAttributeList } from '@adronix/mms-web'
+import { StateAttributeList } from '@adronix/mms-web'
 import { SchedulingList } from '@adronix/mms-web'
 import { AreaModelList } from '@adronix/mms-web'
 import { AssetComponentList } from '@adronix/mms-web'
@@ -52,6 +53,7 @@ const routes: RouteRecordRaw[] = [
       { path: '/assetComponentModels', component: () => AssetComponentModelList, meta: { context: 'models' } },
       { path: '/areaModels', component: () => AreaModelList, meta: { context: 'models' } },
       { path: '/assetAttributes', component: () => AssetAttributeList, meta: { context: 'models' } },
+      { path: '/stateAttributes', component: () => StateAttributeList, meta: { context: 'models' } },
       { path: '/resourceTypes', component: () => ResourceTypeList, meta: { context: 'models' } },
       { path: '/resourceModels', component: () => ResourceModelList, meta: { context: 'models' } },
       { path: '/parts', component: () => PartList, meta: { context: 'models' } },

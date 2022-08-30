@@ -1,27 +1,20 @@
-import { HttpContext, PaginatedList } from "@adronix/server";
-import { DataProviderDefinitions } from "@adronix/server";
-import { MmsRepoService } from "../services/MmsRepoService";
+import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
+import { DataProviderDefinitions, PaginatedList, Utils } from "@adronix/server";
+import { In, Like } from "typeorm";
+import { MmsAsset } from "../persistence/entities/MmsAsset";
+import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
+import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsClient } from "../persistence/entities/MmsClient";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
-import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
-import { MmsArea } from "../persistence/entities/MmsArea";
-import { Brackets, In, Like, Repository } from "typeorm";
-import { Utils } from "@adronix/server";
-import { MmsAsset } from "../persistence/entities/MmsAsset";
-import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
-import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
-import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
-import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
-import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
-import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
-import { MmsTask } from "../persistence/entities/MmsTask";
-import { MmsTaskService } from "../services/MmsTaskService";
-import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
-import { MmsService } from "../persistence/entities/MmsService";
-import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
 import { MmsResource } from "../persistence/entities/MmsResource";
+import { MmsService } from "../persistence/entities/MmsService";
+import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
+import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
+import { MmsTask } from "../persistence/entities/MmsTask";
+import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsWorkOrder } from "../persistence/entities/MmsWorkOrder";
-import { MmsTaskAttribute } from "../persistence/entities/MmsTaskAttribute";
+import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
+import { MmsRepoService } from "../services/MmsRepoService";
 
 
 export const tasksProviders: DataProviderDefinitions = {
@@ -154,7 +147,7 @@ export const tasksProviders: DataProviderDefinitions = {
                 .leftJoinAndSelect('a.model', 'taskModel')
                 .leftJoinAndSelect('a.asset', 'asset')
                 .leftJoinAndSelect('a.workOrder', 'workOrder')
-                .leftJoinAndSelect('a.attributes', 'attributes')
+                .leftJoinAndSelect('a.stateAttributes', 'stateAttributes')
                 .leftJoinAndSelect('asset.client', 'client')
                 .leftJoinAndSelect('asset.model', 'assetModel')
                 .leftJoinAndSelect('asset.location', 'location')
@@ -181,12 +174,12 @@ export const tasksProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsTask, 'code', 'model', 'asset', 'codePrefix', 'codeSuffix',
-                'scheduledDate', 'executionDate', 'workOrder', 'attributes'],
+                'scheduledDate', 'executionDate', 'workOrder', 'stateAttributes'],
             [MmsTaskModel, 'name'],
+            [MmsStateAttribute, 'name'],
             [MmsAsset, 'name', 'client', 'location', 'model'],
             [MmsWorkOrder, 'code'],
             [MmsClient, 'name'],
-            [MmsTaskAttribute, 'name'],
             [MmsAssetModel, 'name', 'assetType'],
             [MmsClientLocation, 'address', 'locality'],
             [CmnLocality, 'name'],
@@ -205,7 +198,7 @@ export const tasksProviders: DataProviderDefinitions = {
                                 asset: true,
                                 resources: true,
                                 workOrder: true,
-                                attributes: true
+                                stateAttributes: true
                             },
                             where: { id }})
                     : new MmsTask()
@@ -236,7 +229,7 @@ export const tasksProviders: DataProviderDefinitions = {
         output: [
             [MmsTask, 'asset', 'model', 'codePrefix', 'codeSuffix', 'scheduledDate',
                 'executionDate', 'code', 'resources', 'workOrder', 'attributes'],
-            [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'attributes'],
+            [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'stateAttributes'],
             [MmsClientLocation, 'address', 'locality'],
             [MmsClient, 'name'],
             [MmsWorkOrder, 'code'],
@@ -244,7 +237,7 @@ export const tasksProviders: DataProviderDefinitions = {
             [MmsResource, 'name'],
             [MmsAssetComponentModel, 'name'],
             [MmsTaskModel, 'name'],
-            [MmsTaskAttribute, 'name'],
+            [MmsStateAttribute, 'name'],
             [CmnMeasurementUnit, 'name'],
             [MmsService, 'name', 'measurementUnit'],
             [MmsWorkPlan, 'assetComponentModel', 'assetModel'],

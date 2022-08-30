@@ -37,8 +37,9 @@
                             />
                     </adx-d>
                     <adx-d vertical padding="xs">
-                        <mms-task-attribute-select
-                            v-model="task.attributes"
+                        <mms-state-attribute-select
+                            v-model="task.stateAttributes"
+                            :for-task="true"
                             multiple
                             />
                     </adx-d>
@@ -157,7 +158,7 @@ import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
 import MmsTaskModelSelect from '../components/MmsTaskModelSelect.vue'
 import MmsServiceSelect from '../components/MmsServiceSelect.vue'
 import MmsResourceSelect from '../components/MmsResourceSelect.vue'
-import MmsTaskAttributeSelect from '../components/MmsTaskAttributeSelect.vue'
+import MmsStateAttributeSelect from '../components/MmsStateAttributeSelect.vue'
 
 const props = defineProps({
   id: Number

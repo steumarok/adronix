@@ -26,8 +26,8 @@ import { MmsResourceType } from "../persistence/entities/MmsResourceType";
 import { MmsScheduling } from "../persistence/entities/MmsScheduling";
 import { MmsService } from "../persistence/entities/MmsService";
 import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
+import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
 import { MmsTask } from "../persistence/entities/MmsTask";
-import { MmsTaskAttribute } from "../persistence/entities/MmsTaskAttribute";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsWorkOrder } from "../persistence/entities/MmsWorkOrder";
 import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
@@ -94,8 +94,8 @@ export class MmsRepoService extends AbstractService {
         return this.dataSource.getRepository(MmsWorkOrder)
     }
 
-    get taskAttributeRepository() {
-        return this.dataSource.getRepository(MmsTaskAttribute)
+    get stateAttributeRepository() {
+        return this.dataSource.getRepository(MmsStateAttribute)
     }
 
     get assetComponentModelRepository() {

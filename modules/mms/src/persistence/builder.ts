@@ -1,39 +1,40 @@
-import { MmsClient } from "./entities/MmsClient";
-import { EntityEventKind, EntityIODefinitions, RulePatterns, Transaction } from "@adronix/persistence"
-import { TypeORMPersistence, TypeORMRulePatterns, TypeORMTransaction } from "@adronix/typeorm";
-import { MmsClientLocation } from "./entities/MmsClientLocation";
+import { EntityEventKind, EntityIODefinitions, RulePatterns } from "@adronix/persistence";
+import { IOService } from "@adronix/server/src";
+import { TypeORMPersistence, TypeORMTransaction } from "@adronix/typeorm";
+import { DateTime } from "luxon";
+import { MmsAssetService } from "../services/MmsAssetService";
+import { MmsTaskService } from "../services/MmsTaskService";
 import { MmsArea } from "./entities/MmsArea";
 import { MmsAreaModel } from "./entities/MmsAreaModel";
 import { MmsAreaModelAttribution } from "./entities/MmsAreaModelAttribution";
 import { MmsAsset } from "./entities/MmsAsset";
-import { MmsAssetModel } from "./entities/MmsAssetModel";
-import { MmsResourceModel } from "./entities/MmsResourceModel";
-import { MmsResourceType } from "./entities/MmsResourceType";
-import { MmsPart } from "./entities/MmsPart";
-import { MmsTaskModel } from "./entities/MmsTaskModel";
-import { MmsPartRequirement } from "./entities/MmsPartRequirement";
 import { MmsAssetAttribute } from "./entities/MmsAssetAttribute";
-import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
-import { MmsScheduling } from "./entities/MmsScheduling";
-import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
-import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
 import { MmsAssetComponent } from "./entities/MmsAssetComponent";
-import { IOService } from "@adronix/server/src";
-import { MmsTask } from "./entities/MmsTask";
-import { MmsCounter } from "./entities/MmsCounter";
-import { MmsWorkPlan } from "./entities/MmsWorkPlan";
-import { MmsService } from "./entities/MmsService";
-import { MmsServiceProvision } from "./entities/MmsServiceProvision";
-import { MmsResource } from "./entities/MmsResource";
-import { MmsWorkOrder } from "./entities/MmsWorkOrder";
-import { MmsTaskService } from "../services/MmsTaskService";
-import { DateTime } from "luxon";
-import { MmsTaskAttribute } from "./entities/MmsTaskAttribute";
-import { MmsChecklistModel } from "./entities/MmsChecklistModel";
+import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
+import { MmsAssetModel } from "./entities/MmsAssetModel";
+import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
+import { MmsChecklist } from "./entities/MmsChecklist";
+import { MmsChecklistItem } from "./entities/MmsChecklistItem";
 import { MmsChecklistItemModel, MmsChecklistItemType } from "./entities/MmsChecklistItemModel";
 import { MmsChecklistItemOption } from "./entities/MmsChecklistItemOption";
-import { MmsChecklistItem } from "./entities/MmsChecklistItem";
-import { MmsChecklist } from "./entities/MmsChecklist";
+import { MmsChecklistModel } from "./entities/MmsChecklistModel";
+import { MmsClient } from "./entities/MmsClient";
+import { MmsClientLocation } from "./entities/MmsClientLocation";
+import { MmsCounter } from "./entities/MmsCounter";
+import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
+import { MmsPart } from "./entities/MmsPart";
+import { MmsPartRequirement } from "./entities/MmsPartRequirement";
+import { MmsResource } from "./entities/MmsResource";
+import { MmsResourceModel } from "./entities/MmsResourceModel";
+import { MmsResourceType } from "./entities/MmsResourceType";
+import { MmsScheduling } from "./entities/MmsScheduling";
+import { MmsService } from "./entities/MmsService";
+import { MmsServiceProvision } from "./entities/MmsServiceProvision";
+import { MmsStateAttribute } from "./entities/MmsStateAttribute";
+import { MmsTask } from "./entities/MmsTask";
+import { MmsTaskModel } from "./entities/MmsTaskModel";
+import { MmsWorkOrder } from "./entities/MmsWorkOrder";
+import { MmsWorkPlan } from "./entities/MmsWorkPlan";
 
 const ioDefinitions: EntityIODefinitions = [
     {
@@ -124,9 +125,6 @@ const ioDefinitions: EntityIODefinitions = [
         entityClass: MmsWorkOrder
     },
     {
-        entityClass: MmsTaskAttribute
-    },
-    {
         entityClass: MmsChecklistModel
     },
     {
@@ -137,6 +135,9 @@ const ioDefinitions: EntityIODefinitions = [
     },
     {
         entityClass: MmsChecklistItem
+    },
+    {
+        entityClass: MmsStateAttribute
     },
     {
         entityClass: MmsChecklistItemModel,
@@ -177,6 +178,18 @@ export default TypeORMPersistence.build()
         if (eventKind == EntityEventKind.Inserting) {
             workOrder.code = await transaction.saga(this.service(MmsTaskService).generateWorkOrderCode())
             workOrder.insertDate = DateTime.now().toJSDate()
+        }
+    })
+    .addEventHandler(MmsChecklistItem, async function(eventKind: EntityEventKind, checklistItem: MmsChecklistItem, transaction: TypeORMTransaction) {
+        if (eventKind == EntityEventKind.Inserting || eventKind == EntityEventKind.Updating) {
+            checklistItem.value = checklistItem.option.value
+
+            await transaction.saga(this.service(MmsAssetService).triggerStateChange(checklistItem))
+        }
+    })
+    .addEventHandler(MmsChecklist, async function(eventKind: EntityEventKind, checklist: MmsChecklist, transaction: TypeORMTransaction) {
+        if (eventKind == EntityEventKind.Inserting) {
+            checklist.previous = await transaction.saga(this.service(MmsAssetService).getLastChecklist(checklist.asset))
         }
     });
 

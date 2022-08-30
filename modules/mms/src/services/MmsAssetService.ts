@@ -7,6 +7,9 @@ import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
+import { MmsChecklist } from "../persistence/entities/MmsChecklist";
+import { MmsChecklistItem } from "../persistence/entities/MmsChecklistItem";
+import { MmsChecklistItemOption } from "../persistence/entities/MmsChecklistItemOption";
 import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 
@@ -43,7 +46,7 @@ export class MmsAssetService extends AbstractService {
         })
 
         const pivots: MmsAssetModelPivot[] = yield this.typeorm.find(MmsAssetModelPivot, {
-            where: { assetModel: model },
+            where: { assetModel: { id: model.id } },
             relations: { areaModel: true, componentModel: true }
         })
 
@@ -79,6 +82,68 @@ export class MmsAssetService extends AbstractService {
         }
 
         return asset
+    }
+
+    *triggerStateChange(checklistItem: MmsChecklistItem) {
+
+        const option: MmsChecklistItemOption = yield this.typeorm.findOne(MmsChecklistItemOption, {
+            where: { id: checklistItem.option.id },
+            relations: {
+                stateAttributes: true
+            }
+        })
+
+        checklistItem = yield this.typeorm.findOne(MmsChecklistItem, {
+            where: { id: checklistItem.id },
+            relations: {
+                checklist: {
+                    asset: {
+                        stateAttributes: true
+                    },
+                    assignedStateAttributes: true
+                },
+                assetComponent: true
+            }
+        })
+
+        const { checklist } = checklistItem
+        const { asset } = checklist
+
+        yield this.io.throwing.update(MmsAsset, asset, {
+            stateAttributes: Utils.distinct([
+                ...asset.stateAttributes,
+                ...option.stateAttributes.filter(a => a.forAsset)
+            ], 'id')
+        })
+
+        const { assetComponent } = checklistItem
+
+        if (assetComponent) {
+            yield this.io.throwing.update(MmsAssetComponent, assetComponent, {
+                stateAttributes: Utils.distinct([
+                    ...asset.stateAttributes,
+                    ...option.stateAttributes.filter(a => a.forAssetComponent)
+                ], 'id')
+            })
+        }
+
+        yield this.io.throwing.update(MmsChecklist, checklistItem.checklist, {
+            assignedStateAttributes: Utils.distinct([
+                ...checklist.assignedStateAttributes,
+                ...option.stateAttributes
+            ], 'id')
+        })
+    }
+
+    *getLastChecklist(asset: MmsAsset) {
+        return yield this.typeorm.findOne(MmsChecklist, {
+            where: {
+                asset: { id: asset.id },
+            },
+            order: {
+                id: "desc"
+            }
+        })
     }
 }
 

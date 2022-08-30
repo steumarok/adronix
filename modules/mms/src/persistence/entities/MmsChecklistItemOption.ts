@@ -1,6 +1,6 @@
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { MmsAssetAttribute } from "./MmsAssetAttribute";
 import { MmsChecklistItemModel } from "./MmsChecklistItemModel";
+import { MmsStateAttribute } from "./MmsStateAttribute";
 
 
 @Entity("mms_checklist_item_options")
@@ -18,9 +18,9 @@ export class MmsChecklistItemOption {
     @Column()
     desc: string;
 
-    @ManyToMany(() => MmsAssetAttribute)
-    @JoinTable({name: "mms_checklist_item_options_mms_asset_attributes"})
-    assetAttributes: MmsAssetAttribute[];
+    @ManyToMany(() => MmsStateAttribute)
+    @JoinTable({name: "mms_checklist_item_options_mms_state_attributes"})
+    stateAttributes: MmsStateAttribute[];
 
     @Column({ default: 0 })
     seq: number;

@@ -5,6 +5,7 @@ import { MmsAssetAttribute } from "./MmsAssetAttribute";
 import { MmsAssetModel } from "./MmsAssetModel";
 import { MmsClient } from "./MmsClient";
 import { MmsClientLocation } from "./MmsClientLocation";
+import { MmsStateAttribute } from "./MmsStateAttribute";
 
 @Entity("mms_assets")
 export class MmsAsset {
@@ -30,6 +31,10 @@ export class MmsAsset {
     @ManyToMany(() => MmsAssetAttribute)
     @JoinTable({name: "mms_assets_mms_attributes"})
     attributes: MmsAssetAttribute[];
+
+    @ManyToMany(() => MmsStateAttribute)
+    @JoinTable({name: "mms_assets_mms_state_attributes"})
+    stateAttributes: MmsStateAttribute[];
 
     @Column({
         type: "decimal",

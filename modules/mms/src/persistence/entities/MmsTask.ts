@@ -1,9 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { MmsAsset } from "./MmsAsset";
-import { MmsAssetComponent } from "./MmsAssetComponent";
 import { MmsResource } from "./MmsResource";
-import { MmsResourceModel } from "./MmsResourceModel";
-import { MmsTaskAttribute } from "./MmsTaskAttribute";
+import { MmsStateAttribute } from "./MmsStateAttribute";
 import { MmsTaskModel } from "./MmsTaskModel";
 import { MmsWorkOrder } from "./MmsWorkOrder";
 
@@ -44,7 +42,8 @@ export class MmsTask {
     @ManyToOne(() => MmsWorkOrder)
     workOrder: MmsWorkOrder;
 
-    @ManyToMany(() => MmsTaskAttribute)
-    @JoinTable({name: "mms_tasks_mms_attributes"})
-    attributes: MmsTaskAttribute[];
+    @ManyToMany(() => MmsStateAttribute)
+    @JoinTable({name: "mms_tasks_mms_state_attributes"})
+    stateAttributes: MmsStateAttribute[];
+
 }

@@ -1,11 +1,9 @@
 import { ColumnNumericTransformer } from "@adronix/typeorm/src";
-import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { MmsArea } from "./MmsArea";
-import { MmsAreaModelAttribution } from "./MmsAreaModelAttribution";
 import { MmsAsset } from "./MmsAsset";
 import { MmsAssetComponentModel } from "./MmsAssetComponentModel";
-import { MmsClient } from "./MmsClient";
-import { MmsClientLocation } from "./MmsClientLocation";
+import { MmsStateAttribute } from "./MmsStateAttribute";
 
 @Entity("mms_asset_components")
 export class MmsAssetComponent {
@@ -34,4 +32,7 @@ export class MmsAssetComponent {
     @ManyToOne(() => MmsAssetComponentModel)
     model: MmsAssetComponentModel;
 
+    @ManyToMany(() => MmsStateAttribute)
+    @JoinTable({name: "mms_asset_components_mms_state_attributes"})
+    stateAttributes: MmsStateAttribute[];
 }

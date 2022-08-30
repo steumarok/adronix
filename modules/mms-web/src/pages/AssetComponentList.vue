@@ -21,6 +21,10 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
 
+                <template #stateAttributes="{ row }">
+                    <q-chip v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
+                </template>
+
             </adx-data-table>
         </adx-d>
 
@@ -47,6 +51,7 @@ const dataTable = $adx.dataTable(
   {
     actions:      { label: 'Azioni', width: "100px" },
     name:         { label: 'Nome', width: "30%", sortable: true, field: (row: Item) => row.name },
+    stateAttributes: { label: 'Stato', width: "50px", sortable: true },
     quantity:     { label: 'Quantità', width: "100px", sortable: true, field: (row: Item) => `${row.quantity} ${row.model.measurementUnit.name}` },
     model:        { label: 'Modello', width: "30%", sortable: true, field: (row: Item) => row.ref('model')?.name },
     area:         { label: 'Posizione', width: "30%", sortable: true, field: (row: Item) => row.ref('area')?.name },

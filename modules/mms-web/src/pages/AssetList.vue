@@ -22,6 +22,10 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
 
+                <template #stateAttributes="{ row }">
+                    <q-chip v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
+                </template>
+
                 <template #client="{ row }">
                     <span class="adx-reference" @click="onOpenCliente(row.client.id)">{{row.client.name}}</span>
                 </template>
@@ -101,6 +105,7 @@ const dataTable = $adx.dataTable(
   {
     actions:      { label: 'Azioni' },
     name:         { label: 'Nome', width: "50px", sortable: true, field: (row: Item) => row.name },
+    stateAttributes: { label: 'Stato', width: "50px", sortable: true },
     model:        { label: 'Modello', width: "20%", sortable: true, field: (row: Item) => (row.model as Item).name },
     client:       { label: 'Cliente', width: "20%", sortable: true },
     address:      { label: 'Indirizzo', width: "20%", sortable: true },

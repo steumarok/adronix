@@ -1,26 +1,25 @@
-import { HttpContext, PaginatedList } from "@adronix/server";
-import { DataProviderDefinitions } from "@adronix/server";
-import { MmsRepoService } from "../services/MmsRepoService";
-import { MmsClient } from "../persistence/entities/MmsClient";
-import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
 import { CmnLocality, CmnMeasurementUnit } from "@adronix/cmn";
+import { DataProviderDefinitions, PaginatedList, Utils } from "@adronix/server";
+import { DateTime } from "luxon";
+import { In, Like } from "typeorm";
 import { MmsArea } from "../persistence/entities/MmsArea";
-import { Brackets, In, Like, Repository } from "typeorm";
-import { Utils } from "@adronix/server";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
-import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
-import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
-import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
-import { MmsTaskService } from "../services/MmsTaskService";
+import { MmsAssetModel } from "../persistence/entities/MmsAssetModel";
 import { MmsChecklist } from "../persistence/entities/MmsChecklist";
-import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
-import { DateTime } from "luxon";
 import { MmsChecklistItem } from "../persistence/entities/MmsChecklistItem";
 import { MmsChecklistItemModel } from "../persistence/entities/MmsChecklistItemModel";
 import { MmsChecklistItemOption } from "../persistence/entities/MmsChecklistItemOption";
+import { MmsChecklistModel } from "../persistence/entities/MmsChecklistModel";
+import { MmsClient } from "../persistence/entities/MmsClient";
+import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
+import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
+import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
+import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
+import { MmsRepoService } from "../services/MmsRepoService";
+import { MmsTaskService } from "../services/MmsTaskService";
 
 
 export const assetsProviders: DataProviderDefinitions = {
@@ -42,7 +41,8 @@ export const assetsProviders: DataProviderDefinitions = {
                 .leftJoinAndSelect('a.model', 'model')
                 .leftJoinAndSelect('a.client', 'client')
                 .leftJoinAndSelect('a.location', 'location')
-                .leftJoinAndSelect('location.locality', 'localitt')
+                .leftJoinAndSelect('a.stateAttributes', 'stateAttributes')
+                .leftJoinAndSelect('location.locality', 'locality')
                 .where(where)
                 .skip((Utils.toInt(page) - 1) * Utils.toInt(limit))
                 .take(Utils.toInt(limit))
@@ -77,7 +77,8 @@ export const assetsProviders: DataProviderDefinitions = {
             return results
         },
         output: [
-            [MmsAsset, 'name', 'client', 'location', 'model'],
+            [MmsAsset, 'name', 'client', 'location', 'model', 'stateAttributes'],
+            [MmsStateAttribute, 'name'],
             [MmsClient, 'name'],
             [MmsAssetModel, 'name', 'assetType'],
             [MmsClientLocation, 'address', 'locality'],
@@ -97,6 +98,9 @@ export const assetsProviders: DataProviderDefinitions = {
                         .findOne({
                             relations: {
                                 attributes: {
+                                    incompatibleAttributes: true
+                                },
+                                stateAttributes: {
                                     incompatibleAttributes: true
                                 },
                                 model: true,
@@ -131,7 +135,8 @@ export const assetsProviders: DataProviderDefinitions = {
             ]
         },
         output: [
-            [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'attributes'],
+            [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'attributes', 'stateAttributes'],
+            [MmsStateAttribute, 'name'],
             [MmsClientLocation, 'address', 'locality'],
             [MmsClient, 'name'],
             [MmsAssetAttribute, 'name', 'incompatibleAttributes'],
@@ -151,7 +156,14 @@ export const assetsProviders: DataProviderDefinitions = {
 
             const [ rows, count ] = await this.service(MmsRepoService).assetComponentRepository
                 .findAndCount({
-                    relations: { model: { measurementUnit: true }, asset: true, area: true },
+                    relations: {
+                        model: {
+                            measurementUnit: true
+                        },
+                        asset: true,
+                        area: true,
+                        stateAttributes: true
+                    },
                     where: { asset: { id: asset.id } },
                     skip: (Utils.toInt(page) - 1) * Utils.toInt(limit),
                     take: Utils.toInt(limit),
@@ -162,8 +174,9 @@ export const assetsProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsAssetComponent, 'model', 'name', 'quantity', 'area'],
+            [MmsAssetComponent, 'model', 'name', 'quantity', 'area', 'stateAttributes'],
             [MmsAsset, 'name'],
+            [MmsStateAttribute, 'name'],
             [MmsAssetComponentModel, 'name', 'measurementUnit'],
             [CmnMeasurementUnit, 'name'],
             [MmsArea, 'name']
@@ -216,7 +229,8 @@ export const assetsProviders: DataProviderDefinitions = {
                     relations: {
                         asset: true,
                         assetComponent: true,
-                        model: true
+                        model: true,
+                        assignedStateAttributes: true
                     },
                     where: { asset: { id: asset.id } },
                     ...Utils.orderClause(sortBy, descending)
@@ -226,42 +240,72 @@ export const assetsProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsChecklist, 'model', 'asset', 'compilationDate'],
+            [MmsChecklist, 'model', 'asset', 'compilationDate', 'assignedStateAttributes'],
+            [MmsStateAttribute, 'name'],
             [MmsAsset, 'name'],
             [MmsChecklistModel, 'name'],
         ]
     },
 
     '/editChecklist': {
-        handler: async function({ id, assetId }) {
+        handler: async function({ id, assetId, checklistModelId }) {
 
             const result = []
+            const itemModelIds = new Set<number>()
 
+            let checklist: MmsChecklist
             if (id) {
-                const checklist = await this.service(MmsRepoService).checklistRepository
+                checklist = await this.service(MmsRepoService).checklistRepository
                     .findOne({
                         relations: {
-                            asset: true,
+                            asset: {
+                                model: {
+                                    checklistModel: true
+                                }
+                            },
                             assetComponent: true,
                             model: true
                         },
                         where: { id }})
-                result.push(checklist)
+
+                const items = await this.service(MmsRepoService).checklistItemRepository
+                    .find({
+                        relations: {
+                            itemModel: true,
+                            assetComponent: true,
+                            checklist: true,
+                            option: true
+                        },
+                        where: {
+                            checklist: { id: checklist.id }
+                        }
+                    })
+
+                result.push(...items)
+
+                for (const item of items) {
+                    itemModelIds.add(item.itemModel.id)
+                }
             } else {
                 const asset = await this.service(MmsRepoService).assetRepository
-                .findOne({
-                    relations: {
-                        model: {
-                            checklistModel: true
-                        }
-                    },
-                    where: { id: assetId }
-                })
+                    .findOne({
+                        relations: {
+                            model: {
+                                checklistModel: true
+                            }
+                        },
+                        where: { id: assetId }
+                    })
+
+                checklist = new MmsChecklist()
+                checklist.compilationDate = DateTime.now().toJSDate()
+                checklist.asset = asset
+                checklist.model = checklist.asset.model.checklistModel
 
                 const assetComponents = await this.service(MmsRepoService).assetComponentRepository
                     .find({
                         where: {
-                            asset: { id: asset.id },
+                            asset: { id: checklist.asset.id },
                         },
                         relations: {
                             model: {
@@ -269,15 +313,6 @@ export const assetsProviders: DataProviderDefinitions = {
                             }
                         }
                     })
-
-                const checklist = new MmsChecklist()
-                checklist.compilationDate = DateTime.now().toJSDate()
-                checklist.asset = asset
-                checklist.model = checklist.asset.model.checklistModel
-
-                result.push(checklist)
-
-                const itemModelIds = new Set<number>()
 
                 for (const component of assetComponents) {
                     for (const itemModel of component.model.checklistItemModels) {
@@ -290,29 +325,57 @@ export const assetsProviders: DataProviderDefinitions = {
                         itemModelIds.add(itemModel.id)
                     }
                 }
+            }
 
-                const options = await this.service(MmsRepoService).checklistItemOptionRepository
-                    .find({
-                        where: {
-                            model: {
-                                id: In(Array.from(itemModelIds))
-                            }
-                        },
+            result.push(checklist)
+
+            if (checklistModelId) {
+                const model = await this.service(MmsRepoService).checklistModelRepository
+                    .findOne({
                         relations: {
-                            model: true
+                            checklistItemModels: true
+                        },
+                        where: {
+                            id: checklistModelId
                         }
                     })
 
-                result.push(...options)
+                result.push(model)
+
+                for (const itemModel of model.checklistItemModels) {
+                    const item = new MmsChecklistItem()
+                    item.itemModel = itemModel
+                    item.checklist = checklist
+                    result.push(item)
+
+                    itemModelIds.add(itemModel.id)
+                }
             }
+
+            const options = await this.service(MmsRepoService).checklistItemOptionRepository
+                .find({
+                    where: {
+                        model: {
+                            id: In(Array.from(itemModelIds))
+                        }
+                    },
+                    relations: {
+                        model: true
+                    },
+                    order: {
+                        seq: "asc"
+                    }
+                })
+            result.push(...options)
+
             return result
         },
         output: [
             [MmsChecklist, 'model', 'asset', 'compilationDate'],
             [MmsAsset, 'name'],
-            [MmsChecklistModel, 'name'],
+            [MmsChecklistModel, 'name', 'checklistItemModels'],
             [MmsAssetComponent, 'name', 'asset'],
-            [MmsChecklistItem, 'checklist', 'itemModel', 'assetComponent', 'value'],
+            [MmsChecklistItem, 'checklist', 'itemModel', 'assetComponent', 'value', 'option'],
             [MmsChecklistItemModel, 'text', 'dataType'],
             [MmsChecklistItemOption, 'model', 'value', 'desc', 'seq'],
         ]

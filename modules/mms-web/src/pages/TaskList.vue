@@ -40,7 +40,7 @@
                 </template>
 
                 <template #attributes="{ row }">
-                    <q-chip v-for="attribute in row.attributes" dense :label="attribute.name" />
+                    <q-chip v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
                 </template>
 
                 <template #address="{ row }">

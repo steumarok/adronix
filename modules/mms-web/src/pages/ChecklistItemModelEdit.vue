@@ -40,13 +40,15 @@
                 </template>
 
                 <template #assetAttributes="{ row }">
-                    <mms-asset-attribute-select
-                            v-model="row.assetAttributes"
-                            dense
-                            label=""
-                            multiple
-                            clearable
-                            />
+                    <mms-state-attribute-select
+                        v-model="row.stateAttributes"
+                        :for-asset="true"
+                        :for-asset-component="true"
+                        dense
+                        label=""
+                        multiple
+                        clearable
+                        />
                 </template>
 
             </adx-data-table>
@@ -61,7 +63,7 @@ import { buildUrl } from '@adronix/client';
 import { useAdronix } from '@adronix/vue'
 import { unref, watch } from 'vue';
 import MmsChecklistItemTypeSelect from '../components/MmsChecklistItemTypeSelect.vue'
-import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
+import MmsStateAttributeSelect from '../components/MmsStateAttributeSelect.vue'
 
 const props = defineProps({
   id: Number

@@ -1,7 +1,7 @@
 import { CmnMeasurementUnit } from "@adronix/cmn";
 import { DataProviderDefinitions, Utils } from "@adronix/server";
 import { Metadata } from "@adronix/server/src/server/ItemCollector";
-import { Like } from "typeorm";
+import { In, Like } from "typeorm";
 import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
 import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
@@ -14,10 +14,9 @@ import { MmsPart } from "../persistence/entities/MmsPart";
 import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
 import { MmsResourceType } from "../persistence/entities/MmsResourceType";
 import { MmsService } from "../persistence/entities/MmsService";
-import { MmsTaskAttribute } from "../persistence/entities/MmsTaskAttribute";
+import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsRepoService } from "../services/MmsRepoService";
-
 
 export const modelsProviders: DataProviderDefinitions = {
 
@@ -621,7 +620,7 @@ export const modelsProviders: DataProviderDefinitions = {
                         .find({
                             where: { model: { id: m.id } },
                             relations: {
-                                assetAttributes: true
+                                stateAttributes: true
                             },
                             order: { seq: "asc" }
                         })
@@ -634,7 +633,7 @@ export const modelsProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsChecklistItemModel, 'text', 'dataType', 'typeOptions'],
-            [MmsChecklistItemOption, 'assetAttributes', 'model', 'value', 'desc', 'seq']
+            [MmsChecklistItemOption, 'stateAttributes', 'model', 'value', 'desc', 'seq']
         ]
     },
 
@@ -653,18 +652,62 @@ export const modelsProviders: DataProviderDefinitions = {
     },
 
 
-    '/lookupTaskAttributes': {
-        handler: async function ({ }) {
+    '/listStateAttributes': {
+        handler: async function ({ sortBy, descending, filter }) {
 
-            return await this.service(MmsRepoService).taskAttributeRepository
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsRepoService).stateAttributeRepository
                 .find({
+                    where,
                     relations: { incompatibleAttributes: true },
-                    order: { name: "asc" }
+                    order: { [sortBy || 'name']: Utils.sortDir(descending) }
                 })
 
         },
         output: [
-            [MmsTaskAttribute, 'name', 'incompatibleAttributes']
+            [MmsStateAttribute, 'name', 'incompatibleAttributes']
+        ]
+    },
+
+    '/editStateAttribute': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsRepoService).stateAttributeRepository
+                        .findOne({
+                            relations: { incompatibleAttributes: true },
+                            where: { id }})
+                    : new MmsStateAttribute()
+
+            return [po]
+        },
+        output: [
+            [MmsStateAttribute, 'name', 'incompatibleAttributes',
+                'forAsset', 'forTask', 'forAssetComponent', 'forWorkOrder']
+        ]
+    },
+
+    '/lookupStateAttributes': {
+        handler: async function ({ forAsset, forAssetComponent, forTask, forWorkOrder }) {
+
+            return await this.service(MmsRepoService).stateAttributeRepository
+                .find({
+                    relations: { incompatibleAttributes: true },
+                    order: { name: "asc" },
+                    where: [
+                        ...forAsset          ? [{ forAsset:          Utils.toBool(forAsset) }] : [],
+                        ...forAssetComponent ? [{ forAssetComponent: Utils.toBool(forAssetComponent) }] : [],
+                        ...forTask           ? [{ forTask:           Utils.toBool(forTask) }] : [],
+                        ...forWorkOrder      ? [{ forWorkOrder:      Utils.toBool(forWorkOrder) }] : []
+                    ]
+                })
+
+        },
+        output: [
+            [MmsStateAttribute, 'name', 'incompatibleAttributes']
         ]
     },
 }

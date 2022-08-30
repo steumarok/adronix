@@ -24,8 +24,8 @@ import { MmsResourceType } from "./entities/MmsResourceType";
 import { MmsScheduling } from "./entities/MmsScheduling";
 import { MmsService } from "./entities/MmsService";
 import { MmsServiceProvision } from "./entities/MmsServiceProvision";
+import { MmsStateAttribute } from "./entities/MmsStateAttribute";
 import { MmsTask } from "./entities/MmsTask";
-import { MmsTaskAttribute } from "./entities/MmsTaskAttribute";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
 import { MmsWorkPlan } from "./entities/MmsWorkPlan";
@@ -57,9 +57,9 @@ export const MmsEntities = [
     MmsService,
     MmsServiceProvision,
     MmsResource,
-    MmsTaskAttribute,
     MmsChecklistItemModel,
     MmsChecklistItemOption,
     MmsChecklist,
-    MmsChecklistItem
+    MmsChecklistItem,
+    MmsStateAttribute
 ]

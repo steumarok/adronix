@@ -3,6 +3,7 @@ import { MmsAsset } from "./MmsAsset";
 import { MmsAssetComponent } from "./MmsAssetComponent";
 import { MmsChecklist } from "./MmsChecklist";
 import { MmsChecklistItemModel } from "./MmsChecklistItemModel";
+import { MmsChecklistItemOption } from "./MmsChecklistItemOption";
 import { MmsChecklistModel } from "./MmsChecklistModel";
 
 
@@ -23,6 +24,9 @@ export class MmsChecklistItem {
 
     @ManyToOne(() => MmsChecklist)
     checklist: MmsChecklist;
+
+    @ManyToOne(() => MmsChecklistItemOption)
+    option: MmsChecklistItemOption;
 
     @Column()
     value: string;

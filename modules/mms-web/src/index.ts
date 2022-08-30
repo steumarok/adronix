@@ -14,6 +14,7 @@ import TaskModelList from './pages/TaskModelList.vue'
 import Planning from './pages/Planning.vue'
 import PartRequirementList from './pages/PartRequirementList.vue'
 import AssetAttributeList from './pages/AssetAttributeList.vue'
+import StateAttributeList from './pages/StateAttributeList.vue'
 import AssetComponentList from './pages/AssetComponentList.vue'
 import AssetComponentModelList from './pages/AssetComponentModelList.vue'
 import SchedulingList from './pages/SchedulingList.vue'
@@ -32,4 +33,5 @@ export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     PartRequirementList, AssetAttributeList, SchedulingList,
     AreaModelList, AssetComponentList, AssetComponentModelList,
     TaskList, WorkPlanList, ResourceList, ServiceList, WorkOrderList,
-    ChecklistModelList, ChecklistItemModelList, ChecklistList }
+    ChecklistModelList, ChecklistItemModelList, ChecklistList,
+    StateAttributeList }

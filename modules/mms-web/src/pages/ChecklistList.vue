@@ -21,6 +21,10 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
 
+                <template #stateAttributes="{ row }">
+                    <q-chip v-for="attribute in row.assignedStateAttributes" dense :label="attribute.name" />
+                </template>
+
             </adx-data-table>
         </adx-d>
 
@@ -47,6 +51,7 @@ const dataTable = $adx.dataTable(
   {
     actions:      { label: 'Azioni', width: "100px" },
     name:         { label: 'Data compilazione', width: "100%", sortable: true, field: (row: Item) => row.compilationDate },
+    stateAttributes: { label: 'Stati risultanti', width: "50px", sortable: true },
   },
   { sortBy: "compileDate" })
 

@@ -79,6 +79,12 @@ const assetModelCount = ds.ref("Metadata", "assetModelCount")
                     </q-item-section>
                 </q-item>
 
+                <q-item clickable to="/stateAttributes">
+                    <q-item-section>
+                        <span class="adx-reference">Attributi di stato</span>
+                    </q-item-section>
+                </q-item>
+
                 <q-item clickable to="/parts">
                     <q-item-section>
                         <span class="adx-reference">Articoli</span>
