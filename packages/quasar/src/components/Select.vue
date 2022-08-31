@@ -33,8 +33,10 @@ const errorMessage = computed(() => props.errors ? props.errors.map(error => err
 <template>
   <q-select
     v-model="value"
+    option-value="id"
     :option-label="props.lookupDisplayProperty"
     :options="options"
+    map-options
     :hide-bottom-space="errorMessage.length == 0"
     :error-message="errorMessage"
     :error="!!errorMessage.length">

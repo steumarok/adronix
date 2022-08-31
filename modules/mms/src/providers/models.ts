@@ -15,6 +15,7 @@ import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
 import { MmsResourceType } from "../persistence/entities/MmsResourceType";
 import { MmsService } from "../persistence/entities/MmsService";
 import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
+import { MmsTaskClosingReason } from "../persistence/entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsRepoService } from "../services/MmsRepoService";
 
@@ -662,13 +663,13 @@ export const modelsProviders: DataProviderDefinitions = {
             return await this.service(MmsRepoService).stateAttributeRepository
                 .find({
                     where,
-                    relations: { incompatibleAttributes: true },
+                    relations: { incompatibleAttributes: true, containers: true },
                     order: { [sortBy || 'name']: Utils.sortDir(descending) }
                 })
 
         },
         output: [
-            [MmsStateAttribute, 'name', 'incompatibleAttributes']
+            [MmsStateAttribute, 'name', 'incompatibleAttributes', 'containers']
         ]
     },
 
@@ -678,14 +679,17 @@ export const modelsProviders: DataProviderDefinitions = {
                 id
                     ? await this.service(MmsRepoService).stateAttributeRepository
                         .findOne({
-                            relations: { incompatibleAttributes: true },
+                            relations: {
+                                incompatibleAttributes: true,
+                                containers: true
+                            },
                             where: { id }})
                     : new MmsStateAttribute()
 
             return [po]
         },
         output: [
-            [MmsStateAttribute, 'name', 'incompatibleAttributes',
+            [MmsStateAttribute, 'name', 'incompatibleAttributes', 'containers',
                 'forAsset', 'forTask', 'forAssetComponent', 'forWorkOrder']
         ]
     },
@@ -695,7 +699,7 @@ export const modelsProviders: DataProviderDefinitions = {
 
             return await this.service(MmsRepoService).stateAttributeRepository
                 .find({
-                    relations: { incompatibleAttributes: true },
+                    relations: { incompatibleAttributes: true, containers: true },
                     order: { name: "asc" },
                     where: [
                         ...forAsset          ? [{ forAsset:          Utils.toBool(forAsset) }] : [],
@@ -707,8 +711,64 @@ export const modelsProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsStateAttribute, 'name', 'incompatibleAttributes']
+            [MmsStateAttribute, 'name', 'incompatibleAttributes', 'containers']
         ]
     },
+
+
+    '/listTaskClosingReasons': {
+        handler: async function ({ sortBy, descending, filter }) {
+
+            const where = filter
+                ? { name: Like(`${filter}%`) }
+                : {}
+
+            return await this.service(MmsRepoService).taskClosingReasonRepository
+                .find({
+                    where,
+                    relations: { assignedAttributes: true },
+                    order: { [sortBy || 'name']: Utils.sortDir(descending) }
+                })
+
+        },
+        output: [
+            [MmsTaskClosingReason, 'name', 'assignedAttributes', 'completionOutcome'],
+            [MmsStateAttribute, 'name']
+        ]
+    },
+
+    '/editTaskClosingReason': {
+        handler: async function({ id }) {
+            const po =
+                id
+                    ? await this.service(MmsRepoService).taskClosingReasonRepository
+                        .findOne({
+                            relations: { assignedAttributes: true },
+                            where: { id }})
+                    : new MmsTaskClosingReason()
+
+            return [po]
+        },
+        output: [
+            [MmsTaskClosingReason, 'name', 'assignedAttributes', 'completionOutcome'],
+            [MmsStateAttribute, 'name']
+        ]
+    },
+
+    '/lookupTaskClosingReasons': {
+        handler: async function ({ completionOutcome }) {
+
+            return await this.service(MmsRepoService).taskClosingReasonRepository
+                .find({
+                    order: { name: "asc" },
+                    where: { completionOutcome }
+                })
+
+        },
+        output: [
+            [MmsTaskClosingReason, 'name']
+        ]
+    },
+
 }
 

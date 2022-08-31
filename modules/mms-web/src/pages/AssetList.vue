@@ -23,7 +23,7 @@
                 </template>
 
                 <template #stateAttributes="{ row }">
-                    <q-chip v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
+                    <q-chip size="sm" v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
                 </template>
 
                 <template #client="{ row }">

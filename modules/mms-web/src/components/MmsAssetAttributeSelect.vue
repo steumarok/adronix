@@ -2,7 +2,7 @@
     <adx-select
         v-model="value"
         label="Attributi"
-        :lookup-data-set="dsAssetAttribute"
+        :lookup-data-set="ds"
         lookup-type="MmsAssetAttribute"
         lookup-display-property="name"
     />
@@ -30,6 +30,6 @@ const value = computed({
 
 const $adx = useAdronix()
 
-const dsAssetAttribute = $adx.dataSet('/api/mms/lookupAssetAttributes')
+const ds = $adx.dataSet('/api/mms/lookupAssetAttributes')
 
 </script>

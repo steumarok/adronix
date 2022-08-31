@@ -6,7 +6,7 @@
         <adx-breadcrumbs separator=" > ">
             <q-breadcrumbs-el label="Home" icon="home" to="/home" />
             <q-breadcrumbs-el label="Modelli" to="/models" />
-            <q-breadcrumbs-el>Attributi di stato</q-breadcrumbs-el>
+            <q-breadcrumbs-el>Motivi chiusura attività</q-breadcrumbs-el>
         </adx-breadcrumbs>
 
         <adx-d>
@@ -16,7 +16,7 @@
                 bordered
             >
                 <template #top-left>
-                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci attributo</q-btn>
+                    <q-btn @click="onInsert" color="primary" unelevated>Inserisci motivo</q-btn>
                 </template>
                 <template #actions="{ row }">
                     <q-btn icon="edit" flat size="sm" @click="onEdit(row.id)"/>
@@ -34,33 +34,33 @@
 <script setup lang="ts">
 import { useAdronix } from '@adronix/vue';
 import { Item, DataSetUtils, buildUrl } from '@adronix/client';
-import StateAttributeEdit from './StateAttributeEdit.vue'
+import TaskClosingReasonEdit from './TaskClosingReasonEdit.vue'
 import { computed } from 'vue';
 
 const $adx = useAdronix()
 
 const dataTable = $adx.dataTable(
-  'MmsStateAttribute',
+  'MmsTaskClosingReason',
   {
-    actions:      { label: 'Azioni', width: "100px" },
-    name:         { label: 'Nome', width: "100%", sortable: true, field: (row: Item) => row.name },
-    incompatibleAttributes: { label: 'In alternativa a', width: "100%", sortable: true, field: (row: Item) => row.incompatibleAttributes.map(a => a.name).join(', ') },
-    containers: { label: 'Associato a', width: "100%", sortable: true, field: (row: Item) => row.containers.map(a => a.name).join(', ') },
+    actions:            { label: 'Azioni', width: "100px" },
+    name:               { label: 'Nome', width: "100%", sortable: true, field: (row: Item) => row.name },
+    completionOutcome:  { label: 'Esito attività', width: "100%", sortable: true, field: (row: Item) => row.completionOutcome },
+    assignedAttributes: { label: 'Attributi assegnati', width: "100%", sortable: true, field: (row: Item) => row.assignedAttributes.map(a => a.name).join(', ') },
   },
   { sortBy: "name" })
 
-const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listStateAttributes', dataTable.params)))
+const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listTaskClosingReasons', dataTable.params)))
 
 function onInsert() {
-    $adx.openDialog(StateAttributeEdit)
+    $adx.openDialog(TaskClosingReasonEdit)
 }
 
 function onDelete(key: string) {
-    DataSetUtils.deleteItem(ds, "MmsStateAttribute", key, () => ds.commit())
+    DataSetUtils.deleteItem(ds, "MmsTaskClosingReason", key, () => ds.commit())
 }
 
 function onEdit(id: string) {
-    $adx.openDialog(StateAttributeEdit, { id })
+    $adx.openDialog(TaskClosingReasonEdit, { id })
 }
 
 const dataBindings = dataTable.bind(ds)

@@ -33,6 +33,13 @@
                             clearable
                             />
                     </adx-d>
+                    <adx-d vertical padding="xs">
+                        <mms-state-attribute-select
+                            v-model="asset.stateAttributes"
+                            :for-asset="true"
+                            multiple
+                            />
+                    </adx-d>
                 </adx-d>
 
                 <adx-d horizontal fit justify="evenly">
@@ -136,6 +143,7 @@ import MmsClientLocationSelect from '../components/MmsClientLocationSelect.vue'
 import MmsAreaSelect from '../components/MmsAreaSelect.vue'
 import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
 import MmsTaskModelSelect from '../components/MmsTaskModelSelect.vue'
+import MmsStateAttributeSelect from '../components/MmsStateAttributeSelect.vue'
 
 const props = defineProps({
   id: Number

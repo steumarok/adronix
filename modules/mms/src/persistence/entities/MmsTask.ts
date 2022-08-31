@@ -2,6 +2,7 @@ import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColum
 import { MmsAsset } from "./MmsAsset";
 import { MmsResource } from "./MmsResource";
 import { MmsStateAttribute } from "./MmsStateAttribute";
+import { MmsTaskClosingReason, MmsTaskCompletionOutcome } from "./MmsTaskClosingReason";
 import { MmsTaskModel } from "./MmsTaskModel";
 import { MmsWorkOrder } from "./MmsWorkOrder";
 
@@ -46,4 +47,16 @@ export class MmsTask {
     @JoinTable({name: "mms_tasks_mms_state_attributes"})
     stateAttributes: MmsStateAttribute[];
 
+    @Column({
+        type: 'enum',
+        enum: MmsTaskCompletionOutcome,
+        nullable: true
+    })
+    completionOutcome: MmsTaskCompletionOutcome;
+
+    @ManyToOne(() => MmsTaskClosingReason, { nullable: true })
+    closingReason: MmsTaskClosingReason;
+
+    @Column({ length: 4096, nullable: true })
+    completionNotes: string;
 }

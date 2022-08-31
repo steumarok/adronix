@@ -85,6 +85,12 @@ const assetModelCount = ds.ref("Metadata", "assetModelCount")
                     </q-item-section>
                 </q-item>
 
+                <q-item clickable to="/taskClosingReasons">
+                    <q-item-section>
+                        <span class="adx-reference">Motivi chiusura attività</span>
+                    </q-item-section>
+                </q-item>
+
                 <q-item clickable to="/parts">
                     <q-item-section>
                         <span class="adx-reference">Articoli</span>

@@ -26,6 +26,7 @@ import WorkOrderList from './pages/WorkOrderList.vue'
 import ChecklistModelList from './pages/ChecklistModelList.vue'
 import ChecklistItemModelList from './pages/ChecklistItemModelList.vue'
 import ChecklistList from './pages/ChecklistList.vue'
+import TaskClosingReasonList from './pages/TaskClosingReasonList.vue'
 
 export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     AreaList, AssetList, Models, AssetModelList, ResourceModelList,
@@ -34,4 +35,4 @@ export { ClientList, ClientEdit, ClientLocationList, ClientLocationEdit,
     AreaModelList, AssetComponentList, AssetComponentModelList,
     TaskList, WorkPlanList, ResourceList, ServiceList, WorkOrderList,
     ChecklistModelList, ChecklistItemModelList, ChecklistList,
-    StateAttributeList }
+    StateAttributeList, TaskClosingReasonList }

@@ -56,6 +56,14 @@
                     label="Dopo"
                     multiple
                 />
+
+                <mms-state-attribute-select
+                    v-model="scheduling.lastsStateAttributes"
+                    label="Attributi di stato"
+                    :for-task="true"
+                    multiple
+                    clearable
+                    />
             </adx-d>
 
             <adx-d vertical padding="xs">
@@ -105,6 +113,19 @@
                 />
             </adx-d>
         </adx-d>
+
+        <adx-d horizontal fit justify="evenly">
+            <adx-d vertical padding="xs">
+                <mms-state-attribute-select
+                    v-model="scheduling.assignedAttributes"
+                    label="Attributo di stato assegnati all'attività"
+                    :for-task="true"
+                    :use-filter="true"
+                    multiple
+                    clearable
+                    />
+            </adx-d>
+        </adx-d>
     </adx-dialog>
 </template>
 
@@ -120,6 +141,7 @@ import MmsPartSelect from '../components/MmsPartSelect.vue'
 import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
 import MmsSchedulingUnitSelect from '../components/MmsSchedulingUnitSelect.vue'
 import MmsDayOfWeekSelect from '../components/MmsDayOfWeekSelect.vue'
+import MmsStateAttributeSelect from '../components/MmsStateAttributeSelect.vue'
 
 const props = defineProps({
   id: Number

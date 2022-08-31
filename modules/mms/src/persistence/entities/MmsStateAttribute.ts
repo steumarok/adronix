@@ -1,4 +1,4 @@
-import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, ManyToOne} from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity("mms_state_attributes")
 export class MmsStateAttribute {
@@ -12,6 +12,10 @@ export class MmsStateAttribute {
     @ManyToMany(() => MmsStateAttribute)
     @JoinTable({name: "mms_state_attributes_incompatible"})
     incompatibleAttributes: MmsStateAttribute[];
+
+    @ManyToMany(() => MmsStateAttribute)
+    @JoinTable({name: "mms_state_attributes_containers"})
+    containers: MmsStateAttribute[];
 
     @Column({ nullable: true })
     forAsset: boolean;

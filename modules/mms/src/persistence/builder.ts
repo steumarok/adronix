@@ -32,6 +32,7 @@ import { MmsService } from "./entities/MmsService";
 import { MmsServiceProvision } from "./entities/MmsServiceProvision";
 import { MmsStateAttribute } from "./entities/MmsStateAttribute";
 import { MmsTask } from "./entities/MmsTask";
+import { MmsTaskClosingReason } from "./entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
 import { MmsWorkPlan } from "./entities/MmsWorkPlan";
@@ -140,6 +141,9 @@ const ioDefinitions: EntityIODefinitions = [
         entityClass: MmsStateAttribute
     },
     {
+        entityClass: MmsTaskClosingReason
+    },
+    {
         entityClass: MmsChecklistItemModel,
         rules: {
             'text':     [ [ RulePatterns.notBlank(), 'blank' ] ],
@@ -165,7 +169,10 @@ export default TypeORMPersistence.build()
         }
     })
     .addEventHandler(MmsTask, async function(eventKind: EntityEventKind, task: MmsTask, transaction: TypeORMTransaction) {
-        if (eventKind == EntityEventKind.Deleting) {
+        if (eventKind == EntityEventKind.Updating) {
+            await transaction.saga(this.service(MmsTaskService).triggerTaskStateChange(task))
+        }
+        else if (eventKind == EntityEventKind.Deleting) {
             const serviceProvisions = await transaction.entityManager.find(MmsServiceProvision, {
                 where: { task: { id: task.id } }
             })
@@ -184,12 +191,13 @@ export default TypeORMPersistence.build()
         if (eventKind == EntityEventKind.Inserting || eventKind == EntityEventKind.Updating) {
             checklistItem.value = checklistItem.option.value
 
-            await transaction.saga(this.service(MmsAssetService).triggerStateChange(checklistItem))
+            await transaction.saga(this.service(MmsAssetService).triggerChecklistItemStateChange(checklistItem))
         }
     })
     .addEventHandler(MmsChecklist, async function(eventKind: EntityEventKind, checklist: MmsChecklist, transaction: TypeORMTransaction) {
         if (eventKind == EntityEventKind.Inserting) {
             checklist.previous = await transaction.saga(this.service(MmsAssetService).getLastChecklist(checklist.asset))
         }
-    });
+    })
+    ;
 

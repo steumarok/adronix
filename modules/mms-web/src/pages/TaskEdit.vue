@@ -20,73 +20,113 @@
         <q-tab-panels v-model="tab" animated style="min-height: 400px">
             <q-tab-panel name="general">
 
-                <adx-d horizontal fit justify="evenly" content="center" v-if="task.workOrder">
-                    <adx-d vertical padding="xs">
-                        <adx-data-input
-                            v-model="task.workOrder.code"
-                            label="Ordine di lavoro"
-                            />
+        <adx-d horizontal>
+            <adx-d vertical padding="xs">
+                <adx-field-group title="Dati attività">
+                    <adx-d horizontal fit justify="evenly" content="center">
+                        <adx-d vertical padding="xs">
+                            <adx-data-input
+                                v-model="taskCode"
+                                label="Nome/codice"
+                                />
+                        </adx-d>
+                        <adx-d vertical padding="xs"  v-if="task.workOrder">
+                            <adx-data-input
+                                v-model="task.workOrder.code"
+                                label="Ordine di lavoro"
+                                />
+                        </adx-d>
                     </adx-d>
-                </adx-d>
+                    <adx-d horizontal fit justify="evenly" content="center">
+                        <adx-d vertical padding="xs">
+                            <mms-task-model-select
+                                v-model="task.model"
+                                />
+                        </adx-d>
+                        <adx-d vertical padding="xs">
+                            <mms-resource-select
+                                v-model="task.resources"
+                                label="Risorse coinvolte"
+                                :errors="task.errors.resources"
+                                multiple
+                                />
+                        </adx-d>
 
-                <adx-d horizontal fit justify="evenly" content="center">
-                    <adx-d vertical padding="xs">
-                        <adx-data-input
-                            v-model="taskCode"
-                            label="Nome/codice"
-                            />
                     </adx-d>
-                    <adx-d vertical padding="xs">
-                        <mms-state-attribute-select
-                            v-model="task.stateAttributes"
-                            :for-task="true"
-                            multiple
-                            />
+                    <adx-d horizontal fit justify="evenly" content="center">
+                        <adx-d vertical padding="xs">
+                            <mms-state-attribute-select
+                                v-model="task.stateAttributes"
+                                :use-filter="true"
+                                :for-task="true"
+                                multiple
+                                />
+                        </adx-d>
                     </adx-d>
-                    <adx-d vertical padding="xs">
-                        <mms-task-model-select
-                            v-model="task.model"
-                            />
+                </adx-field-group>
+            </adx-d>
+            <adx-d vertical padding="xs">
+                <adx-field-group title="Date">
+                    <adx-d horizontal fit justify="evenly" content="center">
+                        <adx-d vertical padding="xs">
+                            <adx-data-input
+                                v-model="task.scheduledDate"
+                                data-type="datetime"
+                                label="Data pianificata"
+                                :errors="task.errors.scheduledDate"
+                                />
+                        </adx-d>
+                        <adx-d vertical padding="xs">
+                            <adx-data-input
+                                v-model="task.executionDate"
+                                data-type="datetime"
+                                label="Data di esecuzione"
+                                :errors="task.errors.executionDate"
+                                />
+                        </adx-d>
+                        <adx-d vertical padding="xs">
+                            <adx-data-input
+                                v-model="task.completeDate"
+                                data-type="datetime"
+                                label="Data di completamento"
+                                :errors="task.errors.completeDate"
+                                />
+                        </adx-d>
                     </adx-d>
-                </adx-d>
+                </adx-field-group>
+<!--
+                <adx-field-group title="Chiusura" class="q-mt-sm">
+                    <adx-d horizontal fit justify="evenly" content="center">
+                        <adx-d vertical padding="xs">
+                            <mms-task-completion-outcome-select
+                                label="Esito"
+                                v-model="task.completionOutcome"
+                                />
+                        </adx-d>
+                        <adx-d vertical padding="xs">
+                            <mms-task-closing-reason-select
+                                label="Motivo"
+                                v-model="task.closingReason"
+                                :completion-outcome="task.completionOutcome"
+                                clearable
+                                />
+                        </adx-d>
+                    </adx-d>
+                    <adx-d horizontal fit justify="evenly" content="center">
+                        <adx-d vertical padding="xs">
+                            <adx-data-input
+                                v-model="task.completionNotes"
+                                label="Note"
+                                :errors="task.errors.completionNotes"
+                                />
+                        </adx-d>
+                    </adx-d>
+                </adx-field-group>
+-->
+            </adx-d>
+        </adx-d>
 
-                <adx-d horizontal fit justify="evenly" content="center">
-                    <adx-d vertical padding="xs">
-                        <adx-data-input
-                            v-model="task.scheduledDate"
-                            data-type="datetime"
-                            label="Data pianificata"
-                            :errors="task.errors.scheduledDate"
-                            />
-                    </adx-d>
-                    <adx-d vertical padding="xs">
-                        <adx-data-input
-                            v-model="task.executionDate"
-                            data-type="datetime"
-                            label="Data di esecuzione"
-                            :errors="task.errors.executionDate"
-                            />
-                    </adx-d>
-                    <adx-d vertical padding="xs">
-                        <adx-data-input
-                            v-model="task.completeDate"
-                            data-type="datetime"
-                            label="Data di completamento"
-                            :errors="task.errors.completeDate"
-                            />
-                    </adx-d>
-                </adx-d>
 
-                <adx-d horizontal fit justify="evenly" content="center">
-                    <adx-d vertical padding="xs">
-                        <mms-resource-select
-                            v-model="task.resources"
-                            label="Risorse coinvolte"
-                            :errors="task.errors.resources"
-                            multiple
-                            />
-                    </adx-d>
-                </adx-d>
 
             </q-tab-panel>
 
@@ -159,6 +199,8 @@ import MmsTaskModelSelect from '../components/MmsTaskModelSelect.vue'
 import MmsServiceSelect from '../components/MmsServiceSelect.vue'
 import MmsResourceSelect from '../components/MmsResourceSelect.vue'
 import MmsStateAttributeSelect from '../components/MmsStateAttributeSelect.vue'
+import MmsTaskCompletionOutcomeSelect from '../components/MmsTaskCompletionOutcomeSelect.vue'
+import MmsTaskClosingReasonSelect from '../components/MmsTaskClosingReasonSelect.vue'
 
 const props = defineProps({
   id: Number

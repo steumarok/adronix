@@ -20,7 +20,6 @@
                 </template>
                 <template #actions="{ row }">
                     <q-btn icon="edit" flat size="sm" @click="onEdit(row.id)"/>
-                    <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
 
                 <template #wo="{ row }">
@@ -40,7 +39,7 @@
                 </template>
 
                 <template #attributes="{ row }">
-                    <q-chip v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
+                    <q-chip size="sm" v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
                 </template>
 
                 <template #address="{ row }">
@@ -112,7 +111,7 @@ const store = useAdronixStore()
 const dataTable = $adx.dataTable(
   'MmsTask',
   {
-    actions:        { label: 'Azioni' },
+    actions:        { label: '' },
     wo:             { label: 'OdL' },
     code:           { label: 'Codice', width: "50px", sortable: true, field: (row: Item) => `${row.codePrefix}${row.code}${row.codeSuffix}` },
     attributes:     { label: 'Attributi' },

@@ -1,5 +1,5 @@
 <template>
-    <adx-dialog ref="dialog" title="Attributo di stato" :loading="!stateAttribute">
+    <adx-dialog ref="dialog" title="Attributo di stato" :loading="!stateAttribute" style="min-width: 80%">
 
         <adx-d vertical y-spacing="sm">
 
@@ -10,9 +10,19 @@
                 />
 
             <mms-state-attribute-select
+                v-model="stateAttribute.containers"
+                :excluded="[stateAttribute]"
+                label="Associato a"
+                :for-task="stateAttribute.forTask"
+                multiple
+                clearable
+                />
+
+            <mms-state-attribute-select
                 v-model="stateAttribute.incompatibleAttributes"
                 :excluded="[stateAttribute]"
-                label="Attributi non compatibili"
+                label="In alternativa a"
+                :for-task="stateAttribute.forTask"
                 multiple
                 clearable
                 />

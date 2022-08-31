@@ -11,6 +11,7 @@ import { MmsService } from "../persistence/entities/MmsService";
 import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
 import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
 import { MmsTask } from "../persistence/entities/MmsTask";
+import { MmsTaskClosingReason } from "../persistence/entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsWorkOrder } from "../persistence/entities/MmsWorkOrder";
 import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
@@ -198,7 +199,8 @@ export const tasksProviders: DataProviderDefinitions = {
                                 asset: true,
                                 resources: true,
                                 workOrder: true,
-                                stateAttributes: true
+                                stateAttributes: true,
+                                closingReason: true
                             },
                             where: { id }})
                     : new MmsTask()
@@ -216,7 +218,7 @@ export const tasksProviders: DataProviderDefinitions = {
                                 assetComponentModel: true,
                                 assetModel: true
                             },
-                            assetComponentModel: true
+                            assetComponentModel: true,
                         },
                         where: { task: { id } }
                     })
@@ -228,10 +230,12 @@ export const tasksProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsTask, 'asset', 'model', 'codePrefix', 'codeSuffix', 'scheduledDate',
-                'executionDate', 'code', 'resources', 'workOrder', 'attributes'],
-            [MmsAsset, 'name', 'client', 'location', 'model', 'area', 'stateAttributes'],
+                'executionDate', 'code', 'resources', 'workOrder', 'stateAttributes',
+                'closingReason', 'completionOutcome', 'completionNotes'],
+            [MmsAsset, 'name', 'client', 'location', 'model', 'area'],
             [MmsClientLocation, 'address', 'locality'],
             [MmsClient, 'name'],
+            [MmsTaskClosingReason, 'name'],
             [MmsWorkOrder, 'code'],
             [MmsAssetModel, 'name'],
             [MmsResource, 'name'],

@@ -28,6 +28,7 @@ import { MmsService } from "../persistence/entities/MmsService";
 import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
 import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
 import { MmsTask } from "../persistence/entities/MmsTask";
+import { MmsTaskClosingReason } from "../persistence/entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
 import { MmsWorkOrder } from "../persistence/entities/MmsWorkOrder";
 import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
@@ -96,6 +97,10 @@ export class MmsRepoService extends AbstractService {
 
     get stateAttributeRepository() {
         return this.dataSource.getRepository(MmsStateAttribute)
+    }
+
+    get taskClosingReasonRepository() {
+        return this.dataSource.getRepository(MmsTaskClosingReason)
     }
 
     get assetComponentModelRepository() {

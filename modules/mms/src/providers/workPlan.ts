@@ -12,6 +12,7 @@ import { MmsScheduling } from "../persistence/entities/MmsScheduling";
 import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
 import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
 import { MmsService } from "../persistence/entities/MmsService";
+import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
 
 
 export const workPlanProviders: DataProviderDefinitions = {
@@ -183,7 +184,9 @@ export const workPlanProviders: DataProviderDefinitions = {
                                 assetAttributes: true,
                                 assetModels: true,
                                 taskModel: true,
-                                startFromLasts: true
+                                startFromLasts: true,
+                                assignedAttributes: true,
+                                lastsStateAttributes: true
                             },
                             where: { id }})
                     : new MmsScheduling()
@@ -193,11 +196,13 @@ export const workPlanProviders: DataProviderDefinitions = {
         output: [
             [MmsScheduling, 'taskModel', 'areaModels', 'assetAttributes',
                 'assetModels', 'startFromLasts', 'dayMonthFrom', 'dayMonthTo',
-                'every', 'unit', 'startImmediately', 'startTime', 'daysOfWeek'],
+                'every', 'unit', 'startImmediately', 'startTime', 'daysOfWeek',
+                'assignedAttributes', 'lastsStateAttributes'],
             [MmsTaskModel, 'name'],
             [MmsAreaModel, 'name'],
             [MmsAssetModel, 'name'],
             [MmsAssetAttribute, 'name'],
+            [MmsStateAttribute, 'name'],
         ]
     },
 }

@@ -24,6 +24,7 @@ import { WorkOrderList } from '@adronix/mms-web'
 import { ChecklistModelList } from '@adronix/mms-web'
 import { ChecklistItemModelList } from '@adronix/mms-web'
 import { ChecklistList } from '@adronix/mms-web'
+import { TaskClosingReasonList } from '@adronix/mms-web'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -45,6 +46,7 @@ const routes: RouteRecordRaw[] = [
       { path: '/assetComponents/:assetId', component: () => AssetComponentList, props: true, meta: { context: 'assets' } },
       { path: '/checklists/:assetId', component: () => ChecklistList, props: true, meta: { context: 'assets' } },
 
+      { path: '/taskClosingReasons', component: () => TaskClosingReasonList, meta: { context: 'models' } },
       { path: '/models', component: () => Models, meta: { context: 'models' } },
       { path: '/taskModels', component: () => TaskModelList, meta: { context: 'models' } },
       { path: '/assetModels', component: () => AssetModelList, meta: { context: 'models' } },

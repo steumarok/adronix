@@ -1,5 +1,5 @@
 import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
-import { InjectDataSource, InjectTypeORM, TypeORM, TypeORMTransaction } from "@adronix/typeorm";
+import { InjectTypeORM, TypeORM } from "@adronix/typeorm";
 import { DateTime } from "luxon";
 import { MmsArea } from "../persistence/entities/MmsArea";
 import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
@@ -84,7 +84,7 @@ export class MmsAssetService extends AbstractService {
         return asset
     }
 
-    *triggerStateChange(checklistItem: MmsChecklistItem) {
+    *triggerChecklistItemStateChange(checklistItem: MmsChecklistItem) {
 
         const option: MmsChecklistItemOption = yield this.typeorm.findOne(MmsChecklistItemOption, {
             where: { id: checklistItem.option.id },

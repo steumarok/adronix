@@ -1,32 +1,19 @@
-import { Errors } from "@adronix/base";
-import { Transaction } from "@adronix/persistence";
 import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
-import { InjectDataSource, InjectTypeORM, TypeORM, TypeORMTransaction } from "@adronix/typeorm";
+import { InjectTypeORM, TypeORM } from "@adronix/typeorm";
 import { DateTime } from "luxon";
-import { DataSource, EntityManager, EntityTarget, FindOneOptions, In, TreeLevelColumn } from "typeorm";
-import { MmsArea } from "../persistence/entities/MmsArea";
-import { MmsAreaModel } from "../persistence/entities/MmsAreaModel";
-import { MmsAreaModelAttribution } from "../persistence/entities/MmsAreaModelAttribution";
+import { In } from "typeorm";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
-import { MmsAssetAttribute } from "../persistence/entities/MmsAssetAttribute";
 import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
-import { MmsAssetComponentModel } from "../persistence/entities/MmsAssetComponentModel";
-import { MmsAssetModel, MmsAssetType } from "../persistence/entities/MmsAssetModel";
-import { MmsAssetModelPivot } from "../persistence/entities/MmsAssetModelPivot";
-import { MmsClient } from "../persistence/entities/MmsClient";
-import { MmsClientLocation } from "../persistence/entities/MmsClientLocation";
+import { MmsAssetType } from "../persistence/entities/MmsAssetModel";
 import { MmsCounter } from "../persistence/entities/MmsCounter";
 import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
-import { MmsPart } from "../persistence/entities/MmsPart";
-import { MmsPartRequirement, MmsQuantityType } from "../persistence/entities/MmsPartRequirement";
-import { MmsResourceModel } from "../persistence/entities/MmsResourceModel";
-import { MmsResourceType } from "../persistence/entities/MmsResourceType";
 import { MmsScheduling } from "../persistence/entities/MmsScheduling";
 import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
 import { MmsTask } from "../persistence/entities/MmsTask";
+import { MmsTaskClosingReason } from "../persistence/entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
+import { MmsWorkOrder } from "../persistence/entities/MmsWorkOrder";
 import { MmsWorkPlan } from "../persistence/entities/MmsWorkPlan";
-import { assetsProviders } from "../providers/assets";
 
 function toDateTime(obj: null | string | Date) {
     let dt = null
@@ -116,7 +103,7 @@ export class MmsTaskService extends AbstractService {
 
         for (const [ model, it ] of group1) {
             for (let i = 0; i < 10; i++) {
-                const scheduledDate = it.next().value.toJSDate()
+                const { date, scheduling } = it.next().value
                 const code = yield* this.generateTaskCode(model)
 
                 const task: MmsTask = yield this.io.throwing.insert(MmsTask, {
@@ -125,7 +112,8 @@ export class MmsTaskService extends AbstractService {
                     code,
                     codePrefix: model.codePrefix,
                     codeSuffix: model.codeSuffix,
-                    scheduledDate
+                    scheduledDate: date.toJSDate(),
+                    stateAttributes: scheduling.assignedAttributes
                 })
 
                 yield* this.createServiceProvisions(task)
@@ -251,7 +239,8 @@ export class MmsTaskService extends AbstractService {
                     assetAttributes: true,
                     assetModels: true,
                     taskModel: true,
-                    startFromLasts: true
+                    startFromLasts: true,
+                    assignedAttributes: true,
                 },
                 where: [
                     { startImmediately: true },
@@ -328,9 +317,9 @@ export class MmsTaskService extends AbstractService {
                 (min, b) => this.calcNextDate(currentDate, b) < this.calcNextDate(currentDate, min) ? b : min,
                 schedulings[0])
             currentDate = this.calcNextDate(currentDate, minScheduling)
-            yield currentDate
+            yield { date: currentDate, scheduling: minScheduling }
         }
-        return startDate
+        return { date: null, scheduling: null }
     }
 
     calcNextDate(startDate: DateTime, scheduling: MmsScheduling) {
@@ -425,5 +414,63 @@ export class MmsTaskService extends AbstractService {
 
         return scheduling.assetAttributes.every(attr => asset.attributes.some(a => a.id == attr.id))
     }
+
+
+    *triggerTaskStateChange(task: MmsTask) {
+        if (!task.closingReason) {
+            return
+        }
+
+        const currentTask: MmsTask = yield this.typeorm.findOne(MmsTask, {
+            where: {
+                id: task.id
+            },
+            relations: {
+                asset: true,
+                workOrder: true,
+                closingReason: true
+            }
+        })
+
+        if (task.closingReason.id != currentTask.closingReason?.id) {
+            const closingReason: MmsTaskClosingReason = yield this.typeorm.findOne(MmsTaskClosingReason, {
+                where: {
+                    id: task.closingReason.id
+                },
+                relations: {
+                    assignedAttributes: true
+                }
+            })
+
+            for (const attribute of closingReason.assignedAttributes) {
+                if (attribute.forTask) {
+                    task.stateAttributes = Utils.distinct([
+                        ...task.stateAttributes || [],
+                        attribute
+                    ], 'id')
+                }
+
+                if (attribute.forAsset) {
+                    yield this.io.throwing.update(MmsAsset, currentTask.asset, {
+                        stateAttributes: Utils.distinct([
+                            ...task.stateAttributes || [],
+                            attribute
+                        ], 'id')
+                    })
+                }
+
+                if (attribute.forWorkOrder && currentTask.workOrder) {
+                    yield this.io.throwing.update(MmsWorkOrder, currentTask.workOrder, {
+                        stateAttributes: Utils.distinct([
+                            ...task.stateAttributes || [],
+                            attribute
+                        ], 'id')
+                    })
+                }
+            }
+        }
+    }
+
+
 }
 
