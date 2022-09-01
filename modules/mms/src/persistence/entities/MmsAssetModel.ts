@@ -38,4 +38,8 @@ export class MmsAssetModel {
         transformer: new ColumnNumericTransformer()
     })
     unitQuantity: number;
+
+    @Column()
+    mandatoryChecklist: boolean;
+
 }

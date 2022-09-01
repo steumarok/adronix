@@ -1,7 +1,7 @@
 import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
 import { InjectTypeORM, TypeORM } from "@adronix/typeorm";
 import { DateTime } from "luxon";
-import { In } from "typeorm";
+import { In, IsNull } from "typeorm";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetType } from "../persistence/entities/MmsAssetModel";
@@ -9,6 +9,7 @@ import { MmsCounter } from "../persistence/entities/MmsCounter";
 import { MmsLastTaskInfo } from "../persistence/entities/MmsLastTaskInfo";
 import { MmsScheduling } from "../persistence/entities/MmsScheduling";
 import { MmsServiceProvision } from "../persistence/entities/MmsServiceProvision";
+import { MmsStateAttribute } from "../persistence/entities/MmsStateAttribute";
 import { MmsTask } from "../persistence/entities/MmsTask";
 import { MmsTaskClosingReason } from "../persistence/entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "../persistence/entities/MmsTaskModel";
@@ -44,6 +45,17 @@ export class MmsTaskService extends AbstractService {
 
     @InjectTypeORM
     typeorm: TypeORM
+
+    *getInitialAttributes({ forWorkOrder }: { forWorkOrder: boolean }) {
+        return yield this.typeorm.find(
+            MmsStateAttribute,
+            {
+                where: {
+                    forWorkOrder,
+                    asInitialState: true
+                }
+            })
+    }
 
     *generateWorkOrderCode() {
         return yield* this.getCounterValue("workOrder")
@@ -415,8 +427,114 @@ export class MmsTaskService extends AbstractService {
         return scheduling.assetAttributes.every(attr => asset.attributes.some(a => a.id == attr.id))
     }
 
+    *checkWorkOrderState({ task }: { task: MmsTask }) {
+        task = yield this.typeorm.findOne(
+            MmsTask,
+            {
+                where: {
+                    id: task.id
+                },
+                relations: {
+                    workOrder: {
+                        stateAttributes: true
+                    }
+                }
+            }
+        )
+
+        const { workOrder } = task
+
+        const siblings: MmsTask[] = yield this.typeorm.find(
+            MmsTask,
+            {
+                where: {
+                    workOrder: {
+                        id: workOrder.id
+                    }
+                },
+                relations: {
+                    stateAttributes: true
+                }
+            }
+        )
+
+        const states: MmsStateAttribute[] = yield this.typeorm.find(
+            MmsStateAttribute,
+            {
+                where: {
+                    forWorkOrder: true,
+                    autoAssigned: true
+                },
+                relations: {
+                    withAllTaskStates: true
+                }
+            }
+        )
+
+        const workOrderStates = states.filter(s => {
+            return siblings.every(t => t.stateAttributes.some(ts => s.withAllTaskStates.map(ts => ts.id).includes(ts.id)))
+        })
+
+        yield this.io.throwing.update(MmsWorkOrder, workOrder, {
+            stateAttributes: workOrderStates.length > 0 ? workOrderStates : workOrder.stateAttributes
+        })
+    }
 
     *triggerTaskStateChange(task: MmsTask) {
+
+        const currentTask: MmsTask = yield this.typeorm.findOne(
+            MmsTask,
+            {
+                where: {
+                    id: task.id
+                },
+                relations: {
+                    stateAttributes: true,
+                    workOrder: true
+                }
+            }
+        )
+
+        const states: MmsStateAttribute[] = yield this.typeorm.find(
+            MmsStateAttribute,
+            {
+                where: {
+                    id: In(currentTask.stateAttributes.map(a => a.id)),
+                }
+            }
+        )
+
+        if (task.workOrder) {
+            task.stateAttributes = states.filter(s => s.withWorkOrder === null || s.withWorkOrder === true)
+
+            //
+            // There is a assignment to a work order
+            //
+            if (!currentTask.workOrder) {
+                const autoStates: MmsStateAttribute[] = yield this.typeorm.find(
+                    MmsStateAttribute,
+                    {
+                        where: {
+                            forTask: true,
+                            autoAssigned: true,
+                            withWorkOrder: true
+                        }
+                    }
+                )
+
+                task.stateAttributes = [
+                    ...task.stateAttributes,
+                    ...autoStates
+                ]
+            }
+        } else {
+            if (!currentTask.workOrder) {
+                task.stateAttributes = states.filter(s => s.withWorkOrder === null || s.withWorkOrder === false)
+            }
+        }
+
+
+        /*
         if (!task.closingReason) {
             return
         }
@@ -468,7 +586,7 @@ export class MmsTaskService extends AbstractService {
                     })
                 }
             }
-        }
+        }*/
     }
 
 

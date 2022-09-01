@@ -37,6 +37,14 @@
                 :errors="assetModel.errors.checklistModel"
                 />
 
+            <adx-d vertical y-spacing="sm">
+                <q-checkbox
+                    v-model="assetModel.mandatoryChecklist"
+                    label="Checklist obbligatoria"
+                    :false-value="null"
+                    />
+            </adx-d>
+
             <adx-d v-if="showComponentModelPivot">
                 <span class="text-subtitle1">Griglia modelli</span>
 

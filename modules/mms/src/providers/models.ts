@@ -114,7 +114,8 @@ export const modelsProviders: DataProviderDefinitions = {
             return [assetModel, ...pivots]
         },
         output: [
-            [MmsAssetModel, 'name', 'assetType', 'measurementUnit', 'unitQuantity', 'checklistModel'],
+            [MmsAssetModel, 'name', 'assetType', 'measurementUnit', 'unitQuantity',
+                'checklistModel', 'mandatoryChecklist'],
             [MmsAssetModelPivot, 'assetModel', 'areaModel', 'componentModel', 'quantity', 'rowGroup'],
             [MmsAreaModel, 'name'],
             [MmsChecklistModel, 'name'],
@@ -681,7 +682,8 @@ export const modelsProviders: DataProviderDefinitions = {
                         .findOne({
                             relations: {
                                 incompatibleAttributes: true,
-                                containers: true
+                                containers: true,
+                                withAllTaskStates: true
                             },
                             where: { id }})
                     : new MmsStateAttribute()
@@ -690,7 +692,9 @@ export const modelsProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsStateAttribute, 'name', 'incompatibleAttributes', 'containers',
-                'forAsset', 'forTask', 'forAssetComponent', 'forWorkOrder']
+                'forAsset', 'forTask', 'forAssetComponent', 'forWorkOrder',
+                'autoAssigned', 'withWorkOrder', 'withAllTaskStates', 'withMandatoryChecklists',
+                'asInitialState']
         ]
     },
 
@@ -711,7 +715,7 @@ export const modelsProviders: DataProviderDefinitions = {
 
         },
         output: [
-            [MmsStateAttribute, 'name', 'incompatibleAttributes', 'containers']
+            [MmsStateAttribute, 'name', 'incompatibleAttributes', 'containers', 'withWorkOrder']
         ]
     },
 

@@ -172,6 +172,9 @@ export default TypeORMPersistence.build()
         if (eventKind == EntityEventKind.Updating) {
             await transaction.saga(this.service(MmsTaskService).triggerTaskStateChange(task))
         }
+        else if (eventKind == EntityEventKind.Updated) {
+            await transaction.saga(this.service(MmsTaskService).checkWorkOrderState({ task }))
+        }
         else if (eventKind == EntityEventKind.Deleting) {
             const serviceProvisions = await transaction.entityManager.find(MmsServiceProvision, {
                 where: { task: { id: task.id } }
@@ -197,6 +200,12 @@ export default TypeORMPersistence.build()
     .addEventHandler(MmsChecklist, async function(eventKind: EntityEventKind, checklist: MmsChecklist, transaction: TypeORMTransaction) {
         if (eventKind == EntityEventKind.Inserting) {
             checklist.previous = await transaction.saga(this.service(MmsAssetService).getLastChecklist(checklist.asset))
+        }
+    })
+    .addEventHandler(MmsWorkOrder, async function(eventKind: EntityEventKind, workOrder: MmsWorkOrder, transaction: TypeORMTransaction) {
+        if (eventKind == EntityEventKind.Inserting) {
+            workOrder.stateAttributes = await transaction.saga(this.service(MmsTaskService)
+                .getInitialAttributes({ forWorkOrder: true }))
         }
     })
     ;

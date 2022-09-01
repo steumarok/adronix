@@ -34,7 +34,8 @@ export const tasksProviders: DataProviderDefinitions = {
                         client: true,
                         location: {
                             locality: true
-                        }
+                        },
+                        stateAttributes: true
                     },
                     order: Utils.orderClause(sortBy || 'code', descending)
                 })
@@ -61,12 +62,13 @@ export const tasksProviders: DataProviderDefinitions = {
             return [...workOrders, ...assets]
         },
         output: [
-            [MmsWorkOrder, 'code', 'client', 'location', 'insertDate'],
+            [MmsWorkOrder, 'code', 'client', 'location', 'insertDate', 'stateAttributes'],
             [MmsClient, 'name'],
             [MmsAsset, 'name', 'model'],
             [MmsAssetModel, 'name'],
             [MmsClientLocation, 'address', 'locality'],
             [CmnLocality, 'name'],
+            [MmsStateAttribute, 'name'],
         ]
     },
 

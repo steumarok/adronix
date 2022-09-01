@@ -105,7 +105,7 @@ const dataTable = $adx.dataTable(
   {
     actions:      { label: 'Azioni' },
     name:         { label: 'Nome', width: "50px", sortable: true, field: (row: Item) => row.name },
-    stateAttributes: { label: 'Stato', width: "50px", sortable: true },
+    stateAttributes: { label: 'Stato', width: "50px" },
     model:        { label: 'Modello', width: "20%", sortable: true, field: (row: Item) => (row.model as Item).name },
     client:       { label: 'Cliente', width: "20%", sortable: true },
     address:      { label: 'Indirizzo', width: "20%", sortable: true },

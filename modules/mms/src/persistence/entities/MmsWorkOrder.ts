@@ -2,6 +2,7 @@ import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable
 import { MmsAssetModel } from "./MmsAssetModel";
 import { MmsClient } from "./MmsClient";
 import { MmsClientLocation } from "./MmsClientLocation";
+import { MmsStateAttribute } from "./MmsStateAttribute";
 
 @Entity("mms_work_orders")
 export class MmsWorkOrder {
@@ -18,9 +19,13 @@ export class MmsWorkOrder {
     @ManyToOne(() => MmsClientLocation)
     location: MmsClientLocation;
 
-    @Column({ name: "insert_date"} )
+    @Column()
     insertDate: Date;
 
-    @Column({ name: "complete_date", nullable: true })
+    @Column({ nullable: true })
     completeDate: Date;
+
+    @ManyToMany(() => MmsStateAttribute)
+    @JoinTable({name: "mms_work_orders_mms_state_attributes"})
+    stateAttributes: MmsStateAttribute[];
 }

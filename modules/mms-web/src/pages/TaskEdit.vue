@@ -59,6 +59,7 @@
                                 v-model="task.stateAttributes"
                                 :use-filter="true"
                                 :for-task="true"
+                                :with-work-order="task.workOrder"
                                 multiple
                                 />
                         </adx-d>

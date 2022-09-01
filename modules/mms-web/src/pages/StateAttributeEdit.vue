@@ -23,9 +23,26 @@
                 :excluded="[stateAttribute]"
                 label="In alternativa a"
                 :for-task="stateAttribute.forTask"
+                :for-work-order="stateAttribute.forWorkOrder"
                 multiple
                 clearable
                 />
+
+            <adx-d vertical y-spacing="sm">
+                <q-checkbox
+                    v-model="stateAttribute.asInitialState"
+                    label="Imposta come stato iniziale"
+                    :false-value="null"
+                    />
+            </adx-d>
+
+            <adx-d vertical y-spacing="sm">
+                <q-checkbox
+                    v-model="stateAttribute.autoAssigned"
+                    label="Assegnato automaticamente"
+                    :false-value="null"
+                    />
+            </adx-d>
 
             <adx-d vertical y-spacing="sm">
                 <q-checkbox
@@ -53,11 +70,39 @@
 
             <adx-d vertical y-spacing="sm">
                 <q-checkbox
+                    v-model="stateAttribute.withWorkOrder"
+                    label="Con ordine di lavoro"
+                    toggle-indeterminate
+                    />
+            </adx-d>
+
+            <adx-d vertical y-spacing="sm">
+                <q-checkbox
                     v-model="stateAttribute.forWorkOrder"
                     label="Per ordine di lavoro"
                     :false-value="null"
                     />
             </adx-d>
+
+            <mms-state-attribute-select
+                v-model="stateAttribute.withAllTaskStates"
+                label="Con tutti questi stati delle attività"
+                :for-task="true"
+                :only-roots="true"
+                :useFilter="false"
+                multiple
+                clearable
+                />
+
+            <adx-d vertical y-spacing="sm">
+                <q-checkbox
+                    v-model="stateAttribute.withMandatoryChecklists"
+                    label="Con tutte le checklist obbligatorie compilate"
+                    :false-value="null"
+                    />
+            </adx-d>
+
+
 
         </adx-d>
 

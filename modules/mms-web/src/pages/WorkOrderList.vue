@@ -19,6 +19,10 @@
                     <q-btn icon="delete" flat size="sm" @click="onDelete(row.id)"/>
                 </template>
 
+                <template #stateAttributes="{ row }">
+                    <q-chip size="sm" v-for="attribute in row.stateAttributes" dense :label="attribute.name" />
+                </template>
+
                 <template #insertDate="{ row }">
                     {{row.insertDate}}
                 </template>
@@ -76,6 +80,7 @@ const dataTable = $adx.dataTable(
   {
     actions:            { label: 'Azioni', width: "100px" },
     code:               { label: 'Codice', width: "100%", sortable: true, field: (row: Item) => row.code },
+    stateAttributes:    { label: 'Stato', width: "50px" },
     insertDate:         { label: 'Data apertura', width: "20%", sortable: true },
     client:             { label: 'Cliente', width: "20%", sortable: true },
     address:            { label: 'Indirizzo', width: "20%", sortable: true },

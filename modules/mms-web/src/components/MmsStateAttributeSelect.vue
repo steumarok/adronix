@@ -18,9 +18,11 @@ import { computed, watch } from 'vue';
 const props = defineProps<{
   modelValue: ItemProp,
   useFilter: Boolean,
+  onlyRoots: Boolean,
   forAsset: Boolean,
   forAssetComponent: Boolean,
   forTask: Boolean,
+  withWorkOrder: Boolean
   forWorkOrder: Boolean
 }>()
 const emit = defineEmits(['update:modelValue'])
@@ -55,6 +57,19 @@ function getFilter(attributes) {
     return (attribute) => {
         if (!props.useFilter) {
             return true
+        }
+
+        if (props.onlyRoots) {
+            return attribute.containers.length == 0
+        }
+
+        if (props.forTask) {
+            if (props.withWorkOrder && attribute.withWorkOrder === false) {
+                return false
+            }
+            if (!props.withWorkOrder && attribute.withWorkOrder === true) {
+                return false
+            }
         }
 
         attributes = attributes.map(a => ds.findItem('MmsStateAttribute', item => item.id == a.id))
