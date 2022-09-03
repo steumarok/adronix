@@ -1,7 +1,7 @@
 import { AbstractService, InjectService, IOService, Utils } from "@adronix/server";
 import { InjectTypeORM, TypeORM } from "@adronix/typeorm";
 import { DateTime } from "luxon";
-import { In, IsNull } from "typeorm";
+import { In, IsNull, MoreThan, Not } from "typeorm";
 import { MmsAsset } from "../persistence/entities/MmsAsset";
 import { MmsAssetComponent } from "../persistence/entities/MmsAssetComponent";
 import { MmsAssetType } from "../persistence/entities/MmsAssetModel";
@@ -38,6 +38,7 @@ export type TaskModelDate = {
     date: DateTime
 }
 
+
 export class MmsTaskService extends AbstractService {
 
     @InjectService
@@ -45,6 +46,45 @@ export class MmsTaskService extends AbstractService {
 
     @InjectTypeORM
     typeorm: TypeORM
+
+
+    *checkCompletion(task: MmsTask) {
+        const currentTask: MmsTask = yield this.typeorm.findOne(
+            MmsTask,
+            {
+                where: { id: task.id },
+                relations: {
+                    asset: true,
+                    model: true
+                }
+            })
+
+        if (!currentTask.completeDate && task.completeDate) {
+            const lti: MmsLastTaskInfo = yield this.typeorm.findOne(
+                MmsLastTaskInfo,
+                {
+                    where: {
+                        asset: { id: currentTask.asset.id }
+                     }
+                })
+
+            if (lti) {
+                yield this.io.throwing.update(
+                    MmsLastTaskInfo,
+                    lti, {
+                        executionDate: task.completeDate || task.executionDate
+                    })
+            } else {
+                yield this.io.throwing.insert(
+                    MmsLastTaskInfo, {
+                        task,
+                        asset: currentTask.asset,
+                        taskModel: currentTask.model,
+                        executionDate: task.completeDate || task.executionDate
+                    })
+            }
+        }
+    }
 
     *getInitialAttributes({ forWorkOrder }: { forWorkOrder: boolean }) {
         return yield this.typeorm.find(
@@ -59,6 +99,74 @@ export class MmsTaskService extends AbstractService {
 
     *generateWorkOrderCode() {
         return yield* this.getCounterValue("workOrder")
+    }
+
+    *deleteDraftTasks(asset: MmsAsset, taskModel: MmsTaskModel, lastExecution: DateTime) {
+        const tasks: MmsTask[] = yield this.typeorm.find(
+            MmsTask,
+            {
+                where: {
+                    asset: { id: asset.id },
+                    model: { id: taskModel.id },
+                    workOrder: IsNull(),
+                    scheduledDate: MoreThan(lastExecution.toJSDate())
+                }
+            })
+
+        for (const task of tasks) {
+            yield this.io.throwing.delete(MmsTask, task)
+        }
+    }
+
+
+    *groupSchedulingsByTaskModel(asset: MmsAsset) {
+        const lastTaskInfos: Map<MmsTaskModel, DateTime> = yield* this.getLastTaskInfos(asset)
+
+        const schedulings: MmsScheduling[] = yield this.typeorm.find(
+            MmsScheduling,
+            {
+                relations: {
+                    areaModels: true,
+                    assetAttributes: true,
+                    assetModels: true,
+                    taskModel: true,
+                    startFromLasts: true,
+                    assignedAttributes: true,
+                },
+                where: [
+                    { startImmediately: true },
+                    { taskModel: {
+                        id: In(Utils.idArray(lastTaskInfos.keys())) }
+                    },
+                ]
+            })
+
+        const matchingSchedulings = schedulings
+            .filter(s => {
+                const assetModelsMatched = this.matchAssetModels(s, asset)
+                const assetAttributesMatched = this.matchAssetAttributes(s, asset)
+                const areaModelsMatched = this.matchAreaModels(s, asset)
+
+                return assetModelsMatched && assetAttributesMatched && areaModelsMatched
+            })
+
+
+        return Utils.groupByAndMap(
+            matchingSchedulings,
+            Utils.unique(s => s.taskModel, lastTaskInfos.keys()),
+            (schedulings, taskModel) => {
+                const lastExecution = lastTaskInfos.get(taskModel)
+
+                if (!lastExecution) {
+                    return {
+                        lastExecution: DateTime.now(),
+                        schedulings: schedulings.filter(s => s.startImmediately)
+                    }
+                }
+                else {
+                    return { lastExecution, schedulings }
+                }
+            })
     }
 
     *generateTasks(asset: MmsAsset) {
@@ -77,24 +185,52 @@ export class MmsTaskService extends AbstractService {
                 }
             })
 
-        const tasks: MmsTask[] = yield this.typeorm.find(
-            MmsTask,
-            {
-                where: {
-                    executionDate: null,
-                    asset: { id: asset.id }
-                }
-            })
+        const group = yield* this.groupSchedulingsByTaskModel(asset)
 
-        for (const task of tasks) {
-            yield this.io.throwing.delete(MmsTask, task)
+        for (const [ taskModel, { lastExecution, schedulings } ] of group) {
+
+            yield* this.deleteDraftTasks(asset, taskModel, lastExecution)
+
+            const it = this.dateGenerator(lastExecution, schedulings)
+
+            const taskCount = Math.min(...schedulings.map(s => s.maxTaskCount || 10))
+
+            for (let i = 0; i < taskCount; i++) {
+                const res = it.next()
+                if (res.done) {
+                    break
+                }
+                const { date, scheduling } = res.value
+
+                const code = yield* this.generateTaskCode(taskModel)
+
+                const task: MmsTask = yield this.io.throwing.insert(MmsTask, {
+                    asset,
+                    model: taskModel,
+                    code,
+                    codePrefix: taskModel.codePrefix,
+                    codeSuffix: taskModel.codeSuffix,
+                    scheduledDate: date.toJSDate(),
+                    stateAttributes: scheduling.assignedAttributes,
+                    scheduling
+                })
+            }
         }
+
+
+
+        return
+
+//        yield* this.deleteDraftTasks(asset)
 
         const lastTaskInfos: MmsLastTaskInfo[] = yield* this.getLastTaskInfo(asset)
         const executedTaskModels = lastTaskInfos.map(lti => lti.taskModel)
 
         const schedulings: MmsScheduling[] = yield* this.getSchedulings(executedTaskModels)
 
+        //
+        // Filter the schedulings that match asset criteria
+        //
         const matchingSchedulings = schedulings
             .filter(s => {
                 const assetModelsMatched = this.matchAssetModels(s, asset)
@@ -104,18 +240,27 @@ export class MmsTaskService extends AbstractService {
                 return assetModelsMatched && assetAttributesMatched && areaModelsMatched
             })
 
+        const taskExecutionDateMap = new Map(lastTaskInfos
+            .map(lti => [ lti.taskModel.id, toDateTime(lti.executionDate) ]))
+
         const group1 = Utils.groupByAndMap(
-            matchingSchedulings.filter(s => s.startImmediately),
+            matchingSchedulings,
             s => s.taskModel,
-            s =>
+            (s, taskModel) =>
                 this.dateGenerator(
-                    DateTime.now(),
+                    taskExecutionDateMap ? DateTime.now() : taskExecutionDateMap[taskModel.id],
                     s
                 ))
 
+        const taskCount = Math.min(...matchingSchedulings.map(s => s.maxTaskCount || 10))
+
         for (const [ model, it ] of group1) {
-            for (let i = 0; i < 10; i++) {
-                const { date, scheduling } = it.next().value
+            for (let i = 0; i < taskCount; i++) {
+                const res = it.next()
+                if (res.done) {
+                    break
+                }
+                const { date, scheduling } = res.value
                 const code = yield* this.generateTaskCode(model)
 
                 const task: MmsTask = yield this.io.throwing.insert(MmsTask, {
@@ -125,7 +270,8 @@ export class MmsTaskService extends AbstractService {
                     codePrefix: model.codePrefix,
                     codeSuffix: model.codeSuffix,
                     scheduledDate: date.toJSDate(),
-                    stateAttributes: scheduling.assignedAttributes
+                    stateAttributes: scheduling.assignedAttributes,
+                    scheduling
                 })
 
                 yield* this.createServiceProvisions(task)
@@ -233,6 +379,69 @@ export class MmsTaskService extends AbstractService {
         return value
     }
 
+    *getLastTaskInfos(asset: MmsAsset) {
+        //const info = new Map<MmsTaskModel, DateTime>()
+
+        const taskModelIdMap = new Map<number, MmsTaskModel>()
+
+        const tasks: MmsTask[] = yield this.typeorm.find(
+            MmsTask,
+            {
+                relations: {
+                    model: true,
+                    stateAttributes: true,
+                    scheduling: {
+                        assignedAttributes: true
+                    }
+                },
+                where: {
+                    asset: {
+                        id: asset.id
+                    }
+                },
+                order: {
+                    scheduledDate: "asc"
+                }
+            })
+
+        const filtered = tasks.filter(t =>
+            !t.scheduling ||
+            !Utils.equalSets(Utils.idSet(t.stateAttributes), Utils.idSet(t.scheduling.assignedAttributes)))
+
+            tasks.forEach(task => {
+            taskModelIdMap.set(task.model.id, task.model)
+        })
+
+        const info = Utils.groupByAndMap(
+            filtered,
+            (task) => taskModelIdMap.get(task.model.id),
+            (tasks) => toDateTime(tasks[tasks.length - 1].scheduledDate)
+        )
+
+        const ltis: MmsLastTaskInfo[] = yield this.typeorm.find(
+            MmsLastTaskInfo,
+            {
+                relations: {
+                    taskModel: true
+                },
+                where: {
+                    asset: {
+                        id: asset.id
+                    },
+                    taskModel: {
+                        id: Not(In(Utils.idArray(info.keys())))
+                    }
+                }
+            })
+
+        for (const lti of ltis) {
+            taskModelIdMap.set(lti.taskModel.id, lti.taskModel)
+            info.set(taskModelIdMap.get(lti.taskModel.id), toDateTime(lti.executionDate))
+        }
+
+        return info
+    }
+
     *getLastTaskInfo(asset: MmsAsset) {
         return yield this.typeorm.find(
             MmsLastTaskInfo,
@@ -256,7 +465,7 @@ export class MmsTaskService extends AbstractService {
                 },
                 where: [
                     { startImmediately: true },
-                    { taskModel: In(executedTaskModels) },
+                    { taskModel: { id: In(executedTaskModels.map(m => m.id)) } },
                 ]
             })
     }
@@ -317,26 +526,62 @@ export class MmsTaskService extends AbstractService {
     }*/
 
     *dateGenerator(startDate: DateTime, schedulings: MmsScheduling[]) {
-        if (schedulings.some(s => s.startImmediately)) {
+        /*if (schedulings.some(s => s.startImmediately)) {
             startDate = DateTime.now()
         }
         if (!startDate) {
             return
-        }
-        var currentDate = startDate
+        }*/
+        //var currentDate = startDate
+        const currentDates = new Map<MmsScheduling, DateTime>()
+        schedulings.forEach(scheduling => currentDates.set(scheduling, startDate))
         while (true) {
-            const minScheduling = schedulings.reduce(
-                (min, b) => this.calcNextDate(currentDate, b) < this.calcNextDate(currentDate, min) ? b : min,
+
+            for (const scheduling of schedulings) {
+                const date = this.calcNextDate(startDate, currentDates.get(scheduling), scheduling)
+                currentDates.set(scheduling, date)
+console.log(date)
+                yield { scheduling, date }
+            }
+/*
+            const ss = schedulings
+                .map(scheduling => ({ scheduling, date: this.calcNextDate(startDate, currentDate, scheduling) }))
+                .filter(({ date }) => date)
+
+            if (ss.length == 0) {
+                return
+            }
+            console.log(currentDate.toISO())
+            const res = ss.reduce((min, b) => b.date < min.date ? b : min)
+            console.log([ss[0].date.toISO(), ss[1].date.toISO()])
+
+            currentDate = res.date
+
+            yield res
+*/
+            /*const minScheduling = schedulings.reduce(
+                (min, b) => this.calcNextDate(startDate, currentDate, b) < this.calcNextDate(startDate, currentDate, min) ? b : min,
                 schedulings[0])
-            currentDate = this.calcNextDate(currentDate, minScheduling)
-            yield { date: currentDate, scheduling: minScheduling }
+            currentDate = this.calcNextDate(startDate, currentDate, minScheduling)
+            yield { date: currentDate, scheduling: minScheduling }*/
+
+
         }
         return { date: null, scheduling: null }
     }
 
-    calcNextDate(startDate: DateTime, scheduling: MmsScheduling) {
+    calcNextDate(startDate: DateTime, currentDate: DateTime, scheduling: MmsScheduling) {
         const unit = scheduling.unit
-        const nextDate = startDate.plus({ [unit]: scheduling.every })
+
+        const nextDate = currentDate.plus({ [unit]: scheduling.every })
+
+        if (scheduling.maxPeriod) {
+            const maxDate = startDate.plus({ [scheduling.maxPeriodUnit]: scheduling.maxPeriod })
+            if (nextDate > maxDate) {
+                //return null
+            }
+        }
+
         if (scheduling.startTime) {
             const { hour, minute } = DateTime.fromISO(scheduling.startTime)
             return nextDate.set({ hour, minute })
@@ -444,6 +689,10 @@ export class MmsTaskService extends AbstractService {
 
         const { workOrder } = task
 
+        if (!workOrder) {
+            return
+        }
+
         const siblings: MmsTask[] = yield this.typeorm.find(
             MmsTask,
             {
@@ -529,7 +778,7 @@ export class MmsTaskService extends AbstractService {
             }
         } else {
             if (!currentTask.workOrder) {
-                task.stateAttributes = states.filter(s => s.withWorkOrder === null || s.withWorkOrder === false)
+                //task.stateAttributes = states.filter(s => s.withWorkOrder === null || s.withWorkOrder === false)
             }
         }
 

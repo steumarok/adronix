@@ -26,7 +26,7 @@ const dataSource = new DataSource({
     "password": "mms_dev",
     "database": "mms_dev",
     "synchronize": true,
-    logging: true,
+    //logging: true,
     entities: [
         ...MmsEntities,
         ...CmnEntities
@@ -39,7 +39,9 @@ async function main() {
 
     new ServerApp(e, dataSource)
 
-    e.listen(9000)
+    e.listen(9000, () => {
+        console.log("ready")
+    })
 }
 
 

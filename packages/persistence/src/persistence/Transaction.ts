@@ -4,6 +4,7 @@ import { TransactionEventHandler, TransactionEventKind } from "./types"
 
 export class Transaction {
     private eventHandlers: TransactionEventHandler[] = []
+    private readonly data: Map<string, any> = new Map()
 
     constructor(public readonly context: Context) { }
 
@@ -29,5 +30,13 @@ export class Transaction {
 
     addEventHandler(handler: TransactionEventHandler) {
         this.eventHandlers.push(handler)
+    }
+
+    setData(key: string, value: any) {
+        this.data.set(key, value)
+    }
+
+    getData(key: string) {
+        return this.data.get(key)
     }
 }

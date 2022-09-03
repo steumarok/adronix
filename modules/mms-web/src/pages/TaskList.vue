@@ -16,7 +16,7 @@
                 <template #top-left v-if="topLeftShown">
                     <q-btn @click="onInsert" color="primary" unelevated>Inserisci attività</q-btn>
                     <q-btn @click="onCreateWorkOrder" color="secondary" unelevated class="q-ml-xs">Apri Ordine di Lavoro</q-btn>
-                    <AssetListFilter v-bind="$props" :data-set="ds" />
+                    <TaskListFilter v-bind="$props" :data-set="ds" />
                 </template>
                 <template #actions="{ row }">
                     <q-btn icon="edit" flat size="sm" @click="onEdit(row.id)"/>
@@ -82,13 +82,14 @@ import TaskEdit from './TaskEdit.vue'
 import { useAdronixStore } from '../store/adronix'
 import { computed, ref, watch } from 'vue'
 import NavTasks from './NavTasks.vue'
-import AssetListFilter from './AssetListFilter.vue'
+import TaskListFilter from './TaskListFilter.vue'
 import { useNavigationStore } from '../store/navigation'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router';
 
 const props = defineProps({
-    workOrderId: Number
+    workOrderId: Number,
+    clientId: Number
 })
 
 const route = useRoute();
@@ -97,8 +98,14 @@ const navStore = useNavigationStore()
 if (route.name == 'tasks') {
     if (props.workOrderId) {
         navStore.taskFilter.workOrder = { id: props.workOrderId }
+        navStore.clearTaskFilter('client')
+    }
+    else if (props.clientId) {
+        navStore.taskFilter.client = { id: props.clientId }
+        navStore.clearTaskFilter('workOrder')
     }
     else {
+        navStore.clearTaskFilter('client')
         navStore.clearTaskFilter('workOrder')
     }
 }
@@ -127,6 +134,7 @@ const dataTable = $adx.dataTable(
 const woTaskId = ref()
 
 const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listTasks', {
+    clientId: navStore.taskFilter.client.id,
     workOrderId: navStore.taskFilter.workOrder.id,
     workOrderTaskId: woTaskId.value,
     ...dataTable.params
@@ -134,6 +142,10 @@ const ds = $adx.dataSet(computed(() => buildUrl('/api/mms/listTasks', {
 
 if (navStore.taskFilter.workOrder.id) {
     navStore.taskFilter.workOrder.ref = ds.ref('MmsWorkOrder', navStore.taskFilter.workOrder.id)
+}
+
+if (navStore.taskFilter.client.id) {
+    navStore.taskFilter.client.ref = ds.ref('MmsClient', navStore.taskFilter.client.id)
 }
 
 if (navStore.assetFilter.clientLocation.id) {

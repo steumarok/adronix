@@ -77,4 +77,13 @@ export class MmsScheduling {
     @ManyToMany(() => MmsStateAttribute)
     @JoinTable({ name: "mms_schedulings_mms_assigned_attributes"} )
     assignedAttributes: MmsStateAttribute[];
+
+    @Column({nullable: true})
+    maxTaskCount: number;
+
+    @Column()
+    maxPeriod: number;
+
+    @Column()
+    maxPeriodUnit: string;
 }

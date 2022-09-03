@@ -12,7 +12,8 @@ const { taskFilter } = storeToRefs(navStore)
 const to = {
     name: 'tasks',
     params: {
-        workOrderId: taskFilter.value.workOrder.id
+        workOrderId: taskFilter.value.workOrder.id,
+        clientId: taskFilter.value.client.id
     }
 }
 </script>
@@ -22,6 +23,7 @@ const to = {
         <q-breadcrumbs-el :to="to">
             Attività
             <span v-if="taskFilter.workOrder.ref">&nbsp;in {{taskFilter.workOrder.ref.code}}</span>
+            <span v-if="taskFilter.client.ref">&per {{taskFilter.client.ref.name}}</span>
         </q-breadcrumbs-el>
         <slot />
     </nav-home>

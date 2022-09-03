@@ -171,6 +171,7 @@ export default TypeORMPersistence.build()
     .addEventHandler(MmsTask, async function(eventKind: EntityEventKind, task: MmsTask, transaction: TypeORMTransaction) {
         if (eventKind == EntityEventKind.Updating) {
             await transaction.saga(this.service(MmsTaskService).triggerTaskStateChange(task))
+            await transaction.saga(this.service(MmsTaskService).checkCompletion(task))
         }
         else if (eventKind == EntityEventKind.Updated) {
             await transaction.saga(this.service(MmsTaskService).checkWorkOrderState({ task }))

@@ -140,8 +140,8 @@ export const tasksProviders: DataProviderDefinitions = {
             const where = {
                 ...Utils.where(filter, { code: Like(`${filter}%`) }),
                 ...Utils.where(workOrderId, { workOrder: { id: workOrderId } }),
-                ...Utils.where(clientId, { client: { id: clientId } }),
-                ...Utils.where(clientLocationId, { location: { id: clientLocationId } }),
+                ...Utils.where(clientId, { asset: { client: { id: clientId } } }),
+                ...Utils.where(clientLocationId, { asset: { location: { id: clientLocationId } } }),
                 ...await buildWorkOrderTaskIdWhere()
             }
 
@@ -201,8 +201,7 @@ export const tasksProviders: DataProviderDefinitions = {
                                 asset: true,
                                 resources: true,
                                 workOrder: true,
-                                stateAttributes: true,
-                                closingReason: true
+                                stateAttributes: true
                             },
                             where: { id }})
                     : new MmsTask()
@@ -233,11 +232,10 @@ export const tasksProviders: DataProviderDefinitions = {
         output: [
             [MmsTask, 'asset', 'model', 'codePrefix', 'codeSuffix', 'scheduledDate',
                 'executionDate', 'code', 'resources', 'workOrder', 'stateAttributes',
-                'closingReason', 'completionOutcome', 'completionNotes'],
+                'completeDate'],
             [MmsAsset, 'name', 'client', 'location', 'model', 'area'],
             [MmsClientLocation, 'address', 'locality'],
             [MmsClient, 'name'],
-            [MmsTaskClosingReason, 'name'],
             [MmsWorkOrder, 'code'],
             [MmsAssetModel, 'name'],
             [MmsResource, 'name'],

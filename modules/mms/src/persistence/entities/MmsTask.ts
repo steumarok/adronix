@@ -1,6 +1,7 @@
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { MmsAsset } from "./MmsAsset";
 import { MmsResource } from "./MmsResource";
+import { MmsScheduling } from "./MmsScheduling";
 import { MmsStateAttribute } from "./MmsStateAttribute";
 import { MmsTaskClosingReason, MmsTaskCompletionOutcome } from "./MmsTaskClosingReason";
 import { MmsTaskModel } from "./MmsTaskModel";
@@ -42,6 +43,9 @@ export class MmsTask {
 
     @ManyToOne(() => MmsWorkOrder)
     workOrder: MmsWorkOrder;
+
+    @ManyToOne(() => MmsScheduling)
+    scheduling: MmsScheduling;
 
     @ManyToMany(() => MmsStateAttribute)
     @JoinTable({name: "mms_tasks_mms_state_attributes"})

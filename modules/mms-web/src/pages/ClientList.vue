@@ -26,6 +26,7 @@
                 <template #links="{ row }">
                     <q-btn size="sm" color="secondary" flat :to="`/clientLocations/${row.id}`">Sedi ({{row.locationCount}})</q-btn>
                     <q-btn size="sm" color="secondary" flat :to="{ name: 'assets', params: { clientId: row.id } }">Assets</q-btn>
+                    <q-btn size="sm" color="secondary" flat :to="{ name: 'tasks', params: { clientId: row.id } }">Attività</q-btn>
                 </template>
             </adx-data-table>
         </adx-d>

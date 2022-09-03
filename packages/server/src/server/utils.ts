@@ -11,6 +11,10 @@ type TableParams = {
     filter: string
 }
 
+type EntityWithId = {
+    id: number
+}
+
 export class Utils {
     static toBool(str: string | boolean): boolean {
         return !!str && str.toString() == 'true'
@@ -22,6 +26,39 @@ export class Utils {
 
     static distinct(elements: any[], idProp: string) {
         return elements.filter((v, i, a) => a.map(e => e[idProp]).indexOf(v[idProp]) === i)
+    }
+
+    static equalSets<T>(xs: Set<T>, ys: Set<T>) {
+        return xs.size === ys.size &&
+            [...xs].every((x) => ys.has(x));
+    }
+
+    static unique<T, R extends EntityWithId>(
+        fn: (val: T) => R,
+        initial: Iterable<R> = []
+    ): ((val: T) => R) {
+        const cache = new Map<number, R>()
+        for (const v of initial) {
+            cache.set(v.id, v)
+        }
+        return v => {
+            const r = fn(v)
+            if (cache.has(r.id)) {
+                return cache.get(r.id)
+            } else {
+                cache.set(r.id, r)
+                return r
+            }
+        }
+    }
+
+
+    static idSet<Number>(arr: { id: Number }[]): Set<Number> {
+        return new Set(arr.map(e => e.id))
+    }
+
+    static idArray<Number>(iterable: Iterable<{ id: Number }>): Number[] {
+        return Array.from(iterable).map(e => e.id)
     }
 
     static groupBy<K, V>(array: V[], grouper: (item: V) => K) {
@@ -85,5 +122,6 @@ export class Utils {
 
         return (page != undefined) ? [PaginatedList(entityClass, rows, count)] : rows
     }
+
 }
 

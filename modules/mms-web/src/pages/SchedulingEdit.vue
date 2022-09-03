@@ -47,6 +47,26 @@
                     label="Immediatamente"
                     :false-value="null"
                     />
+
+                <adx-data-input
+                    v-model="scheduling.maxTaskCount"
+                    label="Numero massimo di attività"
+                    :errors="scheduling.errors.maxTaskCount"
+                />
+
+                <adx-data-input
+                    v-model="scheduling.maxPeriod"
+                    label="Periodo massimo"
+                    :errors="scheduling.errors.maxPeriod"
+                >
+                    <template #after>
+                        <mms-scheduling-unit-select
+                            outline
+                            v-model="scheduling.maxPeriodUnit"
+                            :errors="scheduling.errors.maxPeriodUnit"
+                            />
+                    </template>
+                </adx-data-input>
             </adx-d>
 
             <adx-d vertical padding="xs">
@@ -152,7 +172,11 @@ const ds = $adx.dataSet(buildUrl('/api/mms/editScheduling', { id: props.id}))
 
 const scheduling = ds.ref('MmsScheduling')
 
-watch(() => scheduling.value?.startImmediately, (newValue) => {
+watch(() => scheduling.value?.startImmediately, (newValue, oldValue) => {
+    if (oldValue === undefined) {
+        return
+    }
+
     if (newValue && scheduling.value?.taskModel) {
         scheduling.value.startFromLasts = [scheduling.value.taskModel]
     } else {

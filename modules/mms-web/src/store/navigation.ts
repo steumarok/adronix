@@ -17,6 +17,10 @@ export const useNavigationStore = defineStore('navigation', () => {
         workOrder: {
             id: null,
             ref: null
+        },
+        client: {
+            id: null,
+            ref: null
         }
     })
 
