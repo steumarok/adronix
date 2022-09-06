@@ -159,15 +159,15 @@ export const workPlanProviders: DataProviderDefinitions = {
                         assetAttributes: true,
                         assetModels: true,
                         taskModel: true,
-                        startFromLasts: true
+                        triggerTaskModel: true
                     },
                     order: Utils.orderClause(sortBy, descending)
                 })
 
         },
         output: [
-            [MmsScheduling, 'taskModel', 'areaModels', 'assetAttributes', 'assetModels', 'startFromLasts',
-                'dayMonthFrom', 'dayMonthTo', 'every', 'unit'],
+            [MmsScheduling, 'taskModel', 'areaModels', 'assetAttributes', 'assetModels', 'triggerTaskModel',
+                'dayMonthFrom', 'dayMonthTo', 'every', 'unit', 'schedulingType'],
             [MmsTaskModel, 'name'],
             [MmsAreaModel, 'name'],
             [MmsAssetAttribute, 'name'],
@@ -184,9 +184,9 @@ export const workPlanProviders: DataProviderDefinitions = {
                                 assetAttributes: true,
                                 assetModels: true,
                                 taskModel: true,
-                                startFromLasts: true,
+                                triggerTaskModel: true,
                                 assignedAttributes: true,
-                                lastsStateAttributes: true
+                                triggerStateAttributes: true
                             },
                             where: { id }})
                     : new MmsScheduling()
@@ -195,10 +195,10 @@ export const workPlanProviders: DataProviderDefinitions = {
         },
         output: [
             [MmsScheduling, 'taskModel', 'areaModels', 'assetAttributes',
-                'assetModels', 'startFromLasts', 'dayMonthFrom', 'dayMonthTo',
+                'assetModels', 'dayMonthFrom', 'dayMonthTo', 'triggerStateAttributes',
                 'every', 'unit', 'startImmediately', 'startTime', 'daysOfWeek',
-                'assignedAttributes', 'lastsStateAttributes', 'maxTaskCount',
-                'maxPeriod', 'maxPeriodUnit'],
+                'assignedAttributes', 'triggerTaskModel', 'maxTaskCount',
+                'maxPeriod', 'maxPeriodUnit', 'schedulingType'],
             [MmsTaskModel, 'name'],
             [MmsAreaModel, 'name'],
             [MmsAssetModel, 'name'],

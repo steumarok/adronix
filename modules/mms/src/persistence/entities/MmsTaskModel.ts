@@ -10,10 +10,10 @@ export class MmsTaskModel {
     @Column()
     name: string;
 
-    @Column()
+    @Column({ nullable: true })
     codePrefix: string;
 
-    @Column()
+    @Column({ nullable: true })
     codeSuffix: string;
 
     @Column({ default: true })

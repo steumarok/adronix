@@ -24,13 +24,22 @@ export class Utils {
         return Number.parseInt(str)
     }
 
-    static distinct(elements: any[], idProp: string) {
+    static distinct<T extends EntityWithId>(elements: T[], idProp: string) {
         return elements.filter((v, i, a) => a.map(e => e[idProp]).indexOf(v[idProp]) === i)
     }
 
     static equalSets<T>(xs: Set<T>, ys: Set<T>) {
         return xs.size === ys.size &&
             [...xs].every((x) => ys.has(x));
+    }
+
+    static mapGet<K extends EntityWithId, V>(map: Map<K, V>, key: K): V {
+        for (const [ _key, value ] of map) {
+            if (_key.id == key.id) {
+                return value
+            }
+        }
+        return null
     }
 
     static unique<T, R extends EntityWithId>(

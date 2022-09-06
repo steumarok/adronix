@@ -27,14 +27,16 @@ import { MmsPartRequirement } from "./entities/MmsPartRequirement";
 import { MmsResource } from "./entities/MmsResource";
 import { MmsResourceModel } from "./entities/MmsResourceModel";
 import { MmsResourceType } from "./entities/MmsResourceType";
-import { MmsScheduling } from "./entities/MmsScheduling";
+import { MmsScheduling, MmsSchedulingType } from "./entities/MmsScheduling";
 import { MmsService } from "./entities/MmsService";
 import { MmsServiceProvision } from "./entities/MmsServiceProvision";
 import { MmsStateAttribute } from "./entities/MmsStateAttribute";
 import { MmsTask } from "./entities/MmsTask";
 import { MmsTaskClosingReason } from "./entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
+import { MmsTaskStateChange } from "./entities/MmsTaskStateChange";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
+import { MmsWorkOrderStateChange } from "./entities/MmsWorkOrderStateChange";
 import { MmsWorkPlan } from "./entities/MmsWorkPlan";
 
 const ioDefinitions: EntityIODefinitions = [
@@ -144,6 +146,12 @@ const ioDefinitions: EntityIODefinitions = [
         entityClass: MmsTaskClosingReason
     },
     {
+        entityClass: MmsWorkOrderStateChange
+    },
+    {
+        entityClass: MmsTaskStateChange
+    },
+    {
         entityClass: MmsChecklistItemModel,
         rules: {
             'text':     [ [ RulePatterns.notBlank(), 'blank' ] ],
@@ -185,12 +193,6 @@ export default TypeORMPersistence.build()
             }
         }
     })
-    .addEventHandler(MmsWorkOrder, async function(eventKind: EntityEventKind, workOrder: MmsWorkOrder, transaction: TypeORMTransaction) {
-        if (eventKind == EntityEventKind.Inserting) {
-            workOrder.code = await transaction.saga(this.service(MmsTaskService).generateWorkOrderCode())
-            workOrder.insertDate = DateTime.now().toJSDate()
-        }
-    })
     .addEventHandler(MmsChecklistItem, async function(eventKind: EntityEventKind, checklistItem: MmsChecklistItem, transaction: TypeORMTransaction) {
         if (eventKind == EntityEventKind.Inserting || eventKind == EntityEventKind.Updating) {
             checklistItem.value = checklistItem.option.value
@@ -205,8 +207,20 @@ export default TypeORMPersistence.build()
     })
     .addEventHandler(MmsWorkOrder, async function(eventKind: EntityEventKind, workOrder: MmsWorkOrder, transaction: TypeORMTransaction) {
         if (eventKind == EntityEventKind.Inserting) {
+            workOrder.code = await transaction.saga(this.service(MmsTaskService).generateWorkOrderCode())
+            workOrder.insertDate = DateTime.now().toJSDate()
+
             workOrder.stateAttributes = await transaction.saga(this.service(MmsTaskService)
                 .getInitialAttributes({ forWorkOrder: true }))
+        } else if (eventKind == EntityEventKind.Updating) {
+            await transaction.saga(this.service(MmsTaskService).triggerWorkOrderStateChange(workOrder))
+        }
+    })
+    .addEventHandler(MmsScheduling, async function(eventKind: EntityEventKind, scheduling: MmsScheduling, transaction: TypeORMTransaction) {
+        if (eventKind == EntityEventKind.Inserting || eventKind == EntityEventKind.Updating) {
+            if (scheduling.schedulingType == MmsSchedulingType.TRIGGERED) {
+                scheduling.maxTaskCount = 1
+            }
         }
     })
     ;

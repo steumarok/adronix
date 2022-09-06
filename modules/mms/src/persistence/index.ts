@@ -28,7 +28,9 @@ import { MmsStateAttribute } from "./entities/MmsStateAttribute";
 import { MmsTask } from "./entities/MmsTask";
 import { MmsTaskClosingReason } from "./entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
+import { MmsTaskStateChange } from "./entities/MmsTaskStateChange";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
+import { MmsWorkOrderStateChange } from "./entities/MmsWorkOrderStateChange";
 import { MmsWorkPlan } from "./entities/MmsWorkPlan";
 
 export const MmsEntities = [
@@ -63,5 +65,7 @@ export const MmsEntities = [
     MmsChecklist,
     MmsChecklistItem,
     MmsStateAttribute,
-    MmsTaskClosingReason
+    MmsTaskClosingReason,
+    MmsWorkOrderStateChange,
+    MmsTaskStateChange
 ]

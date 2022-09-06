@@ -57,12 +57,13 @@ const $adx = useAdronix()
 const dataTable = $adx.dataTable(
   'MmsScheduling',
   {
-    actions:      { label: 'Azioni', width: "100px" },
-    taskModel:    { label: 'Modello attività', width: "20%", sortable: true },
-    assetModels:   { label: 'Modelli asset', width: "20%", sortable: true },
-    assetAttributes: { label: 'Attributi', width: "20%", sortable: true },
+    actions:            { label: 'Azioni', width: "100px" },
+    type:               { label: 'Tipologia', width: "20%", sortable: true, field: row => row.schedulingType },
+    taskModel:          { label: 'Modello attività', width: "20%", sortable: true },
+    assetModels:        { label: 'Modelli asset', width: "20%", sortable: true },
+    assetAttributes:    { label: 'Attributi', width: "20%", sortable: true },
     recurrence:         { label: 'Ricorrenza', width: "20%", sortable: true },
-    startFromLasts: { label: 'Dopo', width: "20%", sortable: true },
+    startFromLasts:     { label: 'Dopo', width: "20%", sortable: true },
   },
   { sortBy: "taskModel.name" })
 

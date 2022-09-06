@@ -16,6 +16,11 @@ export enum MmsDayOfWeek {
     SUN = 'sun',
 }
 
+export enum MmsSchedulingType {
+    PERIODIC = 'periodic',
+    TRIGGERED = 'triggered'
+}
+
 @Entity("mms_schedulings")
 export class MmsScheduling {
 
@@ -40,13 +45,12 @@ export class MmsScheduling {
     @Column({nullable: true})
     startTime: string;
 
-    @ManyToMany(() => MmsTaskModel)
-    @JoinTable({ name: "mms_schedulings_start_from_lasts" })
-    startFromLasts: MmsTaskModel[];
+    @ManyToOne(() => MmsTaskModel, { nullable: true })
+    triggerTaskModel: MmsTaskModel;
 
     @ManyToMany(() => MmsStateAttribute)
-    @JoinTable({ name: "mms_schedulings_mms_lasts_state_attributes"} )
-    lastsStateAttributes: MmsStateAttribute[];
+    @JoinTable({ name: "mms_schedulings_mms_trigger_state_attributes"} )
+    triggerStateAttributes: MmsStateAttribute[];
 
     @Column({nullable: true})
     startImmediately: boolean;
@@ -81,9 +85,16 @@ export class MmsScheduling {
     @Column({nullable: true})
     maxTaskCount: number;
 
-    @Column()
+    @Column({nullable: true})
     maxPeriod: number;
 
-    @Column()
+    @Column({nullable: true})
     maxPeriodUnit: string;
+
+    @Column({
+        type: 'enum',
+        enum: MmsSchedulingType,
+        default: MmsSchedulingType.PERIODIC
+    })
+    schedulingType: MmsSchedulingType;
 }

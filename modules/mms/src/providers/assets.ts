@@ -128,7 +128,7 @@ export const assetsProviders: DataProviderDefinitions = {
                     MmsAsset,
                     function* (changes, asset: MmsAsset) {
                         if (changes.recreateTasks) {
-                            yield* this.service(MmsTaskService).generateTasks(asset)
+                            yield* this.service(MmsTaskService).generatePeriodicTasks(asset)
                         }
                     }
                 ]

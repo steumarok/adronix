@@ -3,6 +3,17 @@
 
         <adx-d horizontal fit justify="evenly">
             <adx-d vertical padding="xs">
+                <mms-scheduling-type-select
+                    v-model="scheduling.schedulingType"
+                    :errors="scheduling.errors.schedulingType"
+                    label="Tipologia"
+                />
+            </adx-d>
+        </adx-d>
+
+
+        <adx-d horizontal fit justify="evenly">
+            <adx-d vertical padding="xs">
                 <mms-task-model-select
                     v-model="scheduling.taskModel"
                     :errors="scheduling?.errors.taskModel"
@@ -43,18 +54,21 @@
         <adx-d horizontal fit justify="evenly">
             <adx-d vertical padding="xs">
                 <q-checkbox
+                    v-if="isPeriodic"
                     v-model="scheduling.startImmediately"
                     label="Immediatamente"
                     :false-value="null"
                     />
 
                 <adx-data-input
+                    v-if="isPeriodic"
                     v-model="scheduling.maxTaskCount"
                     label="Numero massimo di attività"
                     :errors="scheduling.errors.maxTaskCount"
                 />
 
                 <adx-data-input
+                    v-if="isPeriodic"
                     v-model="scheduling.maxPeriod"
                     label="Periodo massimo"
                     :errors="scheduling.errors.maxPeriod"
@@ -71,14 +85,14 @@
 
             <adx-d vertical padding="xs">
                 <mms-task-model-select
-                    v-model="scheduling.startFromLasts"
-                    :errors="scheduling?.errors.startFromLasts"
+                    v-model="scheduling.triggerTaskModel"
+                    :errors="scheduling.errors.triggerTaskModel"
                     label="Dopo"
-                    multiple
                 />
 
                 <mms-state-attribute-select
-                    v-model="scheduling.lastsStateAttributes"
+                    v-if="isTriggered"
+                    v-model="scheduling.triggerStateAttributes"
                     label="Attributi di stato"
                     :for-task="true"
                     multiple
@@ -91,7 +105,7 @@
                     v-model="scheduling.every"
                     label="Ricorrenza"
                     :errors="scheduling.errors.every"
-                    prefix="Ogni"
+                    :prefix="isTriggered ? 'Dopo' : 'Ogni'"
                 >
                     <template #after>
                         <mms-scheduling-unit-select
@@ -161,6 +175,7 @@ import MmsPartSelect from '../components/MmsPartSelect.vue'
 import MmsAssetAttributeSelect from '../components/MmsAssetAttributeSelect.vue'
 import MmsSchedulingUnitSelect from '../components/MmsSchedulingUnitSelect.vue'
 import MmsDayOfWeekSelect from '../components/MmsDayOfWeekSelect.vue'
+import MmsSchedulingTypeSelect from '../components/MmsSchedulingTypeSelect.vue'
 import MmsStateAttributeSelect from '../components/MmsStateAttributeSelect.vue'
 
 const props = defineProps({
@@ -183,6 +198,9 @@ watch(() => scheduling.value?.startImmediately, (newValue, oldValue) => {
         scheduling.value.startFromLasts = []
     }
 })
+
+const isPeriodic = computed(() => scheduling.value?.schedulingType == 'periodic')
+const isTriggered = computed(() => scheduling.value?.schedulingType == 'triggered')
 
 const { dialog } = $adx.dialog(() => ds.commit())
 </script>
