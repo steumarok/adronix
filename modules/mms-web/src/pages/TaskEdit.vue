@@ -229,7 +229,7 @@ const { dialog } = $adx.dialog(
   () => { return ds.commit() }
 )
 
-const taskCode = computed(() => task.value.codePrefix + task.value.code + task.value.codeSuffix)
+const taskCode = computed(() => `${task.value.codePrefix || ''}${task.value.code}${task.value.codeSuffix || ''}`)
 const manageExpected = computed(() => !task.workOrder)
 const manageActual = computed(() => task.workOrder)
 

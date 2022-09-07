@@ -51,7 +51,9 @@ export class MmsTaskService extends AbstractService {
     typeorm: TypeORM
 
 
-    *checkCompletion(task: MmsTask) {
+    *checkCompletion(
+        task: MmsTask
+    ) {
         const currentTask: MmsTask = yield this.typeorm.findOne(
             MmsTask,
             {
@@ -69,18 +71,20 @@ export class MmsTaskService extends AbstractService {
                     where: {
                         asset: { id: currentTask.asset.id },
                         taskModel: { id: currentTask.model.id }
-                     }
+                    }
                 })
 
             if (lti) {
                 yield this.io.throwing.update(
                     MmsLastTaskInfo,
-                    lti, {
+                    lti,
+                    {
                         executionDate: task.completeDate || task.executionDate
                     })
             } else {
                 yield this.io.throwing.insert(
-                    MmsLastTaskInfo, {
+                    MmsLastTaskInfo,
+                    {
                         task,
                         asset: currentTask.asset,
                         taskModel: currentTask.model,
@@ -126,11 +130,11 @@ export class MmsTaskService extends AbstractService {
     }
 
 
-    *groupSchedulingsByTaskModel(
+    protected *groupSchedulingsByTaskModel(
         asset: MmsAsset,
         schedulingType: MmsSchedulingType
     ) {
-        const lastTaskInfos: Map<MmsTaskModel, MmsTask> = yield* this.getLastTaskInfos(asset)
+        const lastTaskInfos: Map<MmsTaskModel, MmsTask> = yield* this.getLastTasks(asset)
 
         const schedulings: MmsScheduling[] = yield this.typeorm.find(
             MmsScheduling,
@@ -153,7 +157,7 @@ export class MmsTaskService extends AbstractService {
                     ]
                     : { schedulingType }
             })
-console.log(lastTaskInfos)
+
         const matchingSchedulings = schedulings
             .filter(s => {
                 const assetModelsMatched = this.matchAssetModels(s, asset)
@@ -162,7 +166,7 @@ console.log(lastTaskInfos)
 
                 if (schedulingType == MmsSchedulingType.TRIGGERED) {
                     const triggerTask = Utils.mapGet(lastTaskInfos, s.triggerTaskModel)
-console.log(triggerTask)
+
                     if (!triggerTask ||
                         !triggerTask.executionDate ||
                         !Utils.idArray(s.triggerStateAttributes).some(id => Utils.idSet(triggerTask.stateAttributes).has(id))) {
@@ -178,25 +182,25 @@ console.log(triggerTask)
             Utils.unique(s => s.taskModel, lastTaskInfos.keys()),
             (schedulings, taskModel) => {
 
-                let lastExecution: DateTime
+                let lastTask: MmsTask
                 if (schedulingType == MmsSchedulingType.TRIGGERED) {
-                    lastExecution = schedulings
-                        .map(s => toDateTime(Utils.mapGet(lastTaskInfos, s.triggerTaskModel).executionDate))
-                        .reduce((a, b) => a < b ? a : b)
+                    lastTask = schedulings
+                        .map(s => Utils.mapGet(lastTaskInfos, s.triggerTaskModel))
+                        .reduce((a, b) => toDateTime(a.executionDate) < toDateTime(b.executionDate) ? a : b)
 
                 } else {
-                    lastExecution = toDateTime(lastTaskInfos.get(taskModel).executionDate)
+                    lastTask = lastTaskInfos.get(taskModel)
                 }
 
-                if (!lastExecution) {
+                if (!lastTask) {
                     return {
-                        lastExecution: DateTime.now(),
+                        lastTask: null,
                         schedulings: schedulings.filter(s => s.startImmediately)
                     }
                 }
                 else {
                     return {
-                        lastExecution: lastExecution,
+                        lastTask,
                         schedulings
                     }
                 }
@@ -209,11 +213,9 @@ console.log(triggerTask)
 
     *generateTriggeredTasks(asset: MmsAsset) {
         const g = yield* this.generateTasks(asset, MmsSchedulingType.TRIGGERED)
-        console.log(g)
-        throw "jj"
     }
 
-    *generateTasks(asset: MmsAsset, schedulingType: MmsSchedulingType) {
+    protected *generateTasks(asset: MmsAsset, schedulingType: MmsSchedulingType) {
         asset = yield this.typeorm.findOne(
             MmsAsset,
             {
@@ -230,15 +232,17 @@ console.log(triggerTask)
             })
 
         const group = yield* this.groupSchedulingsByTaskModel(asset, schedulingType)
-console.log(group)
+
         const tasks = []
-        for (const [ taskModel, { lastExecution, schedulings } ] of group) {
+        for (const [ taskModel, { lastTask, schedulings } ] of group) {
+
+            const executionDate = lastTask ? toDateTime(lastTask.executionDate) : DateTime.now()
 
             if (schedulingType == MmsSchedulingType.PERIODIC) {
-                yield* this.deleteDraftTasks(asset, taskModel, lastExecution)
+                yield* this.deleteDraftTasks(asset, taskModel, executionDate)
             }
 
-            const it = this.dateGenerator(lastExecution, schedulings)
+            const it = this.dateGenerator(executionDate, schedulings)
 
             const taskCount = schedulingType == MmsSchedulingType.PERIODIC
                 ? Math.min(...schedulings.map(s => s.maxTaskCount || 10))
@@ -261,7 +265,8 @@ console.log(group)
                     codeSuffix: taskModel.codeSuffix,
                     scheduledDate: date.toJSDate(),
                     stateAttributes: scheduling.assignedAttributes,
-                    scheduling
+                    scheduling,
+                    triggerTask: lastTask.id ? lastTask : null
                 })
 
                 yield* this.createServiceProvisions(task)
@@ -374,11 +379,18 @@ console.log(group)
         return value
     }
 
-    *getLastTaskInfos(asset: MmsAsset) {
-        //const info = new Map<MmsTaskModel, DateTime>()
-
+    /**
+     * Retrieve the last tasks executed for a specific asset
+     * @param asset
+     * @returns a map of task model -> task
+     */
+    protected *getLastTasks(asset: MmsAsset) {
         const taskModelIdMap = new Map<number, MmsTaskModel>()
 
+        //
+        // The id condition limit the extracted tasks to which that
+        // not triggered any tasks (they already triggered so no need consider)
+        //
         const tasks: MmsTask[] = yield this.typeorm.find(
             MmsTask,
             {
@@ -392,27 +404,48 @@ console.log(group)
                 where: {
                     asset: {
                         id: asset.id
-                    }
+                    },
+                    id: Raw(alias =>
+                        `not exists (select 1 from mms_tasks t where t.triggerTaskId=${alias})`)
                 },
                 order: {
                     scheduledDate: "asc"
                 }
             })
 
+        //
+        // Are considered only the tasks manually inserted (with scheduling empty) and
+        // only those without any state change (their state attributes are the same when
+        // they were created)
+        //
         const filtered = tasks.filter(t =>
             !t.scheduling ||
-            !Utils.equalSets(Utils.idSet(t.stateAttributes), Utils.idSet(t.scheduling.assignedAttributes)))
+            !Utils.equalSets(
+                Utils.idSet(t.stateAttributes),
+                Utils.idSet(t.scheduling.assignedAttributes)))
 
-            tasks.forEach(task => {
+        //
+        // Workaround for the typeorm problem that returns different object instances
+        // representing same record
+        //
+        tasks.forEach(task => {
             taskModelIdMap.set(task.model.id, task.model)
         })
 
+        //
+        // Groups the tasks by task model and takes last task
+        //
         const info = Utils.groupByAndMap(
             filtered,
             (task) => taskModelIdMap.get(task.model.id),
             (tasks) => tasks[tasks.length - 1]
         )
 
+        //
+        // Estracts the last lask infos specified by the user
+        // excluding the one they extracted before (because more recent)
+        // and creates fake task objects as a placeholder for those infos.
+        //
         const ltis: MmsLastTaskInfo[] = yield this.typeorm.find(
             MmsLastTaskInfo,
             {
@@ -444,108 +477,68 @@ console.log(group)
         return info
     }
 
-    *getLastTaskInfo(asset: MmsAsset) {
-        return yield this.typeorm.find(
-            MmsLastTaskInfo,
-            {
-                relations: { taskModel: true },
-                where: { asset: { id: asset.id } }
-            })
-    }
-
-    protected *getSchedulings(executedTaskModels: MmsTaskModel[]) {
-        return yield this.typeorm.find(
-            MmsScheduling,
-            {
-                relations: {
-                    areaModels: true,
-                    assetAttributes: true,
-                    assetModels: true,
-                    taskModel: true,
-                    assignedAttributes: true,
-                },
-                where: [
-                    { startImmediately: true },
-                    { taskModel: { id: In(executedTaskModels.map(m => m.id)) } },
-                ]
-            })
-    }
-/*
-    async findNearestTaskModel(asset: MmsAsset): Promise<TaskModelDate | null> {
-
-        const taskModelDateGenerator = await this.computeNextTaskModels(asset)
-
-        const taskModelDates = Utils.transformMap(taskModelDateGenerator, (generator) => generator.next()?.value)
-        if (taskModelDates.size == 0) {
-            return null
-        }
-
-        const arr = Array.from(taskModelDates.entries())
-            .reduce((a, b) => a[1] < b[1] ? a : b)
-
-        return {
-            taskModel: arr[0],
-            date: arr[1]
-        }
-    }
-
-    async computeNextTaskModels(asset: MmsAsset) {
-        asset = await this.assetRepository.findOne({
-            where: { id: asset.id },
-            relations: {
-                attributes: true,
-                model: true,
-                area: {
-                    modelAttributions: {
-                        model: true}
-                    }
-                }
-            }
-        )
-
-        const schedulings = await this.findSchedulingsByAsset(asset)
-
-        const ltis = await this.lastTaskInfoRepository
-            .find({
-                relations: { taskModel: true },
-                where: { asset }
-            })
-
-        return Utils.groupByAndMap(
-            schedulings,
-            s => s.taskModel,
-            (ss: MmsScheduling[], taskModel: MmsTaskModel) =>
-                this.dateGenerator(
-                    this.getLastTaskDate(ltis, taskModel),
-                    ss
-                ))
-    }
-
-    getLastTaskDate(ltis: MmsLastTaskInfo[], taskModel: MmsTaskModel) {
-        const lti = ltis.find(lti => lti.taskModel.id == taskModel.id)
-        return lti ? toDateTime(lti.executionDate) : null
-    }*/
-
-    *dateGenerator(startDate: DateTime, schedulings: MmsScheduling[]) {
+    /**
+     * Generator function that calculates next dates for the specified
+     * schedulings
+     * @param startDate
+     * @param schedulings
+     * @returns a generator of pair of scheduling and next date
+     */
+    protected *dateGenerator(
+        startDate: DateTime,
+        schedulings: MmsScheduling[]
+    ) {
         if (schedulings.length == 0) {
             return
         }
 
         const currentDates = new Map<MmsScheduling, DateTime>()
-        schedulings.forEach(scheduling => currentDates.set(scheduling, startDate))
+        schedulings.forEach(scheduling => {
+            currentDates.set(scheduling, startDate)
+        })
+
         while (true) {
-
+            let stop = true
             for (const scheduling of schedulings) {
-                const date = this.calcNextDate(startDate, currentDates.get(scheduling), scheduling)
-                currentDates.set(scheduling, date)
+                const currentDate = currentDates.get(scheduling)
 
-                yield { scheduling, date }
+                if (currentDate) {
+                    const date = this.calcNextDate(
+                        startDate,
+                        currentDates.get(scheduling),
+                        scheduling)
+
+                    if (!date) {
+                        currentDates.delete(scheduling)
+                    }
+                    else {
+                        stop = false
+
+                        currentDates.set(scheduling, date)
+
+                        yield { scheduling, date }
+                    }
+                }
+            }
+            if (stop) {
+                return
             }
         }
         return { date: null, scheduling: null }
     }
 
-    calcNextDate(startDate: DateTime, currentDate: DateTime, scheduling: MmsScheduling) {
+    /**
+     * Calculates next date based on the specified scheduling
+     * @param startDate
+     * @param currentDate
+     * @param scheduling
+     * @returns a date or null if exceeded the maximum limit
+     */
+    protected calcNextDate(
+        startDate: DateTime,
+        currentDate: DateTime,
+        scheduling: MmsScheduling
+    ) {
         const unit = scheduling.unit
 
         const nextDate = currentDate.plus({ [unit]: scheduling.every })
@@ -553,7 +546,7 @@ console.log(group)
         if (scheduling.maxPeriod) {
             const maxDate = startDate.plus({ [scheduling.maxPeriodUnit]: scheduling.maxPeriod })
             if (nextDate > maxDate) {
-                //return null
+                return null
             }
         }
 
@@ -565,40 +558,6 @@ console.log(group)
             return nextDate
         }
     }
-/*
-    async findSchedulingsByAsset(asset: MmsAsset) {
-
-        const executedTaskModels = (await this.lastTaskInfoRepository
-            .find({
-                relations: { taskModel: true },
-                where: { asset }
-            }))
-            .map(lti => lti.taskModel)
-
-        const schedulings = await this.schedulingRepository
-            .find({
-                relations: {
-                    areaModels: true,
-                    assetAttributes: true,
-                    assetModels: true,
-                    taskModel: true,
-                    startFromLasts: true
-                },
-                where: [
-                    { startImmediately: true },
-                    { taskModel: In(executedTaskModels) },
-                ]
-            })
-
-        return schedulings
-            .filter(s => {
-                const assetModelsMatched = this.matchAssetModels(s, asset)
-                const assetAttributesMatched = this.matchAssetAttributes(s, asset)
-                const areaModelsMatched = this.matchAreaModels(s, asset)
-
-                return assetModelsMatched && assetAttributesMatched && areaModelsMatched
-            })
-    }*/
 
     matchAreaModels(scheduling: MmsScheduling, asset: MmsAsset) {
         //
@@ -695,67 +654,84 @@ console.log(group)
             }
         )
 
-        const workOrderStates = states.filter(s => {
+        //
+        // New work order states are assigned if state attributes of all tasks
+        // meet the attribute based criterias specified in the work order state attribute
+        //
+        const stateAttributes = states.filter(s => {
             return siblings.every(t => t.stateAttributes.some(ts => s.withAllTaskStates.map(ts => ts.id).includes(ts.id)))
         })
 
-        yield this.io.throwing.update(MmsWorkOrder, workOrder, {
-            stateAttributes: workOrderStates.length > 0 ? workOrderStates : workOrder.stateAttributes
-        })
+        if (stateAttributes.length > 0) {
+            yield this.io.throwing.update(MmsWorkOrder, workOrder, {
+                stateAttributes
+            })
+        }
     }
 
 
 
-    private *checkWorkOrderStateChanges(incomingWorkOrder: MmsWorkOrder, storedWorkOrder: MmsWorkOrder) {
-        if (incomingWorkOrder.stateAttributes) {
-            if (!Utils.equalSets(
-                    Utils.idSet(incomingWorkOrder.stateAttributes),
-                    Utils.idSet(storedWorkOrder.stateAttributes))) {
-                const previous: MmsWorkOrderStateChange = yield this.typeorm.findOne(
-                    MmsWorkOrderStateChange, {
+    private *checkWorkOrderStateChanges(
+        incomingWorkOrder: MmsWorkOrder,
+        storedWorkOrder: MmsWorkOrder
+    ) {
+        if (!incomingWorkOrder.stateAttributes) {
+            return
+        }
+
+        if (!Utils.equalSets(
+                Utils.idSet(incomingWorkOrder.stateAttributes),
+                Utils.idSet(storedWorkOrder.stateAttributes))) {
+            const previous: MmsWorkOrderStateChange = yield this.typeorm.findOne(
+                MmsWorkOrderStateChange, {
+                where: {
+                    workOrder: {
+                        id: incomingWorkOrder.id
+                    }
+                },
+                order: {
+                    timestamp: "desc"
+                },
+                relations: {
+                    lastTaskStateChanges: true
+                }
+            })
+
+            const lastTaskStateChanges: MmsTaskStateChange[] = yield this.typeorm.find(
+                MmsTaskStateChange, {
                     where: {
-                        workOrder: {
-                            id: incomingWorkOrder.id
-                        }
+                        task: {
+                            workOrder: {
+                                id: incomingWorkOrder.id
+                            }
+                        },
+                        id: Raw(alias =>
+                            `not exists (select 1 from mms_task_state_changes where previousId=${alias})`)
                     },
-                    order: {
-                        timestamp: "desc"
+                    relations: {
+                        task: {
+                            asset: true
+                        },
+                        previousAttributes: true,
+                        currentAttributes: true
                     }
                 })
 
-                const lastTaskStateChanges: MmsTaskStateChange[] = yield this.typeorm.find(
-                    MmsTaskStateChange, {
-                        where: {
-                            task: {
-                                workOrder: {
-                                    id: incomingWorkOrder.id
-                                }
-                            },
-                            id: Raw(alias => `not exists (select 1 from mms_task_state_changes where previousId=${alias})`)
-                        },
-                        relations: {
-                            task: {
-                                asset: true
-                            }
-                        }
-                    })
-
-                yield this.io.throwing.insert(
-                    MmsWorkOrderStateChange, {
-                        previous,
-                        workOrder: incomingWorkOrder,
-                        timestamp: DateTime.now().toJSDate(),
-                        previousAttributes: storedWorkOrder.stateAttributes,
-                        currentAttributes: incomingWorkOrder.stateAttributes,
-                        lastTaskStateChanges
-                    }
-                )
-
-                const assets = Utils.distinct(lastTaskStateChanges.map(c => c.task.asset), 'id')
-
-                for (const asset of assets) {
-                    yield* this.generateTriggeredTasks(asset)
+            yield this.io.throwing.insert(
+                MmsWorkOrderStateChange, {
+                    previous,
+                    workOrder: incomingWorkOrder,
+                    timestamp: DateTime.now().toJSDate(),
+                    previousAttributes: storedWorkOrder.stateAttributes,
+                    currentAttributes: incomingWorkOrder.stateAttributes,
+                    lastTaskStateChanges
                 }
+            )
+
+            const assets = Utils.distinct(lastTaskStateChanges.map(c => c.task.asset), 'id')
+
+            for (const asset of assets) {
+                yield* this.generateTriggeredTasks(asset)
             }
         }
     }
@@ -774,6 +750,7 @@ console.log(group)
             }
         )
 
+        /*
         const states: MmsStateAttribute[] = yield this.typeorm.find(
             MmsStateAttribute,
             {
@@ -782,37 +759,40 @@ console.log(group)
                 }
             }
         )
+        */
 
         yield* this.checkWorkOrderStateChanges(incomingWorkOrder, storedWorkOrder)
 
     }
 
     private *checkTaskStateChanges(incomingTask: MmsTask, storedTask: MmsTask) {
-        if (incomingTask.stateAttributes) {
-            if (!Utils.equalSets(
-                    Utils.idSet(incomingTask.stateAttributes),
-                    Utils.idSet(storedTask.stateAttributes))) {
-                const previous: MmsTaskStateChange = yield this.typeorm.findOne(
-                    MmsTaskStateChange, {
-                    where: {
-                        task: {
-                            id: incomingTask.id
-                        }
-                    },
-                    order: {
-                        timestamp: "desc"
+        if (!incomingTask.stateAttributes) {
+            return
+        }
+
+        if (!Utils.equalSets(
+                Utils.idSet(incomingTask.stateAttributes),
+                Utils.idSet(storedTask.stateAttributes))) {
+            const previous: MmsTaskStateChange = yield this.typeorm.findOne(
+                MmsTaskStateChange, {
+                where: {
+                    task: {
+                        id: incomingTask.id
                     }
-                })
-                yield this.io.throwing.insert(
-                    MmsTaskStateChange, {
-                        previous,
-                        task: incomingTask,
-                        timestamp: DateTime.now().toJSDate(),
-                        previousAttributes: storedTask.stateAttributes,
-                        currentAttributes: incomingTask.stateAttributes,
-                    }
-                )
-            }
+                },
+                order: {
+                    timestamp: "desc"
+                }
+            })
+            yield this.io.throwing.insert(
+                MmsTaskStateChange, {
+                    previous,
+                    task: incomingTask,
+                    timestamp: DateTime.now().toJSDate(),
+                    previousAttributes: storedTask.stateAttributes,
+                    currentAttributes: incomingTask.stateAttributes,
+                }
+            )
         }
     }
 
@@ -831,19 +811,15 @@ console.log(group)
             }
         )
 
-        const states: MmsStateAttribute[] = yield this.typeorm.find(
-            MmsStateAttribute,
-            {
-                where: {
-                    id: In(currentTask.stateAttributes.map(a => a.id)),
-                }
-            }
-        )
-
         yield* this.checkTaskStateChanges(task, currentTask)
 
         if (task.workOrder) {
-            task.stateAttributes = states.filter(s => s.withWorkOrder === null || s.withWorkOrder === true)
+            //
+            // Excludes the state attributes that are not foreseen
+            // in case of assignment to a work order
+            //
+            task.stateAttributes = currentTask.stateAttributes.filter(
+                s => s.withWorkOrder === null || s.withWorkOrder === true)
 
             //
             // There is a assignment to a work order
@@ -870,61 +846,6 @@ console.log(group)
                 //task.stateAttributes = states.filter(s => s.withWorkOrder === null || s.withWorkOrder === false)
             }
         }
-
-
-        /*
-        if (!task.closingReason) {
-            return
-        }
-
-        const currentTask: MmsTask = yield this.typeorm.findOne(MmsTask, {
-            where: {
-                id: task.id
-            },
-            relations: {
-                asset: true,
-                workOrder: true,
-                closingReason: true
-            }
-        })
-
-        if (task.closingReason.id != currentTask.closingReason?.id) {
-            const closingReason: MmsTaskClosingReason = yield this.typeorm.findOne(MmsTaskClosingReason, {
-                where: {
-                    id: task.closingReason.id
-                },
-                relations: {
-                    assignedAttributes: true
-                }
-            })
-
-            for (const attribute of closingReason.assignedAttributes) {
-                if (attribute.forTask) {
-                    task.stateAttributes = Utils.distinct([
-                        ...task.stateAttributes || [],
-                        attribute
-                    ], 'id')
-                }
-
-                if (attribute.forAsset) {
-                    yield this.io.throwing.update(MmsAsset, currentTask.asset, {
-                        stateAttributes: Utils.distinct([
-                            ...task.stateAttributes || [],
-                            attribute
-                        ], 'id')
-                    })
-                }
-
-                if (attribute.forWorkOrder && currentTask.workOrder) {
-                    yield this.io.throwing.update(MmsWorkOrder, currentTask.workOrder, {
-                        stateAttributes: Utils.distinct([
-                            ...task.stateAttributes || [],
-                            attribute
-                        ], 'id')
-                    })
-                }
-            }
-        }*/
     }
 
 

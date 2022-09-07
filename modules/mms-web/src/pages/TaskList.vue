@@ -120,7 +120,7 @@ const dataTable = $adx.dataTable(
   {
     actions:        { label: '' },
     wo:             { label: 'OdL' },
-    code:           { label: 'Codice', width: "50px", sortable: true, field: (row: Item) => `${row.codePrefix}${row.code}${row.codeSuffix}` },
+    code:           { label: 'Codice', width: "50px", sortable: true, field: (row: Item) => `${row.codePrefix || ''}${row.code}${row.codeSuffix || ''}` },
     attributes:     { label: 'Attributi' },
     model:          { label: 'Modello attività', width: "20%", sortable: true, field: (row: Item) => (row.model as Item).name },
     assetModel:     { label: 'Modello asset', width: "20%", sortable: true },

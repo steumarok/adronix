@@ -16,10 +16,10 @@ export class MmsTask {
     @Column()
     code: number;
 
-    @Column()
+    @Column({ nullable: true })
     codePrefix: string;
 
-    @Column()
+    @Column({ nullable: true })
     codeSuffix: string;
 
     @ManyToOne(() => MmsAsset)
@@ -41,26 +41,16 @@ export class MmsTask {
     @JoinTable({ name: "mms_tasks_mms_resources" })
     resources: MmsResource[];
 
-    @ManyToOne(() => MmsWorkOrder)
+    @ManyToOne(() => MmsWorkOrder, { nullable: true })
     workOrder: MmsWorkOrder;
 
-    @ManyToOne(() => MmsScheduling)
+    @ManyToOne(() => MmsScheduling, { nullable: true })
     scheduling: MmsScheduling;
 
     @ManyToMany(() => MmsStateAttribute)
     @JoinTable({name: "mms_tasks_mms_state_attributes"})
     stateAttributes: MmsStateAttribute[];
 
-    @Column({
-        type: 'enum',
-        enum: MmsTaskCompletionOutcome,
-        nullable: true
-    })
-    completionOutcome: MmsTaskCompletionOutcome;
-
-    @ManyToOne(() => MmsTaskClosingReason, { nullable: true })
-    closingReason: MmsTaskClosingReason;
-
-    @Column({ length: 4096, nullable: true })
-    completionNotes: string;
+    @ManyToOne(() => MmsTask, { nullable: true })
+    triggerTask: MmsTask;
 }

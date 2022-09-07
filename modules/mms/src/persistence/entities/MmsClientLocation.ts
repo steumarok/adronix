@@ -2,6 +2,7 @@ import {Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable
 import { MmsClient } from "./MmsClient";
 import { CmnLocality } from "@adronix/cmn";
 import { MmsAsset } from "./MmsAsset";
+import { MmsCalendar } from "./MmsCalendar";
 
 @Entity("mms_client_locations")
 export class MmsClientLocation {
@@ -17,4 +18,7 @@ export class MmsClientLocation {
 
     @ManyToOne(() => CmnLocality)
     locality: CmnLocality;
+
+    @ManyToOne(() => MmsCalendar)
+    calendar: MmsCalendar;
 }

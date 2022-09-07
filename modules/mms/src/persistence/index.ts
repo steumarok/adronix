@@ -7,6 +7,7 @@ import { MmsAssetComponent } from "./entities/MmsAssetComponent";
 import { MmsAssetComponentModel } from "./entities/MmsAssetComponentModel";
 import { MmsAssetModel } from "./entities/MmsAssetModel";
 import { MmsAssetModelPivot } from "./entities/MmsAssetModelPivot";
+import { MmsCalendar } from "./entities/MmsCalendar";
 import { MmsChecklist } from "./entities/MmsChecklist";
 import { MmsChecklistItem } from "./entities/MmsChecklistItem";
 import { MmsChecklistItemModel } from "./entities/MmsChecklistItemModel";
@@ -15,6 +16,7 @@ import { MmsChecklistModel } from "./entities/MmsChecklistModel";
 import { MmsClient } from "./entities/MmsClient";
 import { MmsClientLocation } from "./entities/MmsClientLocation";
 import { MmsCounter } from "./entities/MmsCounter";
+import { MmsDayType } from "./entities/MmsDayType";
 import { MmsLastTaskInfo } from "./entities/MmsLastTaskInfo";
 import { MmsPart } from "./entities/MmsPart";
 import { MmsPartRequirement } from "./entities/MmsPartRequirement";
@@ -29,6 +31,7 @@ import { MmsTask } from "./entities/MmsTask";
 import { MmsTaskClosingReason } from "./entities/MmsTaskClosingReason";
 import { MmsTaskModel } from "./entities/MmsTaskModel";
 import { MmsTaskStateChange } from "./entities/MmsTaskStateChange";
+import { MmsWorkingTime } from "./entities/MmsWorkingTime";
 import { MmsWorkOrder } from "./entities/MmsWorkOrder";
 import { MmsWorkOrderStateChange } from "./entities/MmsWorkOrderStateChange";
 import { MmsWorkPlan } from "./entities/MmsWorkPlan";
@@ -67,5 +70,8 @@ export const MmsEntities = [
     MmsStateAttribute,
     MmsTaskClosingReason,
     MmsWorkOrderStateChange,
-    MmsTaskStateChange
+    MmsTaskStateChange,
+    MmsDayType,
+    MmsCalendar,
+    MmsWorkingTime
 ]
